@@ -27,6 +27,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAccessDeniedFilter accessDeniedFilter;
     private final AuthenticationEntryPointFilter authenticationEntryPoint;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -34,21 +35,17 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(req -> req.requestMatchers("/api/auth/**")
                         .permitAll()
-
-                        .requestMatchers("/api/admins/**")
-                        .hasRole("ADMIN")
-
-                        .requestMatchers("/api/clients/**")
-                        .hasRole("CLIENT")
-
-                        .anyRequest()
-                        .authenticated())
+                        .requestMatchers("/api/admins/**").hasRole("ADMIN")
+                        .requestMatchers("/api/clients/**").hasRole("CLIENT")
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(accessDeniedFilter)
-                        .authenticationEntryPoint(authenticationEntryPoint));
+                        .authenticationEntryPoint(authenticationEntryPoint))
+                .oauth2Login(oauth -> oauth
+                        .successHandler(oAuth2LoginSuccessHandler));
 
         return http.build();
     }
