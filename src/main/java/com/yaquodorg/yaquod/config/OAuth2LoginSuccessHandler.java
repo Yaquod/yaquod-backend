@@ -41,7 +41,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                     newUser.setLastName(familyName != null ? familyName : "");
                     newUser.setRole(Role.CLIENT);
                     newUser.setPasswordHash("N/A");
-                                        newUser.setPhoneNumber("N/A"); //mobile number is required from the application
+                                        newUser.setPhoneNumber("N/A"); //Mobile number is required from the application
                     newUser.setJoin_date(Timestamp.valueOf(LocalDateTime.now()));
                     newUser.setEmailVerified(true);
                     return userRepository.save(newUser);
