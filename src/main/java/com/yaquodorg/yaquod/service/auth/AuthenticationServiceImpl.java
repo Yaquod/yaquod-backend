@@ -10,6 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
 import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
@@ -45,6 +46,36 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String accessToken = jwtService.generateAccessToken(authenticatedUser);
         String refreshToken = jwtService.generateRefreshToken(authenticatedUser);
+
+        return createLoginResponse(accessToken, refreshToken);
+    }
+
+    @Override
+    public LoginResponse googleLogin(GoogleLoginDto googleLoginDto) {
+        Date now = new Date();
+
+        String email = googleLoginDto.getEmail();
+        String name = googleLoginDto.getName();
+        String givenName = googleLoginDto.getGivenName();
+        String familyName = googleLoginDto.getFamilyName();
+
+        User user = userService.getUser(email)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setEmail(email);
+                    newUser.setFirstName(givenName != null ? givenName : name);
+                    newUser.setLastName(familyName != null ? familyName : "");
+                    newUser.setRole(Role.CLIENT);
+                    newUser.setPasswordHash("N/A");
+                    newUser.setPhoneNumber("N/A");
+                    newUser.setJoin_date(new Timestamp(now.getTime()));
+                    newUser.setEmailVerified(true);
+
+                    return userService.saveUser(newUser);
+                });
+
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
 
         return createLoginResponse(accessToken, refreshToken);
     }
