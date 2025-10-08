@@ -148,4 +148,9 @@ public class AuthenticationController {
                     .body(createFailureResponse("Internal Server Error: " + e.getMessage()));
         }
     }
+    @GetMapping("/test")
+    public String test() {
+        return "Authentication Service is up and running!";
+    }
+
 }
