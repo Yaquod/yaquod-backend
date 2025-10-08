@@ -2,7 +2,6 @@ package com.yaquodorg.yaquod.filter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,25 +34,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final List<String> EXCLUDED_PATHS = List.of("/api/auth/**");
-
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String requestPath = request.getRequestURI();
-
-        if (isExcludedPath(requestPath)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "Authorization header missing or invalid");
+            filterChain.doFilter(request, response);
             return;
         }
 
@@ -103,9 +93,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         PrintWriter out = response.getWriter();
         out.println(objectMapper.writeValueAsString(apiResponse)); // Serializing the ApiResponse
         out.flush();
-    }
-
-    private boolean isExcludedPath(String requestPath) {
-        return EXCLUDED_PATHS.stream().anyMatch(path -> requestPath.startsWith(path.replace("**", "")));
     }
 }

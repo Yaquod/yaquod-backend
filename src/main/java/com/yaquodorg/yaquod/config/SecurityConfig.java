@@ -13,6 +13,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.yaquodorg.yaquod.filter.AuthenticationEntryPointFilter;
+import com.yaquodorg.yaquod.filter.CustomAccessDeniedFilter;
 import com.yaquodorg.yaquod.filter.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAccessDeniedFilter accessDeniedFilter;
+    private final AuthenticationEntryPointFilter authenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -32,20 +36,19 @@ public class SecurityConfig {
                         .permitAll()
 
                         .requestMatchers("/api/admins/**")
-                        .hasAnyAuthority("ADMIN")
-                        .requestMatchers("/api/admins/**")
-                        .hasAnyRole("ADMIN")
+                        .hasRole("ADMIN")
 
                         .requestMatchers("/api/clients/**")
-                        .hasAnyAuthority("CLIENT")
-                        .requestMatchers("/api/clients/**")
-                        .hasAnyRole("CLIENT")
+                        .hasRole("CLIENT")
 
                         .anyRequest()
                         .authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler(accessDeniedFilter)
+                        .authenticationEntryPoint(authenticationEntryPoint));
 
         return http.build();
     }
