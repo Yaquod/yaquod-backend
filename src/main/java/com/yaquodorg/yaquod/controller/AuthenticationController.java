@@ -152,5 +152,4 @@ public class AuthenticationController {
     public String test() {
         return "Authentication Service is up and running!";
     }
-
 }
