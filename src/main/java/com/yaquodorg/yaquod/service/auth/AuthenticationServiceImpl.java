@@ -30,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
 
+    private int ONE_DAY = 86400000;
+
     private final UserService userService;
     private final JwtService jwtService;
     private final MailSenderService mailSenderService;
@@ -74,7 +76,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private User createUserFromDto(RegisterUserDto registerUserDto) {
         User user = new User();
         Date now = new Date();
-        Date codeExpiryDate = new Date(now.getTime() + 86400000);
+        Date codeExpiryDate = new Date(now.getTime() + ONE_DAY);
 
         user.setEmail(registerUserDto.getEmail());
         user.setPasswordHash(passwordEncoder.encode(registerUserDto.getPassword()));
@@ -157,7 +159,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public void regenerateOtp(String email) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + 86400000);
+        Date expiryDate = new Date(now.getTime() + ONE_DAY);
         User user = userService.getUser(email).orElseThrow(() -> new NoSuchElementException("User not found"));
         int newOtp = generateRandomOtp();
 

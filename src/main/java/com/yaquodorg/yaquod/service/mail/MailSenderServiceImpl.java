@@ -5,9 +5,11 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MailSenderServiceImpl implements MailSenderService {
 
     private final JavaMailSender mailSender;
@@ -24,6 +26,6 @@ public class MailSenderServiceImpl implements MailSenderService {
         if (false)
             mailSender.send(mailMessage);
 
-        System.out.println("Mail Sent Successfully!");
+        log.info("Mail Sent to {} Successfully!", toEmail);
     }
 }

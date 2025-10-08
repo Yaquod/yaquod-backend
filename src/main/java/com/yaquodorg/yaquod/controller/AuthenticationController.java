@@ -116,9 +116,9 @@ public class AuthenticationController {
         try {
             LoginResponse loginResponse = authenticationService.refreshToken(authorizationHeader);
             if (loginResponse == null)
-                throw new NullPointerException();
+                throw new IllegalArgumentException("Failed to refresh token: loginResponse is null");
             return ResponseEntity.ok(createSuccessResponse(loginResponse));
-        } catch (NullPointerException e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(createFailureResponse("Bad Request: " + e.getMessage()));
         } catch (ExpiredJwtException e) {
