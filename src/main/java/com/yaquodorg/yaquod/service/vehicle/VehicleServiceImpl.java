@@ -28,12 +28,7 @@ public class VehicleServiceImpl implements VehicleService {
         }
 
         Vehicle vehicle = new Vehicle();
-        vehicle.setVehicleUUID(createVehicleDto.getVehicleUUID());
-        vehicle.setPlateNo(createVehicleDto.getPlateNo());
-        vehicle.setColor(createVehicleDto.getColor());
-        vehicle.setCarCompany(createVehicleDto.getCarCompany());
-        vehicle.setModel(createVehicleDto.getModel());
-        vehicle.setSeats(createVehicleDto.getSeats());
+        buildVehicleFromDto(vehicle, createVehicleDto);
 
         return vehicleRepository.save(vehicle);
     }
@@ -56,24 +51,26 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     @Transactional
     public Vehicle updateVehicle(CreateVehicleDto createVehicleDto) {
-        Optional<Vehicle> vehicleOptional = vehicleRepository.findByVehicleUUID(createVehicleDto.getVehicleUUID());
-        if (vehicleOptional.isEmpty()) {
-            throw new RuntimeException("Vehicle not found!");
-        }
+        Vehicle vehicle = vehicleRepository.findByVehicleUUID(createVehicleDto.getVehicleUUID())
+                .orElseThrow(() -> new RuntimeException(
+                        "Vehicle with UUID " + createVehicleDto.getVehicleUUID() + " not found!"));
 
-        Vehicle vehicle = vehicleOptional.get();
-        vehicle.setVehicleUUID(createVehicleDto.getVehicleUUID());
-        vehicle.setPlateNo(createVehicleDto.getPlateNo());
-        vehicle.setColor(createVehicleDto.getColor());
-        vehicle.setCarCompany(createVehicleDto.getCarCompany());
-        vehicle.setModel(createVehicleDto.getModel());
-        vehicle.setSeats(createVehicleDto.getSeats());
-
+        buildVehicleFromDto(vehicle, createVehicleDto);
         return vehicle;
     }
 
     @Override
     public void deleteVehicle(Long id) {
         vehicleRepository.deleteById(id);
+    }
+
+    private Vehicle buildVehicleFromDto(Vehicle vehicle, CreateVehicleDto dto) {
+        vehicle.setVehicleUUID(dto.getVehicleUUID());
+        vehicle.setPlateNo(dto.getPlateNo());
+        vehicle.setColor(dto.getColor());
+        vehicle.setCarCompany(dto.getCarCompany());
+        vehicle.setModel(dto.getModel());
+        vehicle.setSeats(dto.getSeats());
+        return vehicle;
     }
 }

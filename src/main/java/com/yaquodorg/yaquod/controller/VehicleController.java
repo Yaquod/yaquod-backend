@@ -49,7 +49,7 @@ public class VehicleController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Vehicle>>> getVeicles() {
+    public ResponseEntity<ApiResponse<List<Vehicle>>> getVehicles() {
         return ResponseEntity.ok(createSuccessResponse(vehicleService.getVehicles()));
     }
 
@@ -83,8 +83,7 @@ public class VehicleController {
     public ResponseEntity<ApiResponse<Vehicle>> updateVehicle(@RequestBody CreateVehicleDto createVehicleDto) {
         try {
             Vehicle vehicle = vehicleService.updateVehicle(createVehicleDto);
-            return ResponseEntity.status(CREATED)
-                    .body(createSuccessResponse(vehicle));
+            return ResponseEntity.ok(createSuccessResponse(vehicle));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(createFailureResponse("Failed to update vehicle: " + e.getMessage()));
