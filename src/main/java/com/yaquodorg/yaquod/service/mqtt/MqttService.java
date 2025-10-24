@@ -1,16 +1,18 @@
 package com.yaquodorg.yaquod.service.mqtt;
 
+import org.springframework.integration.annotation.ServiceActivator;
+import org.springframework.integration.mqtt.support.MqttHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.integration.annotation.ServiceActivator;
-import org.springframework.integration.mqtt.support.MqttHeaders;
-import org.springframework.messaging.Message;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -51,7 +53,6 @@ public class MqttService {
     }
 
     private void handleVehicleUpdateStatus(String payload) {
-
         try {
             UpdateVehicleStatusDto dto = objectMapper.readValue(payload, UpdateVehicleStatusDto.class);
             log.info("Vehicle with UUID: {}, updated their status to: {}", dto.getVehicleUUID(),
