@@ -18,9 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.dtos.VehicleDto;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
+import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class VehicleController {
 
     private final VehicleService vehicleService;
+    private final MqttService mqttService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
@@ -100,6 +103,19 @@ public class VehicleController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(createFailureResponse("Could not delete vehicle: " + e.getMessage()));
+
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/uuid/{vehicleUUID}/location-update")
+    public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleLocation(@PathVariable String vehicleUUID) {
+        try {
+            mqttService.publish("topic/order_update_location", new VehicleDto(vehicleUUID));
+            return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Order signal sent!")));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(createFailureResponse("Could not send signal to vehicle: " + e.getMessage()));
 
         }
     }
