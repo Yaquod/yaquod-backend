@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ public class MqttService {
 
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
+    private final VehicleService vehicleService;
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleIncomingMessage(Message<?> message) {
@@ -37,7 +39,7 @@ public class MqttService {
             UpdateVehicleLocationDto dto = objectMapper.readValue(payload, UpdateVehicleLocationDto.class);
             log.info("Vehicle with UUID: {}, updated their long to: {}, and lat to: {}", dto.getVehicleUUID(),
                     dto.getLongitude(), dto.getLatitude());
-            // TODO: Actually update the vehicle's location in the database
+            vehicleService.updateVehicleLocation(dto.getVehicleUUID(), dto.getLongitude(), dto.getLatitude());
         } catch (JsonProcessingException e) {
             log.error("Failed to parse vehicle location update payload: {}", payload, e);
         }

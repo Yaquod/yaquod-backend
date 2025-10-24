@@ -17,5 +17,7 @@ public interface VehicleService {
 
     Vehicle updateVehicle(CreateVehicleDto createVehicleDto);
 
+    void updateVehicleLocation(String vehicleUUID, double longitude, double latitude);
+
     void deleteVehicle(Long id);
 }

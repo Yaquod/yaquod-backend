@@ -3,6 +3,10 @@ package com.yaquodorg.yaquod.service.vehicle;
 import java.util.List;
 import java.util.Optional;
 
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +61,20 @@ public class VehicleServiceImpl implements VehicleService {
 
         buildVehicleFromDto(vehicle, createVehicleDto);
         return vehicle;
+    }
+
+    @Override
+    @Transactional
+    public void updateVehicleLocation(String vehicleUUID, double longitude, double latitude) {
+        Vehicle vehicle = vehicleRepository.findByVehicleUUID(vehicleUUID)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found with UUID: " + vehicleUUID));
+
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+        Point point = geometryFactory.createPoint(new Coordinate(longitude, latitude));
+
+        vehicle.setLastUpdatedLocation(point);
+        vehicle.setLastUpdatedLong(longitude);
+        vehicle.setLastUpdatedLat(latitude);
     }
 
     @Override
