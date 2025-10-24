@@ -36,6 +36,7 @@ public class VehicleController {
 
     private final VehicleService vehicleService;
     private final MqttService mqttService;
+    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/order_update_location";
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
@@ -111,7 +112,7 @@ public class VehicleController {
     @GetMapping("/uuid/{vehicleUUID}/location-update")
     public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleLocation(@PathVariable String vehicleUUID) {
         try {
-            mqttService.publish("topic/order_update_location", new VehicleDto(vehicleUUID));
+            mqttService.publish(TOPIC_ORDER_UPDATE_LOCATION, new VehicleDto(vehicleUUID));
             return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Order signal sent!")));
         } catch (Exception e) {
             return ResponseEntity.badRequest()

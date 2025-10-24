@@ -21,13 +21,14 @@ public class MqttService {
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
     private final VehicleService vehicleService;
+    private static final String TOPIC_UPDATE_LOCATION = "topic/update_location";
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleIncomingMessage(Message<?> message) {
         String topic = (String) message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC);
         String payload = message.getPayload().toString();
 
-        if ("topic/update_location".equals(topic)) {
+        if (TOPIC_UPDATE_LOCATION.equals(topic)) {
             handleVehicleUpdateLocation(payload);
         }
 
