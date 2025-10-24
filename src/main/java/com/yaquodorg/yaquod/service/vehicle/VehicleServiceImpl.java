@@ -1,8 +1,11 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import java.util.List;
-import java.util.Optional;
-
+import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -10,12 +13,8 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.repository.VehicleRepository;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -80,6 +79,14 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     public void deleteVehicle(Long id) {
         vehicleRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void updateVehicleStatus(String vehicleUUID, VehicleStatus status) {
+        Vehicle vehicle = vehicleRepository.findByVehicleUUID(vehicleUUID)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found with UUID: " + vehicleUUID));
+        vehicle.setStatus(status);
     }
 
     private Vehicle buildVehicleFromDto(Vehicle vehicle, CreateVehicleDto dto) {

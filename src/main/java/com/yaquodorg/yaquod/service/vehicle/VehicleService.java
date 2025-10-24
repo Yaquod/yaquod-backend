@@ -1,10 +1,11 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import java.util.List;
-import java.util.Optional;
-
 import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
 import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface VehicleService {
     Vehicle createVehicle(CreateVehicleDto createVehicleDto);
@@ -20,4 +21,6 @@ public interface VehicleService {
     void updateVehicleLocation(String vehicleUUID, double longitude, double latitude);
 
     void deleteVehicle(Long id);
+
+    void updateVehicleStatus(String vehicleUUID, VehicleStatus status);
 }

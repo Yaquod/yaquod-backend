@@ -1,17 +1,16 @@
 package com.yaquodorg.yaquod.service.mqtt;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
-import com.yaquodorg.yaquod.service.vehicle.VehicleService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -22,6 +21,7 @@ public class MqttService {
     private final ObjectMapper objectMapper;
     private final VehicleService vehicleService;
     private static final String TOPIC_UPDATE_LOCATION = "topic/update_location";
+    private static final String TOPIC_UPDATE_STATUS = "topic/update_status";
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleIncomingMessage(Message<?> message) {
@@ -30,6 +30,10 @@ public class MqttService {
 
         if (TOPIC_UPDATE_LOCATION.equals(topic)) {
             handleVehicleUpdateLocation(payload);
+        } else if (TOPIC_UPDATE_STATUS.equals(topic)) {
+            handleVehicleUpdateStatus(payload);
+        } else {
+            log.warn("Unhandled topic: {}", topic);
         }
 
         log.info("Received message from topic '{}': {}", topic, payload);
@@ -43,6 +47,18 @@ public class MqttService {
             vehicleService.updateVehicleLocation(dto.getVehicleUUID(), dto.getLongitude(), dto.getLatitude());
         } catch (JsonProcessingException e) {
             log.error("Failed to parse vehicle location update payload: {}", payload, e);
+        }
+    }
+
+    private void handleVehicleUpdateStatus(String payload) {
+
+        try {
+            UpdateVehicleStatusDto dto = objectMapper.readValue(payload, UpdateVehicleStatusDto.class);
+            log.info("Vehicle with UUID: {}, updated their status to: {}", dto.getVehicleUUID(),
+                    dto.getStatus());
+            vehicleService.updateVehicleStatus(dto.getVehicleUUID(), dto.getStatus());
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse vehicle status update payload: {}", payload, e);
         }
     }
 
