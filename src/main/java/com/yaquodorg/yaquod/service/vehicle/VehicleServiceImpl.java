@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
 import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.repository.VehicleRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -75,6 +76,14 @@ public class VehicleServiceImpl implements VehicleService {
         vehicle.setLastUpdatedLocation(point);
         vehicle.setLastUpdatedLong(longitude);
         vehicle.setLastUpdatedLat(latitude);
+    }
+
+    @Override
+    @Transactional
+    public void updateVehicleStatus(String vehicleUUID, VehicleStatus status) {
+        Vehicle vehicle = vehicleRepository.findByVehicleUUID(vehicleUUID)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found with UUID: " + vehicleUUID));
+        vehicle.setStatus(status);
     }
 
     @Override
