@@ -10,6 +10,4 @@ public class UpdateVehicleStatusDto {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private VehicleStatus status;
-
-
 }

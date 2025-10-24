@@ -101,7 +101,7 @@ public class VehicleController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/uuid/{vehicleUUID}/location-update")
+    @PatchMapping("/uuid/{vehicleUUID}/location-update")
     public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleLocation(@PathVariable String vehicleUUID) {
         try {
             mqttService.publish(TOPIC_ORDER_UPDATE_LOCATION, new VehicleDto(vehicleUUID));
@@ -115,7 +115,7 @@ public class VehicleController {
 
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/uuid/{vehicleUUID}/status-update")
+    @PatchMapping("/uuid/{vehicleUUID}/status-update")
     public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleStatus(@PathVariable String vehicleUUID) {
         try {
             mqttService.publish(TOPIC_ORDER_UPDATE_STATUS, new VehicleDto(vehicleUUID));
