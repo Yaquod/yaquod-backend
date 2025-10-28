@@ -6,6 +6,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,7 +42,7 @@ public class VehicleController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<ApiResponse<Vehicle>> createVehicle(@RequestBody CreateVehicleDto createVehicleDto) {
+    public ResponseEntity<ApiResponse<Vehicle>> createVehicle(@Valid @RequestBody CreateVehicleDto createVehicleDto) {
         try {
             Vehicle vehicle = vehicleService.createVehicle(createVehicleDto);
             return ResponseEntity.status(CREATED)
@@ -85,7 +86,7 @@ public class VehicleController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping
-    public ResponseEntity<ApiResponse<Vehicle>> updateVehicle(@RequestBody CreateVehicleDto createVehicleDto) {
+    public ResponseEntity<ApiResponse<Vehicle>> updateVehicle(@Valid @RequestBody CreateVehicleDto createVehicleDto) {
         try {
             Vehicle vehicle = vehicleService.updateVehicle(createVehicleDto);
             return ResponseEntity.ok(createSuccessResponse(vehicle));

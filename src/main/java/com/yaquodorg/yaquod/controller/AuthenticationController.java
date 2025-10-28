@@ -9,6 +9,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 import java.util.NoSuchElementException;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,7 +42,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/admin/signup")
-    public ResponseEntity<ApiResponse<User>> adminRegister(@RequestBody RegisterUserDto registerUserDto) {
+    public ResponseEntity<ApiResponse<User>> adminRegister(@Valid @RequestBody RegisterUserDto registerUserDto) {
         try {
             User registeredUser = authenticationService.signup(registerUserDto, "ADMIN");
             return ResponseEntity.status(CREATED)
@@ -53,7 +54,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/client/signup")
-    public ResponseEntity<ApiResponse<User>> studentRegister(@RequestBody RegisterUserDto registerUserDto) {
+    public ResponseEntity<ApiResponse<User>> studentRegister(@Valid  @RequestBody RegisterUserDto registerUserDto) {
         try {
             User registeredUser = authenticationService.signup(registerUserDto, "CLIENT");
             return ResponseEntity.status(CREATED)
@@ -65,7 +66,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/verify-code")
-    public ResponseEntity<ApiResponse<MessageResponse>> verifyCode(@RequestBody VerifyCodeDto verifyCodeDto) {
+    public ResponseEntity<ApiResponse<MessageResponse>> verifyCode(@Valid @RequestBody VerifyCodeDto verifyCodeDto) {
         try {
             boolean success = authenticationService.verifyUser(verifyCodeDto);
             if (success) {
@@ -85,7 +86,7 @@ public class AuthenticationController {
 
     @PostMapping("/regenerate-code")
     public ResponseEntity<ApiResponse<MessageResponse>> regenerateOtp(
-            @RequestBody RegenerateCodeDto regenerateCodeDto) {
+            @Valid @RequestBody RegenerateCodeDto regenerateCodeDto) {
         try {
             authenticationService.regenerateOtp(regenerateCodeDto.getEmail());
             return ResponseEntity.ok(createSuccessResponse(new MessageResponse("OTP regenerated successfully." +
@@ -100,7 +101,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginUserDto loginUserDto) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginUserDto loginUserDto) {
         try {
             LoginResponse loginResponse = authenticationService.login(loginUserDto);
             return ResponseEntity.ok(createSuccessResponse(loginResponse));
@@ -131,7 +132,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<MessageResponse>> resetPassword(@RequestBody ResetPasswordDto resetPasswordDto) {
+    public ResponseEntity<ApiResponse<MessageResponse>> resetPassword(@Valid @RequestBody ResetPasswordDto resetPasswordDto) {
         try {
             boolean success = authenticationService.resetPassword(resetPasswordDto);
             if (success) {
