@@ -1,13 +1,13 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgis:5432/yaquod
-    username: yaquod
-    password: yaquod
+    url: jdbc:postgresql://${DB_HOST:postgis}:${DB_PORT:5432}/${DB_NAME:yaquod}
+    username: ${DB_USERNAME:yaquod}
+    password: ${DB_PASSWORD:yaquod}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    show-sql: false
+      ddl-auto: ${HIBERNATE_DDL_AUTO:create-drop}
+    show-sql: ${HIBERNATE_SHOW_SQL:false}
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -18,31 +18,31 @@ spring:
   application:
     security:
       jwt:
-        secret-key: a4b5cf541797e6f5fc8e0942fedb4b938aaa25fedb26f9e5be5efe99c38f9447
-        access-token-expiration: 604800000
-        refresh-token-expiration: 2592000000
+        secret-key: ${JWT_SECRET_KEY:a4b5cf541797e6f5fc8e0942fedb4b938aaa25fedb26f9e5be5efe99c38f9447}
+        access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:604800000}
+        refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:2592000000}
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username:  # your smtp gmail
-    password:  # the password of the smtp gmail
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${MAIL_SMTP_AUTH:true}
           starttls:
-            enable: true
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: 450878426193-m3sne27j22kjbu9ns7ul3u1qdci4kvmd.apps.googleusercontent.com
-            client-secret: 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
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET}
             scope:
               - email
               - profile
-            redirect-uri: "http://localhost:8000/login/oauth2/code/google"
+            redirect-uri: ${OAUTH2_GOOGLE_REDIRECT_URI:http://localhost:8000/login/oauth2/code/google}
             client-name: Google
         provider:
           google:
@@ -52,23 +52,24 @@ spring:
             user-name-attribute: sub
 
 mqtt:
-  broker-url: tcp://localhost:1883
-  client-id: spring-boot-clientF
-  username:
-  password:
+  broker-url: ${MQTT_BROKER_URL:tcp://host.docker.internal:1883}
+  client-id: ${MQTT_CLIENT_ID:spring-boot-client}
+  username: ${MQTT_USERNAME:}
+  password: ${MQTT_PASSWORD:}
   topics:
     - topic/order_update_location
     - topic/update_location
-  qos: 1
-  connection-timeout: 60
-  keep-alive-interval: 60
+    - topic/order_update_status
+    - topic/update_status
+  qos: ${MQTT_QOS:1}
+  connection-timeout: ${MQTT_CONNECTION_TIMEOUT:60}
+  keep-alive-interval: ${MQTT_KEEP_ALIVE_INTERVAL:60}
 
 management:
   health:
     mail:
       enabled: false
 
-
 server:
   address: 0.0.0.0
-  port: 8000
+  port: ${SERVER_PORT:8000}
