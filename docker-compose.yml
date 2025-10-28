@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: yaquod
       POSTGRES_DB: yaquod
     ports:
-      - "5432:5432"  # host:container
+      - "5433:5432"
     volumes:
       - postgis_data:/var/lib/postgresql/data
     healthcheck:
@@ -19,7 +19,7 @@ services:
 
   springboot:
     build:
-      context: .          # project root (where Dockerfile is)
+      context: .
       dockerfile: Dockerfile
     container_name: springboot-app
     depends_on:
