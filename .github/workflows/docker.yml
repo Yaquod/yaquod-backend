@@ -2,9 +2,13 @@ name: Build, Run, and Test API
 
 on:
   push:
-    branches: [ feature/docker ]
+    branches:
+      - feature/docker
+      - develop        # added develop branch
   pull_request:
-    branches: [ feature/docker ]
+    branches:
+      - feature/docker
+      - develop        # added develop branch
 
 jobs:
   build-run-test:
