@@ -1,8 +1,8 @@
 package com.yaquodorg.yaquod.service.jwt;
 
-import java.util.Date;
-
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Date;
 
 public interface JwtService {
     String generateAccessToken(UserDetails userDetails);
