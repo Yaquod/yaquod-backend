@@ -28,7 +28,7 @@ jobs:
         run: mvn -B clean package -DskipTests
 
       - name: Run Unit Tests
-        run: mvn test
+        run: mvn -e -X test
 
       - name: Build and Run Docker containers
         run: |
