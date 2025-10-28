@@ -41,7 +41,7 @@ jobs:
       - name: 🌐 Check Spring Boot Endpoint
         run: |
           echo "Testing /api/auth/docker endpoint..."
-          curl --fail http://localhost:8000/api/auth/docker || (echo "❌ Endpoint not reachable" && exit 1)
+          curl --fail http://localhost:8000/api/auth/test || (echo "❌ Endpoint not reachable" && exit 1)
 
       - name: 🧹 Tear down containers
         if: always()
