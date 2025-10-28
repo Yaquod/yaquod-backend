@@ -24,11 +24,25 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
       - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
       - name: Run Unit Tests
-        run: mvn -e -X test
+        run: mvn test -Dspring.profiles.active=test
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
 
       - name: Build and Run Docker containers
         run: |
@@ -40,11 +54,9 @@ jobs:
 
       - name: Check Spring Boot Endpoint
         run: |
-          echo "Testing /api/auth/docker endpoint..."
+          echo "Testing /api/auth/test endpoint..."
           curl --fail http://localhost:8000/api/auth/test || (echo "❌ Endpoint not reachable" && exit 1)
 
       - name: Tear down containers
         if: always()
         run: docker compose down
-
-

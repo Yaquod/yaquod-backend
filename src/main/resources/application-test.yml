@@ -1,0 +1,62 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    database: h2
+  application:
+    security:
+      jwt:
+        secret-key: test-secret-key-for-testing-only-min-256-bits-long-string
+        access-token-expiration: 604800000
+        refresh-token-expiration: 2592000000
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: test@example.com
+    password: test-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-client-id
+            client-secret: test-client-secret
+            scope:
+              - email
+              - profile
+            redirect-uri: "http://localhost:8000/login/oauth2/code/google"
+            client-name: Google
+
+mqtt:
+  broker-url: tcp://localhost:1883
+  client-id: spring-boot-test-client
+  username: test
+  password: test
+  topics:
+    - topic/order_update_location
+    - topic/update_location
+    - topic/order_update_status
+    - topic/update_status
+  qos: 1
+  connection-timeout: 60
+  keep-alive-interval: 60
+
+server:
+  address: 0.0.0.0
+  port: 8000
