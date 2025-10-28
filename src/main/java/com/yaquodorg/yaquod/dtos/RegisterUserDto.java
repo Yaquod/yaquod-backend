@@ -1,11 +1,10 @@
 package com.yaquodorg.yaquod.dtos;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 
 /**
  * DTO for user registration requests.
@@ -31,9 +30,6 @@ public class RegisterUserDto {
     private String lastName;
 
     @NotBlank(message = "Phone number cannot be blank")
-    @Pattern(
-            regexp = "^\\+?[0-9]{10,15}$",
-            message = "Phone number must be between 10 and 15 digits and may start with +"
-    )
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone number must be between 10 and 15 digits and may start with +")
     private String phoneNumber;
 }

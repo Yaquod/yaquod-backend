@@ -2,7 +2,7 @@ package com.yaquodorg.yaquod.dtos;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
-import jakarta.validation.constraints.NotBlank;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
