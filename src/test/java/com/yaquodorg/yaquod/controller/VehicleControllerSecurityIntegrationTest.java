@@ -200,7 +200,9 @@ class VehicleControllerSecurityIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    // FULL INTEGRATION TESTS
+    /**
+     * FULL INTEGRATION TESTS
+     */
     @Test
     @DisplayName("Should create, retrieve, update, and delete vehicle (full flow)")
     @WithMockUser(roles = "ADMIN")
@@ -344,8 +346,9 @@ class VehicleControllerSecurityIntegrationTest {
                 .andExpect(jsonPath("$.data", hasSize(0)));
     }
 
-    // MQTT INTEGRATION TESTS
-
+    /**
+     * MQTT INTEGRATION TESTS
+     */
     @Test
     @DisplayName("MQTT location update should work with valid UUID")
     @WithMockUser(roles = "ADMIN")
@@ -401,8 +404,9 @@ class VehicleControllerSecurityIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    // VALIDATION TESTS
-
+    /**
+     * VALIDATION TESTS
+     */
     // TODO: Should be uncommented after handled correctly in the refactoring phase
     // @Test
     // @DisplayName("Should validate DTO fields on create")
@@ -444,8 +448,9 @@ class VehicleControllerSecurityIntegrationTest {
                 .andExpect(status().isUnsupportedMediaType());
     }
 
-    // PERFORMANCE AND EDGE CASES
-
+    /**
+     * PERFORMANCE AND EDGE CASES
+     */
     @Test
     @DisplayName("Should handle multiple rapid requests")
     @WithMockUser(roles = "ADMIN")

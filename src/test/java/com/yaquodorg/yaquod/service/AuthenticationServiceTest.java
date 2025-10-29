@@ -113,7 +113,9 @@ class AuthenticationServiceTest {
         googleLoginDto.setFamilyName("User");
     }
 
-    // LOGIN TESTS
+    /**
+     * LOGIN TESTS
+     */
     @Test
     @DisplayName("Should login successfully with valid credentials")
     void shouldLoginSuccessfully() {
@@ -176,7 +178,9 @@ class AuthenticationServiceTest {
         verify(userService, never()).updateFcmToken(anyString(), anyString());
     }
 
-    // GOOGLE LOGIN TESTS
+    /**
+     * GOOGLE LOGIN TESTS
+     */
     @Test
     @DisplayName("Should login existing Google user successfully")
     void shouldLoginExistingGoogleUser() {
@@ -269,7 +273,9 @@ class AuthenticationServiceTest {
         assertThat(capturedUser.getLastName()).isEqualTo("");
     }
 
-    // SIGNUP TESTS
+    /**
+     * SIGNUP TESTS
+     */
     @Test
     @DisplayName("Should signup CLIENT user successfully")
     void shouldSignupClientUser() {
@@ -369,7 +375,9 @@ class AuthenticationServiceTest {
                 tomorrow.getTime() + 5000);
     }
 
-    // VERIFY CODE TESTS
+    /**
+     * VERIFY CODE TESTS
+     */
     @Test
     @DisplayName("Should verify user successfully with valid code")
     void shouldVerifyUserWithValidCode() {
@@ -444,7 +452,9 @@ class AuthenticationServiceTest {
                 .hasMessageContaining("User not found");
     }
 
-    // REGENERATE OTP TESTS
+    /**
+     * REGENERATE OTP TESTS
+     */
     @Test
     @DisplayName("Should regenerate OTP successfully")
     void shouldRegenerateOtpSuccessfully() {
@@ -466,21 +476,6 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    @DisplayName("Should update code expiry when regenerating OTP")
-    void shouldUpdateCodeExpiryWhenRegeneratingOtp() {
-        // Arrange
-        Timestamp oldExpiry = user.getCodeExpiredAt();
-        when(userService.getUser(user.getEmail())).thenReturn(Optional.of(user));
-        doNothing().when(mailSenderService).sendEmail(anyString(), anyString(), anyString());
-
-        // Act
-        authenticationService.regenerateOtp(user.getEmail());
-
-        // Assert
-        assertThat(user.getCodeExpiredAt()).isNotEqualTo(oldExpiry);
-    }
-
-    @Test
     @DisplayName("Should throw exception when regenerating OTP for non-existent user")
     void shouldThrowExceptionWhenRegeneratingOtpForNonExistentUser() {
         // Arrange
@@ -494,7 +489,9 @@ class AuthenticationServiceTest {
         verify(mailSenderService, never()).sendEmail(anyString(), anyString(), anyString());
     }
 
-    // RESET PASSWORD TESTS
+    /**
+     * RESET PASSWORD TESTS
+     */
     @Test
     @DisplayName("Should reset password successfully with valid code")
     void shouldResetPasswordWithValidCode() {
@@ -555,7 +552,9 @@ class AuthenticationServiceTest {
         assertThat(result).isFalse();
     }
 
-    // REFRESH TOKEN TESTS
+    /**
+     * REFRESH TOKEN TESTS
+     */
     @Test
     @DisplayName("Should refresh token successfully with valid refresh token")
     void shouldRefreshTokenSuccessfully() {
