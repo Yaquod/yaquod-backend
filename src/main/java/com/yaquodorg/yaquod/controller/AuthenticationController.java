@@ -103,7 +103,7 @@ public class AuthenticationController {
         try {
             LoginResponse loginResponse = authenticationService.refreshToken(authorizationHeader);
             if (loginResponse == null)
-                throw new IllegalArgumentException("Failed to refresh token: loginResponse is null");
+                throw new IllegalArgumentException("Failed to refresh token: No authorization header provided");
             return ResponseEntity.ok(createSuccessResponse(loginResponse));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
