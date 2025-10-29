@@ -1,21 +1,19 @@
 package com.yaquodorg.yaquod.config;
 
-import java.io.IOException;
-
-import org.springframework.context.annotation.Lazy;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.service.auth.AuthenticationService;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
 
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -24,14 +22,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper objectMapper;
 
     public OAuth2LoginSuccessHandler(@Lazy AuthenticationService authenticationService,
-            ObjectMapper objectMapper) {
+                                     ObjectMapper objectMapper) {
         this.authenticationService = authenticationService;
         this.objectMapper = objectMapper;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-            org.springframework.security.core.Authentication authentication)
+                                        org.springframework.security.core.Authentication authentication)
             throws IOException, ServletException {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();

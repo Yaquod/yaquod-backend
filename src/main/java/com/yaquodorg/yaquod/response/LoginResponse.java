@@ -1,10 +1,9 @@
 package com.yaquodorg.yaquod.response;
 
-import java.util.Date;
-
 import com.yaquodorg.yaquod.entity.User;
-
 import lombok.Data;
+
+import java.util.Date;
 
 @Data
 public class LoginResponse {
