@@ -116,7 +116,7 @@ public class AuthenticationController {
         try {
             LoginResponse loginResponse = authenticationService.refreshToken(authorizationHeader);
             if (loginResponse == null)
-                throw new IllegalArgumentException("Failed to refresh token: loginResponse is null");
+                throw new IllegalArgumentException("Failed to refresh token: No authorization header provided");
             return ResponseEntity.ok(createSuccessResponse(loginResponse));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -148,6 +148,7 @@ public class AuthenticationController {
                     .body(createFailureResponse("Internal Server Error: " + e.getMessage()));
         }
     }
+
     @GetMapping("/test")
     public String test() {
         return "Authentication Service is up and running!";
