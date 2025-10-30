@@ -4,47 +4,59 @@ on:
   push:
     branches:
       - feature/docker
-      - develop        # added develop branch
+      - develop
   pull_request:
     branches:
       - feature/docker
-      - develop        # added develop branch
+      - develop
 
 jobs:
   build-run-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧾 Checkout branch
+      - name: Checkout branch
         uses: actions/checkout@v4
 
-      - name: 🧰 Set up Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: 🧱 Build JAR with Maven
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
-#      - name: 🧪 Run Unit Tests
-#        run: mvn test
+      - name: Run Unit Tests
+        run: mvn test -Dspring.profiles.active=test
 
-      - name: 🐳 Build and Run Docker containers
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+
+      - name: Build and Run Docker containers
         run: |
           docker compose up --build -d
-          echo "⏳ Waiting for app to start..."
+          echo "Waiting for app to start..."
           sleep 30
           docker ps
           docker logs springboot-app | tail -n 50
 
-      - name: 🌐 Check Spring Boot Endpoint
+      - name: Check Spring Boot Endpoint
         run: |
-          echo "Testing /api/auth/docker endpoint..."
+          echo "Testing /api/auth/test endpoint..."
           curl --fail http://localhost:8000/api/auth/test || (echo "❌ Endpoint not reachable" && exit 1)
 
-      - name: 🧹 Tear down containers
+      - name: Tear down containers
         if: always()
         run: docker compose down
-
-
