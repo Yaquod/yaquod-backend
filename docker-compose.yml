@@ -30,9 +30,13 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgis:5432/yaquod
       SPRING_DATASOURCE_USERNAME: yaquod
       SPRING_DATASOURCE_PASSWORD: yaquod
+      MQTT_BROKER_URL: tcp://host.docker.internal:1883  #for Windows and Mac
+      #MQTT_BROKER_URL: tcp:/<your linux ip>:1883  #for Linux with extra setup
     ports:
       - "8000:8000"
     restart: on-failure
 
 volumes:
   postgis_data:
+
+

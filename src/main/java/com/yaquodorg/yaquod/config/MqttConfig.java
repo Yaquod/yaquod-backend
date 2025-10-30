@@ -2,6 +2,7 @@ package com.yaquodorg.yaquod.config;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +18,7 @@ import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 
+@Slf4j
 @Configuration
 @ConfigurationProperties(prefix = "mqtt")
 @Getter
@@ -35,7 +37,13 @@ public class MqttConfig {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
 
-        options.setServerURIs(new String[]{brokerUrl});
+
+        String envBroker = System.getenv("MQTT_BROKER_URL");
+        String resolvedUrl = (envBroker != null && !envBroker.isBlank()) ? envBroker : brokerUrl;
+
+        log.info("Connecting to MQTT Broker at: {}", resolvedUrl);
+
+        options.setServerURIs(new String[]{resolvedUrl});
         options.setConnectionTimeout(connectionTimeout);
         options.setKeepAliveInterval(keepAliveInterval);
         options.setCleanSession(true);
@@ -66,7 +74,6 @@ public class MqttConfig {
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(qos);
         adapter.setOutputChannel(mqttInputChannel());
-
         return adapter;
     }
 
@@ -76,11 +83,9 @@ public class MqttConfig {
         MqttPahoMessageHandler messageHandler = new MqttPahoMessageHandler(
                 clientId + "-outbound",
                 mqttClientFactory());
-
         messageHandler.setAsync(true);
         messageHandler.setDefaultQos(qos);
         messageHandler.setDefaultTopic("testTopic");
-
         return messageHandler;
     }
 }
