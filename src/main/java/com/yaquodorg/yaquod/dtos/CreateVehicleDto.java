@@ -1,5 +1,6 @@
 package com.yaquodorg.yaquod.dtos;
 
+import lombok.Builder;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -13,6 +14,7 @@ import lombok.Data;
  *
  */
 @Data
+@Builder
 public class CreateVehicleDto {
 
     @NotBlank(message = "vehicleUUID cannot be blank")
