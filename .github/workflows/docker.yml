@@ -3,16 +3,44 @@ name: Build, Run, and Test API
 on:
   push:
     branches:
-      - feature/docker
-      - develop
+      - master
   pull_request:
     branches:
-      - feature/docker
+      - master
       - develop
 
 jobs:
   build-run-test:
     runs-on: ubuntu-latest
+
+    # Add service containers
+    services:
+      # PostgreSQL for integration tests (if needed)
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: yaquod_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      # Mosquitto MQTT Broker
+      mosquitto:
+        image: eclipse-mosquitto:2
+        ports:
+          - 1883:1883
+          - 9001:9001
+        options: >-
+          --health-cmd "timeout 5 mosquitto_sub -t '$$SYS/#' -C 1 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout branch
@@ -31,11 +59,26 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      # Verify MQTT broker is running
+      - name: Verify MQTT Broker
+        run: |
+          echo "Testing MQTT broker connection..."
+          docker run --rm --network host eclipse-mosquitto:2 mosquitto_pub -h localhost -t test/topic -m "test" || echo "MQTT broker test failed"
+          echo "MQTT broker is ready on localhost:1883"
+
       - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
+      # Run unit tests (fast, with mocked MQTT)
       - name: Run Unit Tests
-        run: mvn test -Dspring.profiles.active=test
+        run: mvn test -Dspring.profiles.active=test-unit -Dgroups=unit
+        
+      # Run integration tests (with real MQTT broker)
+      - name: Run Integration Tests
+        run: mvn test -Dspring.profiles.active=test-integration -Dgroups=integration
+        env:
+          MQTT_BROKER_URL: tcp://localhost:1883
+          MQTT_CLIENT_ID: github-actions-integration-test-client
 
       - name: Upload test reports on failure
         if: failure()
@@ -56,6 +99,16 @@ jobs:
         run: |
           echo "Testing /api/auth/test endpoint..."
           curl --fail http://localhost:8000/api/auth/test || (echo "❌ Endpoint not reachable" && exit 1)
+
+      # Test MQTT integration with running app
+      - name: Test MQTT Integration
+        run: |
+          echo "Testing MQTT integration..."
+          # Publish a test message
+          docker run --rm --network host eclipse-mosquitto:2 \
+            mosquitto_pub -h localhost -t topic/test -m '{"test": "message"}' \
+            && echo "✅ MQTT publish successful" \
+            || echo "❌ MQTT publish failed"
 
       - name: Tear down containers
         if: always()

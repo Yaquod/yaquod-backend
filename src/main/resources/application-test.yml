@@ -44,10 +44,10 @@ spring:
             client-name: Google
 
 mqtt:
-  broker-url: tcp://localhost:1883
-  client-id: spring-boot-test-client
-  username: test
-  password: test
+  broker-url: ${MQTT_BROKER_URL:tcp://localhost:1883}
+  client-id: ${MQTT_CLIENT_ID:spring-boot-test-client}
+  username: ${MQTT_USERNAME:}
+  password: ${MQTT_PASSWORD:}
   topics:
     - topic/order_update_location
     - topic/update_location
@@ -59,4 +59,4 @@ mqtt:
 
 server:
   address: 0.0.0.0
-  port: 8000
+  port: ${SERVER_PORT:8000}
