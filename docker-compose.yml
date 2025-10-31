@@ -1,0 +1,44 @@
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: postgis
+    restart: always
+    environment:
+      POSTGRES_USER: yaquod
+      POSTGRES_PASSWORD: yaquod
+      POSTGRES_DB: yaquod
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  springboot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: springboot-app
+    depends_on:
+      postgis:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgis:5432/yaquod
+      SPRING_DATASOURCE_USERNAME: yaquod
+      SPRING_DATASOURCE_PASSWORD: yaquod
+      MQTT_BROKER_URL: tcp://host.docker.internal:1883  #for Windows and Mac
+      #MQTT_BROKER_URL: tcp:/<your linux ip>:1883  #for Linux with extra setup
+    ports:
+      - "8000:8000"
+    restart: on-failure
+
+volumes:
+  postgis_data:
+
+
