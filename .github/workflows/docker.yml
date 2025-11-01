@@ -9,34 +9,6 @@ on:
       - master
       - develop
 
-jobs:
-  build-run-test:
-    runs-on: ubuntu-latest
-
-    # Add service containers
-    services:
-      # PostgreSQL for integration tests (if needed)
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: yaquod_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: test_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      # Mosquitto MQTT Broker
-      mosquitto:
-        image: eclipse-mosquitto:2
-        ports:
-          - 1883:1883
-          - 9001:9001
-
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -54,6 +26,11 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Start Mosquitto Broker
+        uses: namoshek/mosquitto-github-action@v1
+        with:
+          ports: '1883:1883'
+
       # Verify MQTT broker is running
       - name: Verify MQTT Broker
         run: |
@@ -64,7 +41,7 @@ jobs:
       - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
-      # Run unit tests
+      # Run tests
       - name: Run Unit Tests
         run: mvn test
 
