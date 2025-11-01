@@ -64,16 +64,9 @@ jobs:
       - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
-      # Run unit tests (fast, with mocked MQTT)
+      # Run unit tests
       - name: Run Unit Tests
-        run: mvn test -Dspring.profiles.active=test-unit -Dgroups=unit
-        
-      # Run integration tests (with real MQTT broker)
-      - name: Run Integration Tests
-        run: mvn test -Dspring.profiles.active=test-integration -Dgroups=integration
-        env:
-          MQTT_BROKER_URL: tcp://localhost:1883
-          MQTT_CLIENT_ID: github-actions-integration-test-client
+        run: mvn test
 
       - name: Upload test reports on failure
         if: failure()
