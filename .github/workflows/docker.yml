@@ -36,12 +36,13 @@ jobs:
         ports:
           - 1883:1883
           - 9001:9001
+        volumes:
+          - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
         options: >-
           --health-cmd "timeout 5 mosquitto_sub -t '$$SYS/#' -C 1 || exit 1"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          --entrypoint "sh -c 'echo \"listener 1883 0.0.0.0\nallow_anonymous true\" > /mosquitto/config/mosquitto.conf && /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf'"
 
     steps:
       - name: Checkout branch
