@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class UpdateVehicleLocationDto {
-    private String vehicleUUID;
+    private String vinNumber;
     private double longitude;
     private double latitude;
 }

@@ -46,7 +46,7 @@ class VehicleRepositoryTest {
 
         // Setup test data
         vehicle1 = Vehicle.builder()
-                .vehicleUUID("uuid-001")
+                .vinNumber("vin-001")
                 .plateNo("ABC-123")
                 .model("Toyota Camry")
                 .seats(4)
@@ -56,7 +56,7 @@ class VehicleRepositoryTest {
                 .build();
 
         vehicle2 = Vehicle.builder()
-                .vehicleUUID("uuid-002")
+                .vinNumber("vin-002")
                 .plateNo("XYZ-789")
                 .model("Honda Accord")
                 .seats(5)
@@ -75,19 +75,19 @@ class VehicleRepositoryTest {
         // Assert
         assertThat(saved).isNotNull();
         assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getVehicleUUID()).isEqualTo("uuid-001");
+        assertThat(saved.getVinNumber()).isEqualTo("vin-001");
         assertThat(saved.getPlateNo()).isEqualTo("ABC-123");
     }
 
     @Test
-    @DisplayName("Should find vehicle by UUID")
-    void shouldFindVehicleByUUID() {
+    @DisplayName("Should find vehicle by VIN")
+    void shouldFindVehicleByVIN() {
         // Arrange
         entityManager.persist(vehicle1);
         entityManager.flush();
 
         // Act
-        Optional<Vehicle> found = vehicleRepository.findByVehicleUUID("uuid-001");
+        Optional<Vehicle> found = vehicleRepository.findByVinNumber("vin-001");
 
         // Assert
         assertThat(found).isPresent();
@@ -95,10 +95,10 @@ class VehicleRepositoryTest {
     }
 
     @Test
-    @DisplayName("Should return empty when vehicle UUID not found")
-    void shouldReturnEmptyWhenUUIDNotFound() {
+    @DisplayName("Should return empty when vehicle VIN not found")
+    void shouldReturnEmptyWhenVINNotFound() {
         // Act
-        Optional<Vehicle> found = vehicleRepository.findByVehicleUUID("non-existent");
+        Optional<Vehicle> found = vehicleRepository.findByVinNumber("non-existent");
 
         // Assert
         assertThat(found).isEmpty();

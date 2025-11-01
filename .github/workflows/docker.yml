@@ -13,35 +13,6 @@ jobs:
   build-run-test:
     runs-on: ubuntu-latest
 
-    # Add service containers
-    services:
-      # PostgreSQL for integration tests (if needed)
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: yaquod_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: test_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      # Mosquitto MQTT Broker
-      mosquitto:
-        image: eclipse-mosquitto:2
-        ports:
-          - 1883:1883
-          - 9001:9001
-        options: >-
-          --health-cmd "timeout 5 mosquitto_sub -t '$$SYS/#' -C 1 || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -59,6 +30,36 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Install Mosquitto
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mosquitto mosquitto-clients
+          
+      - name: Start Mosquitto Broker
+        run: |
+          # Start the broker as a background daemon
+          mosquitto -d
+
+      - name: Verify Broker is running on localhost:1883
+        run: |
+          echo "Waiting for broker to start..."
+          sleep 2 # Give the broker a moment to initialize
+          
+          echo "Subscribing to topic 'github/action'..."
+          # Subscribe in the background, wait for 1 message (-C 1), then exit
+          # We pipe to 'grep' to check if the message is correct
+          mosquitto_sub -h localhost -p 1883 -t 'github/action' -C 1 | grep -q 'it works!' &
+          
+          echo "Publishing test message..."
+          # Publish a test message
+          mosquitto_pub -h localhost -p 1883 -t 'github/action' -m 'it works!'
+          
+          # 'wait' ensures the background 'mosquitto_sub' process finishes
+          # If grep found the message, it exits with 0 (success)
+          # If not, it exits with 1 (failure), failing the workflow step
+          wait
+          echo "✅ Test message received successfully!"
+
       # Verify MQTT broker is running
       - name: Verify MQTT Broker
         run: |
@@ -69,16 +70,9 @@ jobs:
       - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
-      # Run unit tests (fast, with mocked MQTT)
-      - name: Run Unit Tests
-        run: mvn test -Dspring.profiles.active=test-unit -Dgroups=unit
-        
-      # Run integration tests (with real MQTT broker)
-      - name: Run Integration Tests
-        run: mvn test -Dspring.profiles.active=test-integration -Dgroups=integration
-        env:
-          MQTT_BROKER_URL: tcp://localhost:1883
-          MQTT_CLIENT_ID: github-actions-integration-test-client
+      # Run tests
+      - name: Run Unit & Integration Tests
+        run: mvn test
 
       - name: Upload test reports on failure
         if: failure()

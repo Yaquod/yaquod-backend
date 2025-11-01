@@ -8,7 +8,7 @@ import lombok.Data;
 
 @Data
 public class UpdateVehicleStatusDto {
-    private String vehicleUUID;
+    private String vinNumber;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @NotNull(message = "Status cannot be blank")

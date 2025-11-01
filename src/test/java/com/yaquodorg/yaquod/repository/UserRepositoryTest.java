@@ -91,7 +91,7 @@ class UserRepositoryTest {
 
     @Test
     @DisplayName("Should find user by email")
-    void shouldFindUserByUUID() {
+    void shouldFindUserByEmail() {
         // Arrange
         entityManager.persist(user1);
         entityManager.flush();
@@ -106,7 +106,7 @@ class UserRepositoryTest {
 
     @Test
     @DisplayName("Should return empty when user email not found")
-    void shouldReturnEmptyWhenUUIDNotFound() {
+    void shouldReturnEmptyWhenEmailNotFound() {
         // Act
         Optional<User> found = userRepository.findByEmail("non-existent");
 

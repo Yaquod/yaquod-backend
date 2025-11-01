@@ -47,7 +47,7 @@ class VehicleServiceTest {
     @BeforeEach
     void setUp() {
         createVehicleDto = CreateVehicleDto.builder()
-                .vehicleUUID("UUID1")
+                .vinNumber("VIN1")
                 .plateNo("abc123")
                 .color("RED")
                 .carCompany("Dodge")
@@ -57,7 +57,7 @@ class VehicleServiceTest {
 
         vehicle = Vehicle.builder()
                 .id(1L)
-                .vehicleUUID("UUID1")
+                .vinNumber("VIN1")
                 .plateNo("abc123")
                 .color("RED")
                 .carCompany("Dodge")
@@ -95,7 +95,7 @@ class VehicleServiceTest {
         // Arrange
         Vehicle vehicle2 = new Vehicle();
         vehicle2.setId(2L);
-        vehicle2.setVehicleUUID("test-uuid-456");
+        vehicle2.setVinNumber("test-vin-456");
         vehicle2.setPlateNo("XYZ-789");
         vehicle2.setModel("Honda Accord");
 
@@ -146,50 +146,50 @@ class VehicleServiceTest {
     }
 
     @Test
-    @DisplayName("Should get vehicle by UUID successfully")
-    void shouldGetVehicleByUUID() {
+    @DisplayName("Should get vehicle by VIN successfully")
+    void shouldGetVehicleByVIN() {
         // Arrange
-        String uuid = "UUID1";
-        when(vehicleRepository.findByVehicleUUID(uuid)).thenReturn(Optional.of(vehicle));
+        String vin = "VIN1";
+        when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.of(vehicle));
 
         // Act
-        Optional<Vehicle> result = vehicleService.getVehicleByUUID(uuid);
+        Optional<Vehicle> result = vehicleService.getVehicleByVinNumber(vin);
 
         // Assert
         assertThat(result).isPresent();
-        assertThat(result.get().getVehicleUUID()).isEqualTo(uuid);
+        assertThat(result.get().getVinNumber()).isEqualTo(vin);
 
-        verify(vehicleRepository, times(1)).findByVehicleUUID(uuid);
+        verify(vehicleRepository, times(1)).findByVinNumber(vin);
     }
 
     @Test
-    @DisplayName("Should return empty when vehicle not found by UUID")
-    void shouldReturnEmptyWhenVehicleNotFoundByUUID() {
+    @DisplayName("Should return empty when vehicle not found by VIN")
+    void shouldReturnEmptyWhenVehicleNotFoundByVIN() {
         // Arrange
-        String uuid = "non-existent-uuid";
-        when(vehicleRepository.findByVehicleUUID(uuid)).thenReturn(Optional.empty());
+        String vin = "non-existent-vin";
+        when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.empty());
 
         // Act
-        Optional<Vehicle> result = vehicleService.getVehicleByUUID(uuid);
+        Optional<Vehicle> result = vehicleService.getVehicleByVinNumber(vin);
 
         // Assert
         assertThat(result).isEmpty();
 
-        verify(vehicleRepository, times(1)).findByVehicleUUID(uuid);
+        verify(vehicleRepository, times(1)).findByVinNumber(vin);
     }
 
     @Test
     @DisplayName("Should update vehicle location successfully")
     void shouldUpdateVehicleLocation() {
         // Arrange
-        String uuid = "test-uuid-123";
+        String vin = "test-vin-123";
         double longitude = 40.7128;
         double latitude = -74.0060;
 
-        when(vehicleRepository.findByVehicleUUID(uuid)).thenReturn(Optional.of(vehicle));
+        when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.of(vehicle));
 
         // Act
-        vehicleService.updateVehicleLocation(uuid, longitude, latitude);
+        vehicleService.updateVehicleLocation(vin, longitude, latitude);
 
         // Assert - Verify the vehicle object was modified (not saved explicitly)
         assertThat(vehicle.getLastUpdatedLong()).isEqualTo(longitude);
@@ -200,7 +200,7 @@ class VehicleServiceTest {
         assertThat(vehicle.getLastUpdatedLocation().getSRID()).isEqualTo(4326);
 
         // Verify repository interactions
-        verify(vehicleRepository, times(1)).findByVehicleUUID(uuid);
+        verify(vehicleRepository, times(1)).findByVinNumber(vin);
         // Note: save() is NOT called because @Transactional handles persistence
         verify(vehicleRepository, never()).save(any(Vehicle.class));
     }
@@ -209,15 +209,15 @@ class VehicleServiceTest {
     @DisplayName("Should throw exception when updating location for non-existent vehicle")
     void shouldThrowExceptionWhenUpdatingLocationForNonExistentVehicle() {
         // Arrange
-        String uuid = "non-existent-uuid";
-        when(vehicleRepository.findByVehicleUUID(uuid)).thenReturn(Optional.empty());
+        String vin = "non-existent-vin";
+        when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> vehicleService.updateVehicleLocation(uuid, 40.7128, -74.0060))
+        assertThatThrownBy(() -> vehicleService.updateVehicleLocation(vin, 40.7128, -74.0060))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Vehicle not found with UUID: " + uuid);
+                .hasMessageContaining("Vehicle not found with VIN: " + vin);
 
-        verify(vehicleRepository, times(1)).findByVehicleUUID(uuid);
+        verify(vehicleRepository, times(1)).findByVinNumber(vin);
         verify(vehicleRepository, never()).save(any(Vehicle.class));
     }
 
@@ -225,19 +225,19 @@ class VehicleServiceTest {
     @DisplayName("Should update vehicle status successfully")
     void shouldUpdateVehicleStatus() {
         // Arrange
-        String uuid = "test-uuid-123";
+        String vin = "test-vin-123";
         VehicleStatus newStatus = VehicleStatus.IN_USE;
 
-        when(vehicleRepository.findByVehicleUUID(uuid)).thenReturn(Optional.of(vehicle));
+        when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.of(vehicle));
 
         // Act
-        vehicleService.updateVehicleStatus(uuid, newStatus);
+        vehicleService.updateVehicleStatus(vin, newStatus);
 
         // Assert - Verify the vehicle object was modified
         assertThat(vehicle.getStatus()).isEqualTo(VehicleStatus.IN_USE);
 
         // Verify repository interactions
-        verify(vehicleRepository, times(1)).findByVehicleUUID(uuid);
+        verify(vehicleRepository, times(1)).findByVinNumber(vin);
         // Note: save() is NOT called because @Transactional handles persistence
         verify(vehicleRepository, never()).save(any(Vehicle.class));
     }

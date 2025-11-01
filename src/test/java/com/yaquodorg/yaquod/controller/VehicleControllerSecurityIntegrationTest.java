@@ -59,7 +59,7 @@ class VehicleControllerSecurityIntegrationTest {
         vehicleRepository.deleteAll();
 
         createVehicleDto = CreateVehicleDto.builder()
-                .vehicleUUID("UUID1")
+                .vinNumber("VIN1")
                 .plateNo("ABC-123")
                 .color("RED")
                 .carCompany("Toyota")
@@ -69,7 +69,7 @@ class VehicleControllerSecurityIntegrationTest {
 
         vehicle = new Vehicle();
         vehicle.setId(1L);
-        vehicle.setVehicleUUID("UUID1");
+        vehicle.setVinNumber("VIN1");
         vehicle.setPlateNo("ABC-123");
         vehicle.setColor("RED");
         vehicle.setCarCompany("Toyota");
@@ -154,10 +154,10 @@ class VehicleControllerSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/vehicles/uuid/{vehicleUUID} - Should require ADMIN role")
+    @DisplayName("GET /api/vehicles/vin/{vinNumber} - Should require ADMIN role")
     @WithMockUser(roles = "DRIVER")
-    void shouldRequireAdminRoleForGetByUUID() throws Exception {
-        mockMvc.perform(get("/api/vehicles/uuid/test-uuid"))
+    void shouldRequireAdminRoleForGetByVIN() throws Exception {
+        mockMvc.perform(get("/api/vehicles/vin/test-vin"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
@@ -183,19 +183,19 @@ class VehicleControllerSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/uuid/{uuid}/location-update - Should require ADMIN role")
+    @DisplayName("PATCH /api/vehicles/vin/{vin}/location-update - Should require ADMIN role")
     @WithMockUser(roles = "USER")
     void shouldRequireAdminRoleForLocationUpdate() throws Exception {
-        mockMvc.perform(patch("/api/vehicles/uuid/test-uuid/location-update"))
+        mockMvc.perform(patch("/api/vehicles/vin/test-vin/location-update"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/uuid/{uuid}/status-update - Should require ADMIN role")
+    @DisplayName("PATCH /api/vehicles/vin/{vin}/status-update - Should require ADMIN role")
     @WithMockUser(roles = "USER")
     void shouldRequireAdminRoleForStatusUpdate() throws Exception {
-        mockMvc.perform(patch("/api/vehicles/uuid/test-uuid/status-update"))
+        mockMvc.perform(patch("/api/vehicles/vin/test-vin/status-update"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
@@ -235,7 +235,7 @@ class VehicleControllerSecurityIntegrationTest {
 
         // 4. Update vehicle
         CreateVehicleDto updateDto = CreateVehicleDto.builder()
-                .vehicleUUID("UUID1")
+                .vinNumber("VIN1")
                 .plateNo("XYZ-999")
                 .color("Updated Color")
                 .carCompany("Updated Company")
@@ -271,7 +271,7 @@ class VehicleControllerSecurityIntegrationTest {
 
         // Create second vehicle with different plate
         CreateVehicleDto dto2 = CreateVehicleDto.builder()
-                .vehicleUUID("UUID2")
+                .vinNumber("VIN2")
                 .plateNo("XYZ-789")
                 .color("WHITE")
                 .carCompany("Honda")
@@ -291,26 +291,26 @@ class VehicleControllerSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should get vehicle by UUID after creation")
+    @DisplayName("Should get vehicle by VIN after creation")
     @WithMockUser(roles = "ADMIN")
-    void shouldGetVehicleByUUIDAfterCreation() throws Exception {
+    void shouldGetVehicleByVINAfterCreation() throws Exception {
         // Create vehicle
         mockMvc.perform(post("/api/vehicles")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andExpect(status().isCreated());
 
-        // Get the created vehicle's UUID
+        // Get the created vehicle's VIN
         Vehicle created = vehicleRepository.findAll().get(0);
         assertNotNull(created);
-        String uuid = created.getVehicleUUID();
+        String vin = created.getVinNumber();
 
-        // Get by UUID
-        mockMvc.perform(get("/api/vehicles/uuid/{vehicleUUID}", uuid))
+        // Get by VIN
+        mockMvc.perform(get("/api/vehicles/vin/{vinNumber}", vin))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.vehicleUUID").value(uuid))
+                .andExpect(jsonPath("$.data.vinNumber").value(vin))
                 .andExpect(jsonPath("$.data.plateNo").value("ABC-123"));
     }
 
@@ -326,10 +326,10 @@ class VehicleControllerSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should return 400 when getting non-existent vehicle by UUID")
+    @DisplayName("Should return 400 when getting non-existent vehicle by VIN")
     @WithMockUser(roles = "ADMIN")
-    void shouldReturn400ForNonExistentVehicleByUUID() throws Exception {
-        mockMvc.perform(get("/api/vehicles/uuid/non-existent-uuid"))
+    void shouldReturn400ForNonExistentVehicleByVIN() throws Exception {
+        mockMvc.perform(get("/api/vehicles/vin/non-existent-vin"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
@@ -350,7 +350,7 @@ class VehicleControllerSecurityIntegrationTest {
      * MQTT INTEGRATION TESTS
      */
     @Test
-    @DisplayName("MQTT location update should work with valid UUID")
+    @DisplayName("MQTT location update should work with valid VIN")
     @WithMockUser(roles = "ADMIN")
     void shouldSendLocationUpdateViaMMQTT() throws Exception {
         // Create vehicle first
@@ -360,10 +360,10 @@ class VehicleControllerSecurityIntegrationTest {
                 .andExpect(status().isCreated());
 
         Vehicle created = vehicleRepository.findAll().get(0);
-        String uuid = created.getVehicleUUID();
+        String vin = created.getVinNumber();
 
         // Send location update signal
-        mockMvc.perform(patch("/api/vehicles/uuid/{vehicleUUID}/location-update", uuid))
+        mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/location-update", vin))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -371,7 +371,7 @@ class VehicleControllerSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("MQTT status update should work with valid UUID")
+    @DisplayName("MQTT status update should work with valid VIN")
     @WithMockUser(roles = "ADMIN")
     void shouldSendStatusUpdateViaMQTT() throws Exception {
         // Create vehicle first
@@ -381,10 +381,10 @@ class VehicleControllerSecurityIntegrationTest {
                 .andExpect(status().isCreated());
 
         Vehicle created = vehicleRepository.findAll().get(0);
-        String uuid = created.getVehicleUUID();
+        String vin = created.getVinNumber();
 
         // Send status update signal
-        mockMvc.perform(patch("/api/vehicles/uuid/{vehicleUUID}/status-update", uuid))
+        mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/status-update", vin))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -396,11 +396,11 @@ class VehicleControllerSecurityIntegrationTest {
     @WithMockUser(roles = "DRIVER")
     void mqttUpdatesShouldRequireAdminRole() throws Exception {
         // Location update
-        mockMvc.perform(patch("/api/vehicles/uuid/test-uuid/location-update"))
+        mockMvc.perform(patch("/api/vehicles/vin/test-vin/location-update"))
                 .andExpect(status().isForbidden());
 
         // Status update
-        mockMvc.perform(patch("/api/vehicles/uuid/test-uuid/status-update"))
+        mockMvc.perform(patch("/api/vehicles/vin/test-vin/status-update"))
                 .andExpect(status().isForbidden());
     }
 
@@ -457,7 +457,7 @@ class VehicleControllerSecurityIntegrationTest {
     void shouldHandleMultipleRapidRequests() throws Exception {
         for (int i = 0; i < 5; i++) {
             CreateVehicleDto dto = CreateVehicleDto.builder()
-                    .vehicleUUID("UUID" + i)
+                    .vinNumber("VIN" + i)
                     .plateNo("PLATE-" + i)
                     .carCompany("Company" + i)
                     .color("Color" + i)
@@ -482,7 +482,7 @@ class VehicleControllerSecurityIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldHandleSpecialCharactersInPlateNumbers() throws Exception {
         CreateVehicleDto dto = CreateVehicleDto.builder()
-                .vehicleUUID("UUID2")
+                .vinNumber("VIN2")
                 .plateNo("ABC-123!@#")
                 .color("RED")
                 .carCompany("Test")

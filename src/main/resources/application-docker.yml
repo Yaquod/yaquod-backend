@@ -57,9 +57,9 @@ mqtt:
   username: ${MQTT_USERNAME:}
   password: ${MQTT_PASSWORD:}
   topics:
-    - topic/order_update_location
+    - topic/update_location/order
     - topic/update_location
-    - topic/order_update_status
+    - topic/update_status/order
     - topic/update_status
   qos: ${MQTT_QOS:1}
   connection-timeout: ${MQTT_CONNECTION_TIMEOUT:60}
