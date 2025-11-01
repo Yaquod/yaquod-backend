@@ -76,7 +76,7 @@ class VehicleControllerTest {
 
         // Setup test data
         createVehicleDto = CreateVehicleDto.builder()
-                .vehicleUUID("UUID1")
+                .vinNumber("VIN1")
                 .plateNo("ABC-123")
                 .color("RED")
                 .carCompany("Toyota")
@@ -86,7 +86,7 @@ class VehicleControllerTest {
 
         vehicle = new Vehicle();
         vehicle.setId(1L);
-        vehicle.setVehicleUUID("UUID1");
+        vehicle.setVinNumber("VIN1");
         vehicle.setPlateNo("ABC-123");
         vehicle.setColor("RED");
         vehicle.setCarCompany("Toyota");
@@ -112,7 +112,7 @@ class VehicleControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.vehicleUUID").value("UUID1"))
+                .andExpect(jsonPath("$.data.vinNumber").value("VIN1"))
                 .andExpect(jsonPath("$.data.plateNo").value("ABC-123"))
                 .andExpect(jsonPath("$.data.model").value("Camry"))
                 .andExpect(jsonPath("$.data.status").value("IDLE"));
@@ -164,7 +164,7 @@ class VehicleControllerTest {
         // Arrange
         Vehicle vehicle2 = new Vehicle();
         vehicle2.setId(2L);
-        vehicle2.setVehicleUUID("test-uuid-456");
+        vehicle2.setVinNumber("test-vin-456");
         vehicle2.setPlateNo("XYZ-789");
         vehicle2.setModel("Honda Accord");
 
@@ -234,39 +234,39 @@ class VehicleControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/vehicles/uuid/{vehicleUUID} - Should return vehicle by UUID")
-    void shouldGetVehicleByUUID() throws Exception {
+    @DisplayName("GET /api/vehicles/vin/{vinNumber} - Should return vehicle by VIN")
+    void shouldGetVehicleByVIN() throws Exception {
         // Arrange
-        String uuid = "UUID1";
-        when(vehicleService.getVehicleByUUID(uuid)).thenReturn(Optional.of(vehicle));
+        String vin = "VIN1";
+        when(vehicleService.getVehicleByVinNumber(vin)).thenReturn(Optional.of(vehicle));
 
         // Act & Assert
-        mockMvc.perform(get("/api/vehicles/uuid/{vehicleUUID}", uuid))
+        mockMvc.perform(get("/api/vehicles/vin/{vinNumber}", vin))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.vehicleUUID").value(uuid))
+                .andExpect(jsonPath("$.data.vinNumber").value(vin))
                 .andExpect(jsonPath("$.data.plateNo").value("ABC-123"));
 
-        verify(vehicleService, times(1)).getVehicleByUUID(uuid);
+        verify(vehicleService, times(1)).getVehicleByVinNumber(vin);
     }
 
     @Test
-    @DisplayName("GET /api/vehicles/uuid/{vehicleUUID} - Should return 400 when vehicle not found by UUID")
-    void shouldReturn400WhenVehicleNotFoundByUUID() throws Exception {
+    @DisplayName("GET /api/vehicles/vin/{vinNumber} - Should return 400 when vehicle not found by VIN")
+    void shouldReturn400WhenVehicleNotFoundByVIN() throws Exception {
         // Arrange
-        String uuid = "non-existent-uuid";
-        when(vehicleService.getVehicleByUUID(uuid)).thenReturn(Optional.empty());
+        String vin = "non-existent-vin";
+        when(vehicleService.getVehicleByVinNumber(vin)).thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(get("/api/vehicles/uuid/{vehicleUUID}", uuid))
+        mockMvc.perform(get("/api/vehicles/vin/{vinNumber}", vin))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value(containsString("Could not fetch vehicle")))
                 .andExpect(jsonPath("$.message").value(containsString("Vehicle not found!")));
 
-        verify(vehicleService, times(1)).getVehicleByUUID(uuid);
+        verify(vehicleService, times(1)).getVehicleByVinNumber(vin);
     }
 
     @Test
@@ -274,7 +274,7 @@ class VehicleControllerTest {
     void shouldUpdateVehicle() throws Exception {
         // Arrange
         CreateVehicleDto updateDto = CreateVehicleDto.builder()
-                .vehicleUUID("UUID1")
+                .vinNumber("VIN1")
                 .plateNo("XYZ-999")
                 .color("RED")
                 .carCompany("Update Company")
@@ -284,7 +284,7 @@ class VehicleControllerTest {
 
         Vehicle updatedVehicle = new Vehicle();
         updatedVehicle.setId(1L);
-        updatedVehicle.setVehicleUUID("UUID1");
+        updatedVehicle.setVinNumber("VIN1");
         updatedVehicle.setPlateNo("XYZ-999");
         updatedVehicle.setColor("RED");
         updatedVehicle.setCarCompany("Updated Company");
@@ -377,14 +377,14 @@ class VehicleControllerTest {
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/uuid/{vehicleUUID}/location-update - Should send MQTT message")
+    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/location-update - Should send MQTT message")
     void shouldSendLocationUpdateSignal() throws Exception {
         // Arrange
-        String uuid = "UUID1";
+        String vin = "VIN1";
         doNothing().when(mqttService).publish(anyString(), any());
 
         // Act & Assert
-        mockMvc.perform(patch("/api/vehicles/uuid/{vehicleUUID}/location-update", uuid))
+        mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/location-update", vin))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -396,23 +396,23 @@ class VehicleControllerTest {
         verify(mqttService, times(1)).publish(topicCaptor.capture(), dtoCaptor.capture());
 
         // Verify correct topic
-        assertThat(topicCaptor.getValue()).isEqualTo("topic/order_update_location");
+        assertThat(topicCaptor.getValue()).isEqualTo("topic/update_location/order");
 
         // Verify correct payload
         VehicleDto capturedDto = dtoCaptor.getValue();
-        assertThat(capturedDto.getVehicleUUID()).isEqualTo(uuid);
+        assertThat(capturedDto.getVinNumber()).isEqualTo(vin);
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/uuid/{vehicleUUID}/location-update - Should return 400 when MQTT fails")
+    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/location-update - Should return 400 when MQTT fails")
     void shouldReturn400WhenLocationUpdateFails() throws Exception {
         // Arrange
-        String uuid = "UUID1";
+        String vin = "VIN1";
         doThrow(new RuntimeException("MQTT broker unavailable"))
                 .when(mqttService).publish(anyString(), any());
 
         // Act & Assert
-        mockMvc.perform(patch("/api/vehicles/uuid/{vehicleUUID}/location-update", uuid))
+        mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/location-update", vin))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -423,33 +423,33 @@ class VehicleControllerTest {
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/uuid/{vehicleUUID}/location-update - Should handle special characters in UUID")
-    void shouldHandleSpecialCharactersInUUIDForLocationUpdate() throws Exception {
+    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/location-update - Should handle special characters in VIN")
+    void shouldHandleSpecialCharactersInVINForLocationUpdate() throws Exception {
         // Arrange
-        String uuid = "test-uuid-with-special-chars-!@#";
+        String vin = "test-vin-with-special-chars-!@#";
         doNothing().when(mqttService).publish(anyString(), any());
 
         // Act & Assert
-        mockMvc.perform(patch("/api/vehicles/uuid/{vehicleUUID}/location-update", uuid))
+        mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/location-update", vin))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        // Verify correct UUID was passed
+        // Verify correct VIN was passed
         ArgumentCaptor<VehicleDto> dtoCaptor = ArgumentCaptor.forClass(VehicleDto.class);
         verify(mqttService).publish(anyString(), dtoCaptor.capture());
-        assertThat(dtoCaptor.getValue().getVehicleUUID()).isEqualTo(uuid);
+        assertThat(dtoCaptor.getValue().getVinNumber()).isEqualTo(vin);
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/uuid/{vehicleUUID}/status-update - Should send MQTT message")
+    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/status-update - Should send MQTT message")
     void shouldSendStatusUpdateSignal() throws Exception {
         // Arrange
-        String uuid = "UUID1";
+        String vin = "VIN1";
         doNothing().when(mqttService).publish(anyString(), any());
 
         // Act & Assert
-        mockMvc.perform(patch("/api/vehicles/uuid/{vehicleUUID}/status-update", uuid))
+        mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/status-update", vin))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -461,23 +461,23 @@ class VehicleControllerTest {
         verify(mqttService, times(1)).publish(topicCaptor.capture(), dtoCaptor.capture());
 
         // Verify correct topic
-        assertThat(topicCaptor.getValue()).isEqualTo("topic/order_update_status");
+        assertThat(topicCaptor.getValue()).isEqualTo("topic/update_status/order");
 
         // Verify correct payload
         VehicleDto capturedDto = dtoCaptor.getValue();
-        assertThat(capturedDto.getVehicleUUID()).isEqualTo(uuid);
+        assertThat(capturedDto.getVinNumber()).isEqualTo(vin);
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/uuid/{vehicleUUID}/status-update - Should return 400 when MQTT fails")
+    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/status-update - Should return 400 when MQTT fails")
     void shouldReturn400WhenStatusUpdateFails() throws Exception {
         // Arrange
-        String uuid = "UUID1";
+        String vin = "VIN1";
         doThrow(new RuntimeException("MQTT connection timeout"))
                 .when(mqttService).publish(anyString(), any());
 
         // Act & Assert
-        mockMvc.perform(patch("/api/vehicles/uuid/{vehicleUUID}/status-update", uuid))
+        mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/status-update", vin))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -489,18 +489,18 @@ class VehicleControllerTest {
 
     // EDGE CASES AND ERROR HANDLING
     @Test
-    @DisplayName("Should handle very long UUID")
-    void shouldHandleVeryLongUUID() throws Exception {
+    @DisplayName("Should handle very long VIN")
+    void shouldHandleVeryLongVIN() throws Exception {
         // Arrange
-        String longUuid = "a".repeat(500);
-        when(vehicleService.getVehicleByUUID(longUuid)).thenReturn(Optional.of(vehicle));
+        String longVin = "a".repeat(500);
+        when(vehicleService.getVehicleByVinNumber(longVin)).thenReturn(Optional.of(vehicle));
 
         // Act & Assert
-        mockMvc.perform(get("/api/vehicles/uuid/{vehicleUUID}", longUuid))
+        mockMvc.perform(get("/api/vehicles/vin/{vinNumber}", longVin))
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        verify(vehicleService, times(1)).getVehicleByUUID(longUuid);
+        verify(vehicleService, times(1)).getVehicleByVinNumber(longVin);
     }
 
     @Test
@@ -537,30 +537,30 @@ class VehicleControllerTest {
     @DisplayName("Should verify correct MQTT topics are used")
     void shouldVerifyCorrectMqttTopics() throws Exception {
         // Arrange
-        String uuid = "UUID1";
+        String vin = "VIN1";
         doNothing().when(mqttService).publish(anyString(), any());
 
         // Act - Test location update
-        mockMvc.perform(patch("/api/vehicles/uuid/{vehicleUUID}/location-update", uuid))
+        mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/location-update", vin))
                 .andExpect(status().isOk());
 
         // Assert - Verify location topic
         ArgumentCaptor<String> topicCaptor1 = ArgumentCaptor.forClass(String.class);
         verify(mqttService, times(1)).publish(topicCaptor1.capture(), any());
-        assertThat(topicCaptor1.getValue()).isEqualTo("topic/order_update_location");
+        assertThat(topicCaptor1.getValue()).isEqualTo("topic/update_location/order");
 
         // Reset mock
         reset(mqttService);
         doNothing().when(mqttService).publish(anyString(), any());
 
         // Act - Test status update
-        mockMvc.perform(patch("/api/vehicles/uuid/{vehicleUUID}/status-update", uuid))
+        mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/status-update", vin))
                 .andExpect(status().isOk());
 
         // Assert - Verify status topic
         ArgumentCaptor<String> topicCaptor2 = ArgumentCaptor.forClass(String.class);
         verify(mqttService, times(1)).publish(topicCaptor2.capture(), any());
-        assertThat(topicCaptor2.getValue()).isEqualTo("topic/order_update_status");
+        assertThat(topicCaptor2.getValue()).isEqualTo("topic/update_status/order");
     }
 
     @Test

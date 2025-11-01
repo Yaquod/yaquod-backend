@@ -17,8 +17,8 @@ import lombok.Data;
 @Builder
 public class CreateVehicleDto {
 
-    @NotBlank(message = "vehicleUUID cannot be blank")
-    private String vehicleUUID;
+    @NotBlank(message = "vinNumber cannot be blank")
+    private String vinNumber;
 
     @NotBlank(message = "plateNo cannot be blank")
     private String plateNo;
