@@ -71,7 +71,7 @@ jobs:
         run: mvn -B clean package -DskipTests
 
       # Run tests
-      - name: Run Unit Tests
+      - name: Run Unit & Integration Tests
         run: mvn test
 
       - name: Upload test reports on failure
