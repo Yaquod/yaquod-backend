@@ -9,6 +9,24 @@ on:
       - master
       - develop
 
+jobs:
+  build-run-test:
+    runs-on: ubuntu-latest
+
+    # Add service containers
+    services:
+      # Mosquitto MQTT Broker
+      mosquitto:
+        image: eclipse-mosquitto:2
+        ports:
+          - 1883:1883
+          - 9001:9001
+        options: >-
+          --health-cmd "timeout 5 mosquitto_sub -t '$$SYS/#' -C 1 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -25,11 +43,6 @@ on:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-
-      - name: Start Mosquitto Broker
-        uses: namoshek/mosquitto-github-action@v1
-        with:
-          ports: '1883:1883'
 
       # Verify MQTT broker is running
       - name: Verify MQTT Broker
