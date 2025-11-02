@@ -1,5 +1,7 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,6 +69,7 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     @Transactional
     public void updateVehicleLocation(String vinNumber, double longitude, double latitude) {
+        Date now = new Date();
         Vehicle vehicle = vehicleRepository.findByVinNumber(vinNumber)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found with VIN: " + vinNumber));
 
@@ -76,14 +79,17 @@ public class VehicleServiceImpl implements VehicleService {
         vehicle.setLastUpdatedLocation(point);
         vehicle.setLastUpdatedLong(longitude);
         vehicle.setLastUpdatedLat(latitude);
+        vehicle.setLastUpdatedLocationAt(new Timestamp(now.getTime()));
     }
 
     @Override
     @Transactional
     public void updateVehicleStatus(String vinNumber, VehicleStatus status) {
+        Date now = new Date();
         Vehicle vehicle = vehicleRepository.findByVinNumber(vinNumber)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found with VIN: " + vinNumber));
         vehicle.setStatus(status);
+        vehicle.setLastUpdatedStatusAt(new Timestamp(now.getTime()));
     }
 
     @Override

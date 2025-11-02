@@ -4,6 +4,8 @@ import java.sql.Timestamp;
 
 import org.locationtech.jts.geom.Geometry;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -57,6 +59,7 @@ public class Vehicle {
     private Timestamp lastUpdatedStatusAt;
 
     @Column(columnDefinition = "geometry")
+    @JsonIgnore
     private Geometry lastUpdatedLocation;
 
     @Column
