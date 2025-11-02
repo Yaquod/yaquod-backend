@@ -19,11 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class MqttService {
 
+    private static final String TOPIC_UPDATE_LOCATION = "topic/update_location";
+    private static final String TOPIC_UPDATE_STATUS = "topic/update_status";
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
     private final VehicleService vehicleService;
-    private static final String TOPIC_UPDATE_LOCATION = "topic/update_location";
-    private static final String TOPIC_UPDATE_STATUS = "topic/update_status";
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleIncomingMessage(Message<?> message) {
@@ -44,9 +44,9 @@ public class MqttService {
     private void handleVehicleUpdateLocation(String payload) {
         try {
             UpdateVehicleLocationDto dto = objectMapper.readValue(payload, UpdateVehicleLocationDto.class);
-            log.info("Vehicle with UUID: {}, updated their long to: {}, and lat to: {}", dto.getVehicleUUID(),
+            log.info("Vehicle with VIN: {}, updated their long to: {}, and lat to: {}", dto.getVinNumber(),
                     dto.getLongitude(), dto.getLatitude());
-            vehicleService.updateVehicleLocation(dto.getVehicleUUID(), dto.getLongitude(), dto.getLatitude());
+            vehicleService.updateVehicleLocation(dto.getVinNumber(), dto.getLongitude(), dto.getLatitude());
         } catch (JsonProcessingException e) {
             log.error("Failed to parse vehicle location update payload: {}", payload, e);
         }
@@ -55,9 +55,9 @@ public class MqttService {
     private void handleVehicleUpdateStatus(String payload) {
         try {
             UpdateVehicleStatusDto dto = objectMapper.readValue(payload, UpdateVehicleStatusDto.class);
-            log.info("Vehicle with UUID: {}, updated their status to: {}", dto.getVehicleUUID(),
+            log.info("Vehicle with VIN: {}, updated their status to: {}", dto.getVinNumber(),
                     dto.getStatus());
-            vehicleService.updateVehicleStatus(dto.getVehicleUUID(), dto.getStatus());
+            vehicleService.updateVehicleStatus(dto.getVinNumber(), dto.getStatus());
         } catch (JsonProcessingException e) {
             log.error("Failed to parse vehicle status update payload: {}", payload, e);
         }

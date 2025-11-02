@@ -1,6 +1,10 @@
 package com.yaquodorg.yaquod.entity;
 
+import java.sql.Timestamp;
+
 import org.locationtech.jts.geom.Geometry;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,6 +24,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "vehicles")
 public class Vehicle {
@@ -27,7 +33,7 @@ public class Vehicle {
     private Long id;
 
     @Column(unique = true)
-    private String vehicleUUID;
+    private String vinNumber;
 
     @Column
     private String plateNo;
@@ -49,8 +55,15 @@ public class Vehicle {
     @Enumerated(EnumType.STRING)
     private VehicleStatus status = VehicleStatus.IDLE;
 
+    @Column
+    private Timestamp lastUpdatedStatusAt;
+
     @Column(columnDefinition = "geometry")
+    @JsonIgnore
     private Geometry lastUpdatedLocation;
+
+    @Column
+    private Timestamp lastUpdatedLocationAt;
 
     @Column
     private double lastUpdatedLong;

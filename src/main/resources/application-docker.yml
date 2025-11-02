@@ -1,0 +1,75 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgis}:${DB_PORT:5432}/${DB_NAME:yaquod}
+    username: ${DB_USERNAME:yaquod}
+    password: ${DB_PASSWORD:yaquod}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${HIBERNATE_DDL_AUTO:create-drop}
+    show-sql: ${HIBERNATE_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    database: postgresql
+  application:
+    security:
+      jwt:
+        secret-key: ${JWT_SECRET_KEY:a4b5cf541797e6f5fc8e0942fedb4b938aaa25fedb26f9e5be5efe99c38f9447}
+        access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:604800000}
+        refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:2592000000}
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+            redirect-uri: ${OAUTH2_GOOGLE_REDIRECT_URI:http://localhost:8000/login/oauth2/code/google}
+            client-name: Google
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+mqtt:
+  broker-url: ${MQTT_BROKER_URL:tcp://host.docker.internal:1883}
+  client-id: ${MQTT_CLIENT_ID:spring-boot-client}
+  username: ${MQTT_USERNAME:}
+  password: ${MQTT_PASSWORD:}
+  topics:
+    - topic/update_location/order
+    - topic/update_location
+    - topic/update_status/order
+    - topic/update_status
+  qos: ${MQTT_QOS:1}
+  connection-timeout: ${MQTT_CONNECTION_TIMEOUT:60}
+  keep-alive-interval: ${MQTT_KEEP_ALIVE_INTERVAL:60}
+
+management:
+  health:
+    mail:
+      enabled: false
+
+server:
+  address: 0.0.0.0
+  port: ${SERVER_PORT:8000}

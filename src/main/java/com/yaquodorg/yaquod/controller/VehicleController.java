@@ -25,6 +25,7 @@ import com.yaquodorg.yaquod.response.MessageResponse;
 import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,14 +35,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class VehicleController {
 
+    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/update_location/order";
+    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/update_status/order";
     private final VehicleService vehicleService;
     private final MqttService mqttService;
-    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/order_update_location";
-    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/order_update_status";
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<ApiResponse<Vehicle>> createVehicle(@RequestBody CreateVehicleDto createVehicleDto) {
+    public ResponseEntity<ApiResponse<Vehicle>> createVehicle(@Valid @RequestBody CreateVehicleDto createVehicleDto) {
         try {
             Vehicle vehicle = vehicleService.createVehicle(createVehicleDto);
             return ResponseEntity.status(CREATED)
@@ -71,10 +72,10 @@ public class VehicleController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/uuid/{vehicleUUID}")
-    public ResponseEntity<ApiResponse<Vehicle>> getVehicle(@PathVariable String vehicleUUID) {
+    @GetMapping("/vin/{vinNumber}")
+    public ResponseEntity<ApiResponse<Vehicle>> getVehicle(@PathVariable String vinNumber) {
         try {
-            Vehicle vehicle = vehicleService.getVehicleByUUID(vehicleUUID)
+            Vehicle vehicle = vehicleService.getVehicleByVinNumber(vinNumber)
                     .orElseThrow(() -> new RuntimeException("Vehicle not found!"));
             return ResponseEntity.ok(createSuccessResponse(vehicle));
         } catch (Exception e) {
@@ -85,7 +86,7 @@ public class VehicleController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping
-    public ResponseEntity<ApiResponse<Vehicle>> updateVehicle(@RequestBody CreateVehicleDto createVehicleDto) {
+    public ResponseEntity<ApiResponse<Vehicle>> updateVehicle(@Valid @RequestBody CreateVehicleDto createVehicleDto) {
         try {
             Vehicle vehicle = vehicleService.updateVehicle(createVehicleDto);
             return ResponseEntity.ok(createSuccessResponse(vehicle));
@@ -110,10 +111,10 @@ public class VehicleController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/uuid/{vehicleUUID}/location-update")
-    public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleLocation(@PathVariable String vehicleUUID) {
+    @PatchMapping("/vin/{vinNumber}/location-update")
+    public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleLocation(@PathVariable String vinNumber) {
         try {
-            mqttService.publish(TOPIC_ORDER_UPDATE_LOCATION, new VehicleDto(vehicleUUID));
+            mqttService.publish(TOPIC_ORDER_UPDATE_LOCATION, new VehicleDto(vinNumber));
             return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Order signal sent!")));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -123,10 +124,10 @@ public class VehicleController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/uuid/{vehicleUUID}/status-update")
-    public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleStatus(@PathVariable String vehicleUUID) {
+    @PatchMapping("/vin/{vinNumber}/status-update")
+    public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleStatus(@PathVariable String vinNumber) {
         try {
-            mqttService.publish(TOPIC_ORDER_UPDATE_STATUS, new VehicleDto(vehicleUUID));
+            mqttService.publish(TOPIC_ORDER_UPDATE_STATUS, new VehicleDto(vinNumber));
             return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Order signal sent!")));
         } catch (Exception e) {
             return ResponseEntity.badRequest()

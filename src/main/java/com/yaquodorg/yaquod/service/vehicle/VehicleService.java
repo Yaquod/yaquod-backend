@@ -14,13 +14,13 @@ public interface VehicleService {
 
     Vehicle getVehicle(Long id);
 
-    Optional<Vehicle> getVehicleByUUID(String vehicleUUID);
+    Optional<Vehicle> getVehicleByVinNumber(String vinNumber);
 
     Vehicle updateVehicle(CreateVehicleDto createVehicleDto);
 
-    void updateVehicleLocation(String vehicleUUID, double longitude, double latitude);
+    void updateVehicleLocation(String vinNumber, double longitude, double latitude);
 
-    void updateVehicleStatus(String vehicleUUID, VehicleStatus status);
+    void updateVehicleStatus(String vinNumber, VehicleStatus status);
 
     void deleteVehicle(Long id);
 }

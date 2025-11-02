@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class VehicleDto {
-    private String vehicleUUID;
+    private String vinNumber;
 }
