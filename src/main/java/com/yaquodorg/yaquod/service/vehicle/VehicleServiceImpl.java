@@ -97,6 +97,27 @@ public class VehicleServiceImpl implements VehicleService {
         vehicleRepository.deleteById(id);
     }
 
+    @Override
+    public List<Vehicle> findKNearestVehicles(double longitude, double latitude, int k) {
+        Point point = createPoint(longitude, latitude);
+        log.info("Finding {} nearest vehicles to location: ({}, {})", k, latitude, longitude);
+        return vehicleRepository.findKNearestVehicles(point, k);
+    }
+
+    @Override
+    public List<Vehicle> findKNearestVehiclesWithinDistance(double longitude, double latitude, double maxDistanceMeters,
+            int k) {
+        Point point = createPoint(longitude, latitude);
+        log.info("Finding {} nearest vehicles within {} meters of location: ({}, {})",
+                k, maxDistanceMeters, latitude, longitude);
+        return vehicleRepository.findKNearestVehiclesWithinDistance(point, maxDistanceMeters, k);
+    }
+
+    private Point createPoint(double longitude, double latitude) {
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+        return geometryFactory.createPoint(new Coordinate(longitude, latitude));
+    }
+
     private Vehicle buildVehicleFromDto(Vehicle vehicle, CreateVehicleDto dto) {
         vehicle.setVinNumber(dto.getVinNumber());
         vehicle.setPlateNo(dto.getPlateNo());

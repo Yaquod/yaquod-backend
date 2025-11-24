@@ -21,6 +21,7 @@ public class MqttService {
 
     private static final String TOPIC_UPDATE_LOCATION = "topic/update_location";
     private static final String TOPIC_UPDATE_STATUS = "topic/update_status";
+    private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
     private final VehicleService vehicleService;
@@ -34,6 +35,8 @@ public class MqttService {
             handleVehicleUpdateLocation(payload);
         } else if (TOPIC_UPDATE_STATUS.equals(topic)) {
             handleVehicleUpdateStatus(payload);
+        } else if (TOPIC_ETA_TRIP.equals(payload)) {
+            handleVehicleUpdateEta(payload);
         } else {
             log.warn("Unhandled topic: {}", topic);
         }
@@ -61,6 +64,10 @@ public class MqttService {
         } catch (JsonProcessingException e) {
             log.error("Failed to parse vehicle status update payload: {}", payload, e);
         }
+    }
+
+    private void handleVehicleUpdateEta(String payload) {
+        // TODO: Update request status
     }
 
     public void publish(String topic, Object data) {
