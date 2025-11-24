@@ -92,6 +92,10 @@ public class User implements UserDetails {
     @OrderBy("id ASC")
     private List<Trip> trips = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("id ASC")
+    private List<Trip> requests = new ArrayList<>();
+
     @Override
     public String getUsername() {
         return email;

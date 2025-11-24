@@ -1,13 +1,13 @@
 package com.yaquodorg.yaquod.dtos;
 
+import com.yaquodorg.yaquod.entity.RequestStatus;
 import lombok.Builder;
 import lombok.Data;
 
 @Builder
 @Data
 public class EtaStatusDto {
-    // TODO: Should be converted to enum later
-    private String status;
+    private RequestStatus status;
 
     private String vinNumber;
 
