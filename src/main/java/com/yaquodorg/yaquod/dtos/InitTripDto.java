@@ -8,13 +8,13 @@ import lombok.Data;
 public class InitTripDto {
     private String vinNumber;
 
-    private long requestId;
+    private double requestId;
 
-    private long startLong;
+    private double startLong;
 
-    private long startLat;
+    private double startLat;
 
-    private long endLong;
+    private double endLong;
 
-    private long endLat;
+    private double endLat;
 }

@@ -5,7 +5,7 @@ import com.yaquodorg.yaquod.entity.Request;
 
 public interface TripService {
 
-    void initTrip(long requestId, double startLong, double startLat, double endLong, double endLat);
+    void initTrip(Long requestId, double startLong, double startLat, double endLong, double endLat);
 
     EtaStatusDto checkStatus(long requestId);
 

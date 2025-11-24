@@ -1,0 +1,74 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://ep-twilight-haze-agz8ytl2-pooler.c-2.eu-central-1.aws.neon.tech:5432/yaquod?sslmode=require&channel_binding=require
+    username: neondb_owner
+    password: npg_ESihqb4c6Zlx
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    database: postgresql
+  application:
+    security:
+      jwt:
+        secret-key: a4b5cf541797e6f5fc8e0942fedb4b938aaa25fedb26f9e5be5efe99c38f9447
+        access-token-expiration: 604800000
+        refresh-token-expiration: 2592000000
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username:  # your smtp gmail
+    password:  # the password of the smtp gmail
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 450878426193-m3sne27j22kjbu9ns7ul3u1qdci4kvmd.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+            redirect-uri: "http://localhost:8000/login/oauth2/code/google"
+            client-name: Google
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+mqtt:
+  broker-url: tcp://localhost:1883
+  client-id: spring-boot-clientF
+  username:
+  password:
+  topics:
+    - topic/order_update_location
+    - topic/update_location
+  qos: 1
+  connection-timeout: 60
+  keep-alive-interval: 60
+
+management:
+  health:
+    mail:
+      enabled: false
+
+
+server:
+  address: 0.0.0.0
+  port: 8000
