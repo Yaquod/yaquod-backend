@@ -2,14 +2,17 @@ package com.yaquodorg.yaquod.service.trip;
 
 import com.yaquodorg.yaquod.dtos.EtaStatusDto;
 import com.yaquodorg.yaquod.entity.Request;
+import com.yaquodorg.yaquod.entity.RequestStatus;
+import com.yaquodorg.yaquod.entity.TripStatus;
 
 public interface TripService {
 
     void initTrip(Long requestId, double startLong, double startLat, double endLong, double endLat);
 
-    EtaStatusDto checkStatus(long requestId);
+    EtaStatusDto checkStatus(Long requestId);
 
-    public Request createRequest(Long userId, double startLong, double startLat, double endLong, double endLat);
+     Request createRequest(Long userId, double startLong, double startLat, double endLong, double endLat);
 
+     RequestStatus getRequestStatusByRequestId(Long requestId);
 
 }

@@ -19,8 +19,9 @@ public class Trip {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TODO: Should be converted to enum later
-    private String status;
+    @Column
+    @Enumerated(EnumType.STRING)
+    private TripStatus status ;
 
     @Column
     private Timestamp startedAt;

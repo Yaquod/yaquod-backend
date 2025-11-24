@@ -5,9 +5,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.repository.RequestRepository;
 import com.yaquodorg.yaquod.repository.UserRepository;
 import org.locationtech.jts.geom.Coordinate;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import com.yaquodorg.yaquod.dtos.EtaStatusDto;
 import com.yaquodorg.yaquod.dtos.InitTripDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
@@ -60,7 +57,7 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public EtaStatusDto checkStatus(long requestId) {
+    public EtaStatusDto checkStatus(Long requestId) {
         // TODO: Complete implementation
         return null;
     }
@@ -82,8 +79,17 @@ public class TripServiceImpl implements TripService {
                 .createdAt(new Timestamp(new Date().getTime()))
                 .build();
 
-        initTrip(request.getId(),  startLong,  startLat,  endLong,  endLat);
-        return requestRepository.save(request);
+                Request savedRequest = requestRepository.save(request);
+        initTrip(savedRequest.getId(),  startLong,  startLat,  endLong,  endLat);
+        return savedRequest;
     }
+
+    @Override
+    public RequestStatus getRequestStatusByRequestId(Long requestId) {
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found!"));
+        return  request.getStatus();
+    }
+
 
 }

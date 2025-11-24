@@ -11,7 +11,7 @@ public class EtaStatusDto {
 
     private String vinNumber;
 
-    private long requestId;
+    private Long requestId;
 
     private double estimatedTime;
 
