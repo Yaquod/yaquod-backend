@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "vehicles")
+@Table(name = "trips")
 public class Trip {
 
     @Id
@@ -29,8 +29,10 @@ public class Trip {
     @Column
     private Timestamp endedAt;
 
-    // TODO: Should be a one-to-one relationship later
-    // private Request request;
+
+    @OneToOne
+    @JoinColumn(name = "request_id", referencedColumnName = "id")
+    private Request request;
 
     @JsonIgnore
     @ManyToOne

@@ -49,4 +49,7 @@ public class Request {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
+    @JsonIgnore
+    @OneToOne(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private  Trip trip;
 }

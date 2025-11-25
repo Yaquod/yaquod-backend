@@ -4,22 +4,11 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.*;
 import org.locationtech.jts.geom.Geometry;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -59,7 +48,7 @@ public class Vehicle {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private VehicleStatus status = VehicleStatus.IDLE;
+    private VehicleStatus status= VehicleStatus.IDLE; ;
 
     @Column
     private Timestamp lastUpdatedStatusAt;
@@ -80,4 +69,6 @@ public class Vehicle {
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("id ASC")
     private List<Trip> trips = new ArrayList<>();
+
+
 }
