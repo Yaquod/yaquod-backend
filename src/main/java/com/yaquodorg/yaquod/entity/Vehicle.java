@@ -1,19 +1,13 @@
 package com.yaquodorg.yaquod.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.*;
+import org.locationtech.jts.geom.Geometry;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-
-import jakarta.persistence.*;
-import org.locationtech.jts.geom.Geometry;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
 @Setter
@@ -48,7 +42,7 @@ public class Vehicle {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private VehicleStatus status= VehicleStatus.IDLE; ;
+    private VehicleStatus status = VehicleStatus.IDLE;
 
     @Column
     private Timestamp lastUpdatedStatusAt;

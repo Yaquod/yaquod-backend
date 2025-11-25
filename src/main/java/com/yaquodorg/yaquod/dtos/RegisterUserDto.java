@@ -30,6 +30,7 @@ public class RegisterUserDto {
     private String lastName;
 
     @NotBlank(message = "Phone number cannot be blank")
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone number must be between 10 and 15 digits and may start with +")
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone number must be between 10 and 15 digits and may start " +
+            "with +")
     private String phoneNumber;
 }

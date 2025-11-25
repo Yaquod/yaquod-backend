@@ -24,14 +24,13 @@ import java.util.List;
 @Slf4j
 public class TripServiceImpl implements TripService {
 
+    private static final String TOPIC_INIT_TRIP = "topic/trip/init";
+    private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
     private final MqttService mqttService;
     private final VehicleService vehicleService;
     private final RequestRepository requestRepository;
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
-
-    private static final String TOPIC_INIT_TRIP = "topic/trip/init";
-    private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
 
     @Override
     public void initTrip(Long requestId, double startLong, double startLat, double endLong, double endLat) {

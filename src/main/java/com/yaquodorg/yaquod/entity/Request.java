@@ -3,7 +3,6 @@ package com.yaquodorg.yaquod.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Type;
 import org.locationtech.jts.geom.Point;
 
 import java.sql.Time;
@@ -50,6 +49,6 @@ public class Request {
     private User user;
 
     @JsonIgnore
-    @OneToOne(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private  Trip trip;
+    @OneToOne(mappedBy = "request", cascade = CascadeType.ALL)
+    private Trip trip;
 }

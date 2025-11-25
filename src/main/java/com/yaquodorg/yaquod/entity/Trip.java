@@ -21,7 +21,7 @@ public class Trip {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private TripStatus status ;
+    private TripStatus status;
 
     @Column
     private Timestamp startedAt;
