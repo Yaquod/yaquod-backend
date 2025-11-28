@@ -1,11 +1,8 @@
 package com.yaquodorg.yaquod.utils;
 
-import static com.yaquodorg.yaquod.response.ApiResponse.createFailureResponse;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
+import com.yaquodorg.yaquod.response.ApiResponse;
+import com.yaquodorg.yaquod.response.MessageResponse;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,10 +15,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartException;
 
-import com.yaquodorg.yaquod.response.ApiResponse;
-import com.yaquodorg.yaquod.response.MessageResponse;
+import java.util.HashMap;
+import java.util.Map;
 
-import jakarta.validation.ConstraintViolationException;
+import static com.yaquodorg.yaquod.response.ApiResponse.createFailureResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {

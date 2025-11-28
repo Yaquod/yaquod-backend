@@ -1,10 +1,11 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-
+import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -12,13 +13,10 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.VehicleRepository;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -95,6 +93,27 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     public void deleteVehicle(Long id) {
         vehicleRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Vehicle> findKNearestVehicles(double longitude, double latitude, int k) {
+        Point point = createPoint(longitude, latitude);
+        log.info("Finding {} nearest vehicles to location: ({}, {})", k, latitude, longitude);
+        return vehicleRepository.findKNearestVehicles(point, k);
+    }
+
+    @Override
+    public List<Vehicle> findKNearestVehiclesWithinDistance(double longitude, double latitude, double maxDistanceMeters,
+                                                            int k) {
+        Point point = createPoint(longitude, latitude);
+        log.info("Finding {} nearest vehicles within {} meters of location: ({}, {})",
+                k, maxDistanceMeters, latitude, longitude);
+        return vehicleRepository.findKNearestVehiclesWithinDistance(point, maxDistanceMeters, k);
+    }
+
+    private Point createPoint(double longitude, double latitude) {
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+        return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
 
     private Vehicle buildVehicleFromDto(Vehicle vehicle, CreateVehicleDto dto) {
