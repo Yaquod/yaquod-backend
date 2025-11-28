@@ -13,7 +13,7 @@ import com.yaquodorg.yaquod.dtos.InitTripDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
 import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.service.trip.TripService;
+import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class MqttService {
     private final ObjectMapper objectMapper;
 
     private final VehicleService vehicleService;
-    private final TripService tripService;
+    private final RequestService requestService;
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleIncomingMessage(Message<?> message) {
@@ -80,7 +80,7 @@ public class MqttService {
             EtaStatusDto dto = objectMapper.readValue(payload, EtaStatusDto.class);
             log.info("Request with ID: {}, status updated to {}", dto.getRequestId(),
                     dto.getStatus());
-            tripService.updateRequest(dto.getRequestId(), RequestStatus.COMPLETED, dto.getEstimatedTime(),
+            requestService.updateRequest(dto.getRequestId(), RequestStatus.COMPLETED, dto.getEstimatedTime(),
                     dto.getEstimatedFare());
         } catch (JsonProcessingException e) {
             log.error("Failed to parse request status update payload: {}", payload, e);

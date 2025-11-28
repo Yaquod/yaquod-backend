@@ -15,7 +15,7 @@ import com.yaquodorg.yaquod.dtos.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
-import com.yaquodorg.yaquod.service.trip.TripService;
+import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.user.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TripController {
 
-    private final TripService tripService;
+    private final RequestService requestService;
     private final JwtService jwtService;
     private final UserService userService;
 
@@ -38,7 +38,7 @@ public class TripController {
             String userEmail = jwtService.getEmailFromToken(token.substring(7));
             Long userId = userService.getUser(userEmail).orElseThrow().getId();
 
-            Request request = tripService.createRequest(userId,
+            Request request = requestService.createRequest(userId,
                     tripRequestDto.getStartLong(),
                     tripRequestDto.getStartLat(),
                     tripRequestDto.getEndLong(),
@@ -53,10 +53,10 @@ public class TripController {
 
     }
 
-    @GetMapping("/status/{requestId}")
+    @GetMapping("/request/status/{requestId}")
     public ResponseEntity<ApiResponse<Request>> getRequest(@PathVariable Long requestId) {
         try {
-            Request request = tripService.getRequest(requestId);
+            Request request = requestService.getRequest(requestId);
             return ResponseEntity
                     .ok(createSuccessResponse(request));
         } catch (Exception e) {
