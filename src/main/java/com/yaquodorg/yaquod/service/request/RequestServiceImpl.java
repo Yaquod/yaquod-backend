@@ -25,16 +25,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RequestServiceImpl implements RequestService {
 
+    private final GeometryFactory geometryFactory = new GeometryFactory();
+
     private final RequestRepository requestRepository;
 
     private final UserService userService;
     private final TripService tripService;
 
+    @Transactional
     @Override
     public Request createRequest(Long userId, double startLong, double startLat, double endLong, double endLat) {
         User user = userService.getUserById(userId);
 
-        GeometryFactory geometryFactory = new GeometryFactory();
         Point startPoint = geometryFactory.createPoint(new Coordinate(startLong, startLat));
         Point endPoint = geometryFactory.createPoint(new Coordinate(endLong, endLat));
 

@@ -37,6 +37,10 @@ public class TripServiceImpl implements TripService {
 
         // match vehicle
         List<Vehicle> vehicles = vehicleService.findKNearestVehicles(startLong, startLat, 1);
+        if (vehicles.isEmpty()) {
+            throw new RuntimeException("No vehicles available for the requested location");
+        }
+
         Vehicle vehicle = vehicles.get(0);
         String vinNumber = vehicle.getVinNumber();
 
@@ -50,10 +54,7 @@ public class TripServiceImpl implements TripService {
                 .endLat(endLat)
                 .build();
 
-        // publish to broker
-        eventPublisher.publishEvent(initTripDto);
-
-        // finally save the trip to the database
+        // save the trip to the database
         tripRepository.save(Trip.builder()
                 .request(request)
                 .vehicle(vehicle)
@@ -61,5 +62,8 @@ public class TripServiceImpl implements TripService {
                 .status(TripStatus.INITIATED)
                 .startedAt(new Timestamp(new Date().getTime()))
                 .build());
+
+        // publish to broker
+        eventPublisher.publishEvent(initTripDto);
     }
 }
