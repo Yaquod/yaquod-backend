@@ -8,6 +8,7 @@ import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -120,7 +121,7 @@ public class TripServiceImpl implements TripService {
 
     @Override
     public List<Trip> getLastNTrips(int n) {
-        return tripRepository.findNTopNByOrderByStartedAtDesc(n);
+        return tripRepository.findTopN(PageRequest.of(0, n));
     }
 
     @Override
