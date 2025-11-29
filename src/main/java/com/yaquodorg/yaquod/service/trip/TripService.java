@@ -20,7 +20,7 @@ public interface TripService {
 
     List<Trip> getTripsByUserId(Long userId);
 
-    List<Trip>getLastNTrips(int n);
+    List<Trip> getLastNTrips(int n);
 
-    List <Trip>getTripsByVinNumber(String vinNumber);
+    List<Trip> getTripsByVinNumber(String vinNumber);
 }

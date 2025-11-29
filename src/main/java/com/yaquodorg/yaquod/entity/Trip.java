@@ -30,7 +30,7 @@ public class Trip {
     private Timestamp endedAt;
 
     @Column
-    private Timestamp updatedAt ;
+    private Timestamp updatedAt;
 
     @OneToOne
     @JoinColumn(name = "request_id", referencedColumnName = "id")
@@ -45,7 +45,6 @@ public class Trip {
     @ManyToOne
     @JoinColumn(name = "vehicle_id", referencedColumnName = "id")
     private Vehicle vehicle;
-
 
 
 }

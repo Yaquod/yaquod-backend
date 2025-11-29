@@ -1,19 +1,15 @@
 package com.yaquodorg.yaquod.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.HashMap;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
+import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.service.mqtt.MqttGateway;
+import com.yaquodorg.yaquod.service.mqtt.MqttService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,20 +22,17 @@ import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
-import com.yaquodorg.yaquod.dtos.VehicleDto;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.service.mqtt.MqttGateway;
-import com.yaquodorg.yaquod.service.mqtt.MqttService;
-import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- *
+ * <p>
  * Unit tests for MqttService
  */
 @ExtendWith(MockitoExtension.class)
@@ -373,8 +366,8 @@ class MqttServiceTest {
     @DisplayName("Should handle all vehicle statuses")
     void shouldHandleAllVehicleStatuses() throws Exception {
         // Test each status
-        VehicleStatus[] statuses = { VehicleStatus.IDLE, VehicleStatus.IN_USE, VehicleStatus.ON_WAY,
-                VehicleStatus.OUT_OF_SERVICE };
+        VehicleStatus[] statuses = {VehicleStatus.IDLE, VehicleStatus.IN_USE, VehicleStatus.ON_WAY,
+                VehicleStatus.OUT_OF_SERVICE};
 
         for (VehicleStatus status : statuses) {
             // Arrange

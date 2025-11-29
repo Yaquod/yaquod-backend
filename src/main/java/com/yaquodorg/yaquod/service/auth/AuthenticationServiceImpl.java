@@ -30,7 +30,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MailSenderService mailSenderService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private int ONE_DAY = 86400000;
+    private final int ONE_DAY = 86400000;
 
     @Override
     public LoginResponse login(LoginUserDto loginUserDto) {

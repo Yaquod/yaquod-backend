@@ -1,9 +1,9 @@
 package com.yaquodorg.yaquod.service.request;
 
-import java.util.List;
-
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
+
+import java.util.List;
 
 public interface RequestService {
     Request createRequest(Long userId, double startLong, double startLat, double endLong, double endLat);
