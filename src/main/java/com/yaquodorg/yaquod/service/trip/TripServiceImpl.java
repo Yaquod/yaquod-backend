@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.yaquodorg.yaquod.dtos.InitTripDto;
@@ -14,6 +15,7 @@ import com.yaquodorg.yaquod.entity.TripStatus;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.repository.TripRepository;
+import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,8 @@ public class TripServiceImpl implements TripService {
     private final TripRepository tripRepository;
 
     private final VehicleService vehicleService;
+
+    private final UserService userService;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -65,5 +69,58 @@ public class TripServiceImpl implements TripService {
 
         // publish to broker
         eventPublisher.publishEvent(initTripDto);
+    }
+
+    @Override
+    public Trip getTripByRequestId(Long requestId) {
+        Trip trip = tripRepository.findByRequestId(requestId);
+        if (trip == null) {
+            log.error("Trip not found for requestId: {}", requestId);
+            throw new RuntimeException("Trip not found for requestId: " + requestId);
+        }
+
+        return trip;
+    }
+
+    @Override
+    public Trip getTripById(Long id) {
+        return tripRepository.findById(id).orElseThrow(() -> {
+            log.error("Trip not found for id: {}", id);
+            return new RuntimeException("Trip not found for id: " + id);
+        });
+    }
+
+    @Override
+    public void deleteTripById(Long id) {
+        tripRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Trip> getAllTrips() {
+        return tripRepository.findAll();
+    }
+
+    @Override
+    public List<Trip> getTripsByUserId(Long userId) {
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            log.error("User not found for id: {}", userId);
+            throw new RuntimeException("User not found for id: " + userId);
+        }
+
+        return tripRepository.findByUserId(userId);
+    }
+
+    @Override
+    public List<Trip> getLastNTrips(int n) {
+        return tripRepository.findTopN(PageRequest.of(0, n));
+    }
+
+    @Override
+    public List<Trip> getTripsByVinNumber(String vinNumber) {
+        Vehicle vehicle = vehicleService.getVehicleByVinNumber(vinNumber).orElseThrow(
+                () -> new RuntimeException("Vehicle not found for vin number: " + vinNumber));
+
+        return tripRepository.findByVehicleVinNumber(vehicle.getVinNumber());
     }
 }

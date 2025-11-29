@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<MessageResponse>> handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(err -> errors.put(err.getField(), err.getDefaultMessage()));
-        String errorMessage = "Validation failed: " + errors.toString();
+        String errorMessage = "Validation failed: " + errors;
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createFailureResponse(errorMessage));
     }
 
@@ -40,7 +40,7 @@ public class GlobalExceptionHandler {
             String path = cv.getPropertyPath() != null ? cv.getPropertyPath().toString() : "";
             errors.put(path, cv.getMessage());
         });
-        String errorMessage = "Constraint violations: " + errors.toString();
+        String errorMessage = "Constraint violations: " + errors;
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createFailureResponse(errorMessage));
     }
 
