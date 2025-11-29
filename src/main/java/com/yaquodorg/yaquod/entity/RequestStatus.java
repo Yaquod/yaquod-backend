@@ -4,5 +4,7 @@ public enum RequestStatus {
     PENDING,
     COMPLETED,
     TIMEOUT,
-    FAILED
+    FAILED,
+    ACCEPTED,
+    DECLINED
 }
