@@ -1,25 +1,19 @@
 package com.yaquodorg.yaquod.service.trip;
 
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-
+import com.yaquodorg.yaquod.dtos.InitTripDto;
+import com.yaquodorg.yaquod.entity.*;
+import com.yaquodorg.yaquod.repository.TripRepository;
+import com.yaquodorg.yaquod.service.user.UserService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import com.yaquodorg.yaquod.dtos.InitTripDto;
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.Trip;
-import com.yaquodorg.yaquod.entity.TripStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.repository.TripRepository;
-import com.yaquodorg.yaquod.service.user.UserService;
-import com.yaquodorg.yaquod.service.vehicle.VehicleService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -78,7 +72,6 @@ public class TripServiceImpl implements TripService {
             log.error("Trip not found for requestId: {}", requestId);
             throw new RuntimeException("Trip not found for requestId: " + requestId);
         }
-
         return trip;
     }
 
@@ -92,8 +85,21 @@ public class TripServiceImpl implements TripService {
 
     @Override
     public void deleteTripById(Long id) {
-        tripRepository.deleteById(id);
+        Trip trip = getTripById(id);
+        tripRepository.deleteById(trip.getId());
     }
+
+//    @Override
+//    public Trip updateTrip(Long id, Trip updatedTrip) {
+//        Trip existingTrip = getTripById(id);
+//        existingTrip.setStatus(updatedTrip.getStatus());
+//        existingTrip.setEndedAt(updatedTrip.getEndedAt());
+//        existingTrip.setUpdatedAt(new Timestamp(new Date().getTime()));
+//        existingTrip.setUser(updatedTrip.getUser());
+//        existingTrip.setVehicle(updatedTrip.getVehicle());
+//        existingTrip.setRequest(updatedTrip.getRequest());
+//        return tripRepository.save(existingTrip);
+//    }
 
     @Override
     public List<Trip> getAllTrips() {
@@ -106,9 +112,11 @@ public class TripServiceImpl implements TripService {
         if (user == null) {
             log.error("User not found for id: {}", userId);
             throw new RuntimeException("User not found for id: " + userId);
+
+        } else {
+            return tripRepository.findByUserId(userId);
         }
 
-        return tripRepository.findByUserId(userId);
     }
 
     @Override
@@ -119,8 +127,9 @@ public class TripServiceImpl implements TripService {
     @Override
     public List<Trip> getTripsByVinNumber(String vinNumber) {
         Vehicle vehicle = vehicleService.getVehicleByVinNumber(vinNumber).orElseThrow(
-                () -> new RuntimeException("Vehicle not found for vin number: " + vinNumber));
-
+                () -> new RuntimeException("Vehicle not found for vin number: " + vinNumber)
+        );
         return tripRepository.findByVehicleVinNumber(vehicle.getVinNumber());
+
     }
 }

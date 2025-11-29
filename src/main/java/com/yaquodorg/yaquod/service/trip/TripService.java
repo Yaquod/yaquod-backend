@@ -1,9 +1,9 @@
 package com.yaquodorg.yaquod.service.trip;
 
-import java.util.List;
-
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
+
+import java.util.List;
 
 public interface TripService {
     void createTrip(Request request, double startLong, double startLat, double endLong, double endLat);
@@ -12,7 +12,9 @@ public interface TripService {
 
     Trip getTripById(Long id);
 
-    // Trip updateTrip(Long id, Trip updatedTrip);
+    void deleteTripById(Long id);
+
+//    Trip updateTrip(Long id, Trip updatedTrip);
 
     List<Trip> getAllTrips();
 
@@ -21,6 +23,4 @@ public interface TripService {
     List<Trip> getLastNTrips(int n);
 
     List<Trip> getTripsByVinNumber(String vinNumber);
-
-    void deleteTripById(Long id);
 }

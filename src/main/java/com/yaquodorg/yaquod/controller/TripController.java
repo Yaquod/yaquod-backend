@@ -1,20 +1,5 @@
 package com.yaquodorg.yaquod.controller;
 
-import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
-
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.yaquodorg.yaquod.dtos.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
@@ -23,9 +8,15 @@ import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -38,7 +29,7 @@ public class TripController {
 
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,
-            @AuthenticationPrincipal User user) {
+                                                              @AuthenticationPrincipal User user) {
         try {
             Request request = requestService.createRequest(user.getId(),
                     tripRequestDto.getStartLong(),
@@ -52,6 +43,7 @@ public class TripController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.createFailureResponse("Failed to create trip request: " + e.getMessage()));
         }
+
     }
 
     @GetMapping("/request/status/{requestId}")
@@ -64,7 +56,9 @@ public class TripController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.createFailureResponse("Failed to check Request status: " + e.getMessage()));
         }
+
     }
+
 
     @GetMapping("/by-request/{requestId}")
     public ResponseEntity<ApiResponse<Trip>> getTripByRequestId(@PathVariable Long requestId) {
@@ -88,9 +82,10 @@ public class TripController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.createFailureResponse("Failed to get Trip by id: " + e.getMessage()));
         }
+
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+
     @DeleteMapping("/{tripId}")
     public ResponseEntity<ApiResponse<MessageResponse>> deleteTripById(@PathVariable Long tripId) {
         try {
@@ -101,7 +96,9 @@ public class TripController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.createFailureResponse("Failed to delete Trip by id: " + e.getMessage()));
         }
+
     }
+
 
     @GetMapping()
     public ResponseEntity<ApiResponse<List<Trip>>> getAllTrips() {
@@ -113,12 +110,13 @@ public class TripController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.createFailureResponse("Failed to get all Trips: " + e.getMessage()));
         }
+
     }
 
-    @GetMapping("/user")
-    public ResponseEntity<ApiResponse<List<Trip>>> getTripsByUserId(@AuthenticationPrincipal User user) {
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ApiResponse<List<Trip>>> getTripsByUserId(@PathVariable Long userId) {
         try {
-            List<Trip> trips = tripService.getTripsByUserId(user.getId());
+            List<Trip> trips = tripService.getTripsByUserId(userId);
             return ResponseEntity
                     .ok(createSuccessResponse(trips));
         } catch (Exception e) {
@@ -126,6 +124,7 @@ public class TripController {
                     .body(ApiResponse.createFailureResponse("Failed to get Trips by userId: " + e.getMessage()));
         }
     }
+
 
     @GetMapping("/last/{n}")
     public ResponseEntity<ApiResponse<List<Trip>>> getLastNTrips(@PathVariable int n) {
@@ -139,6 +138,7 @@ public class TripController {
         }
     }
 
+
     @GetMapping("/vehicle/{vinNumber}")
     public ResponseEntity<ApiResponse<List<Trip>>> getTripsByVinNumber(@PathVariable String vinNumber) {
         try {
@@ -150,4 +150,6 @@ public class TripController {
                     .body(ApiResponse.createFailureResponse("Failed to get Trips by VIN number: " + e.getMessage()));
         }
     }
+
+
 }
