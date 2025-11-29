@@ -47,4 +47,5 @@ public class Trip {
     private Vehicle vehicle;
 
 
+
 }
