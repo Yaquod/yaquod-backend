@@ -1,11 +1,11 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import java.util.List;
-import java.util.Optional;
-
 import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface VehicleService {
     Vehicle createVehicle(CreateVehicleDto createVehicleDto);
@@ -23,4 +23,12 @@ public interface VehicleService {
     void updateVehicleStatus(String vinNumber, VehicleStatus status);
 
     void deleteVehicle(Long id);
+
+    List<Vehicle> findKNearestVehicles(double longitude, double latitude, int k);
+
+    List<Vehicle> findKNearestVehiclesWithinDistance(
+            double longitude,
+            double latitude,
+            double maxDistanceMeters,
+            int k);
 }

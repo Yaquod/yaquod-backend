@@ -1,21 +1,13 @@
 package com.yaquodorg.yaquod.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-
+import com.yaquodorg.yaquod.dtos.*;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.response.LoginResponse;
+import com.yaquodorg.yaquod.service.auth.AuthenticationServiceImpl;
+import com.yaquodorg.yaquod.service.jwt.JwtService;
+import com.yaquodorg.yaquod.service.mail.MailSenderService;
+import com.yaquodorg.yaquod.service.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,22 +21,19 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
-import com.yaquodorg.yaquod.dtos.LoginUserDto;
-import com.yaquodorg.yaquod.dtos.RegisterUserDto;
-import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
-import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
-import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.response.LoginResponse;
-import com.yaquodorg.yaquod.service.auth.AuthenticationServiceImpl;
-import com.yaquodorg.yaquod.service.jwt.JwtService;
-import com.yaquodorg.yaquod.service.mail.MailSenderService;
-import com.yaquodorg.yaquod.service.user.UserService;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- *
+ * <p>
  * Unit tests for AuthenticationService
  * Tests authentication, registration, verification, and password reset logic
  */

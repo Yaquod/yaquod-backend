@@ -1,9 +1,9 @@
 package com.yaquodorg.yaquod.dtos;
 
-import lombok.Builder;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import lombok.Data;
 
 /**
