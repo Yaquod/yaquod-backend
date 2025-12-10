@@ -1,5 +1,6 @@
 package com.yaquodorg.yaquod.dtos;
 
+import com.yaquodorg.yaquod.utils.ValidVIN;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -16,7 +17,7 @@ import lombok.Data;
 @Data
 @Builder
 public class CreateVehicleDto {
-
+    @ValidVIN
     @NotBlank(message = "vinNumber cannot be blank")
     private String vinNumber;
 

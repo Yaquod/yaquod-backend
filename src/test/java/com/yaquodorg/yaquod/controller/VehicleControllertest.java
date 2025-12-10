@@ -59,6 +59,9 @@ class VehicleControllerTest {
     private CreateVehicleDto createVehicleDto;
     private Vehicle vehicle;
 
+    private final String VinNumber1 = "1HGCM82633A004352";
+    private final String VinNumber2 = "1M8GDM9AXKP042788";
+
     @BeforeEach
     void setUp() {
         // Setup MockMvc
@@ -67,7 +70,7 @@ class VehicleControllerTest {
 
         // Setup test data
         createVehicleDto = CreateVehicleDto.builder()
-                .vinNumber("VIN1")
+                .vinNumber(VinNumber1)
                 .plateNo("ABC-123")
                 .color("RED")
                 .carCompany("Toyota")
@@ -77,7 +80,7 @@ class VehicleControllerTest {
 
         vehicle = new Vehicle();
         vehicle.setId(1L);
-        vehicle.setVinNumber("VIN1");
+        vehicle.setVinNumber(VinNumber1);
         vehicle.setPlateNo("ABC-123");
         vehicle.setColor("RED");
         vehicle.setCarCompany("Toyota");
@@ -103,7 +106,7 @@ class VehicleControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.vinNumber").value("VIN1"))
+                .andExpect(jsonPath("$.data.vinNumber").value(VinNumber1))
                 .andExpect(jsonPath("$.data.plateNo").value("ABC-123"))
                 .andExpect(jsonPath("$.data.model").value("Camry"))
                 .andExpect(jsonPath("$.data.status").value("IDLE"));
@@ -155,7 +158,7 @@ class VehicleControllerTest {
         // Arrange
         Vehicle vehicle2 = new Vehicle();
         vehicle2.setId(2L);
-        vehicle2.setVinNumber("test-vin-456");
+        vehicle2.setVinNumber(VinNumber2);
         vehicle2.setPlateNo("XYZ-789");
         vehicle2.setModel("Honda Accord");
 
@@ -228,7 +231,7 @@ class VehicleControllerTest {
     @DisplayName("GET /api/vehicles/vin/{vinNumber} - Should return vehicle by VIN")
     void shouldGetVehicleByVIN() throws Exception {
         // Arrange
-        String vin = "VIN1";
+        String vin = VinNumber1;
         when(vehicleService.getVehicleByVinNumber(vin)).thenReturn(Optional.of(vehicle));
 
         // Act & Assert
@@ -246,7 +249,7 @@ class VehicleControllerTest {
     @DisplayName("GET /api/vehicles/vin/{vinNumber} - Should return 400 when vehicle not found by VIN")
     void shouldReturn400WhenVehicleNotFoundByVIN() throws Exception {
         // Arrange
-        String vin = "non-existent-vin";
+        String vin = "2GCEK19T7Y1156789";
         when(vehicleService.getVehicleByVinNumber(vin)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -265,7 +268,7 @@ class VehicleControllerTest {
     void shouldUpdateVehicle() throws Exception {
         // Arrange
         CreateVehicleDto updateDto = CreateVehicleDto.builder()
-                .vinNumber("VIN1")
+                .vinNumber(VinNumber1)
                 .plateNo("XYZ-999")
                 .color("RED")
                 .carCompany("Update Company")
@@ -275,7 +278,7 @@ class VehicleControllerTest {
 
         Vehicle updatedVehicle = new Vehicle();
         updatedVehicle.setId(1L);
-        updatedVehicle.setVinNumber("VIN1");
+        updatedVehicle.setVinNumber(VinNumber1);
         updatedVehicle.setPlateNo("XYZ-999");
         updatedVehicle.setColor("RED");
         updatedVehicle.setCarCompany("Updated Company");
@@ -371,7 +374,7 @@ class VehicleControllerTest {
     @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/location-update - Should send MQTT message")
     void shouldSendLocationUpdateSignal() throws Exception {
         // Arrange
-        String vin = "VIN1";
+        String vin = VinNumber1;
         doNothing().when(mqttService).publish(anyString(), any());
 
         // Act & Assert
@@ -398,7 +401,7 @@ class VehicleControllerTest {
     @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/location-update - Should return 400 when MQTT fails")
     void shouldReturn400WhenLocationUpdateFails() throws Exception {
         // Arrange
-        String vin = "VIN1";
+        String vin = VinNumber1;
         doThrow(new RuntimeException("MQTT broker unavailable"))
                 .when(mqttService).publish(anyString(), any());
 
@@ -414,10 +417,10 @@ class VehicleControllerTest {
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/location-update - Should handle special characters in VIN")
+    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/location-update - Should handle valid VIN for location update")
     void shouldHandleSpecialCharactersInVINForLocationUpdate() throws Exception {
         // Arrange
-        String vin = "test-vin-with-special-chars-!@#";
+        String vin = VinNumber2;
         doNothing().when(mqttService).publish(anyString(), any());
 
         // Act & Assert
@@ -436,7 +439,7 @@ class VehicleControllerTest {
     @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/status-update - Should send MQTT message")
     void shouldSendStatusUpdateSignal() throws Exception {
         // Arrange
-        String vin = "VIN1";
+        String vin = VinNumber1;
         doNothing().when(mqttService).publish(anyString(), any());
 
         // Act & Assert
@@ -463,7 +466,7 @@ class VehicleControllerTest {
     @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/status-update - Should return 400 when MQTT fails")
     void shouldReturn400WhenStatusUpdateFails() throws Exception {
         // Arrange
-        String vin = "VIN1";
+        String vin = VinNumber1;
         doThrow(new RuntimeException("MQTT connection timeout"))
                 .when(mqttService).publish(anyString(), any());
 
@@ -480,18 +483,18 @@ class VehicleControllerTest {
 
     // EDGE CASES AND ERROR HANDLING
     @Test
-    @DisplayName("Should handle very long VIN")
+    @DisplayName("Should handle valid VIN format")
     void shouldHandleVeryLongVIN() throws Exception {
         // Arrange
-        String longVin = "a".repeat(500);
-        when(vehicleService.getVehicleByVinNumber(longVin)).thenReturn(Optional.of(vehicle));
+        String validVin = VinNumber2;
+        when(vehicleService.getVehicleByVinNumber(validVin)).thenReturn(Optional.of(vehicle));
 
         // Act & Assert
-        mockMvc.perform(get("/api/vehicles/vin/{vinNumber}", longVin))
+        mockMvc.perform(get("/api/vehicles/vin/{vinNumber}", validVin))
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        verify(vehicleService, times(1)).getVehicleByVinNumber(longVin);
+        verify(vehicleService, times(1)).getVehicleByVinNumber(validVin);
     }
 
     @Test
@@ -528,7 +531,7 @@ class VehicleControllerTest {
     @DisplayName("Should verify correct MQTT topics are used")
     void shouldVerifyCorrectMqttTopics() throws Exception {
         // Arrange
-        String vin = "VIN1";
+        String vin = VinNumber1;
         doNothing().when(mqttService).publish(anyString(), any());
 
         // Act - Test location update
