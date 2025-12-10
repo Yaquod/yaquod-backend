@@ -39,8 +39,9 @@ class VehicleServiceTest {
     private CreateVehicleDto createVehicleDto;
     private Vehicle vehicle;
 
-    private  final  String VinNumber1 = "1HGCM82633A004352";
-    private  final  String TestVin = "2GCEK19T7Y1156789";
+    private final String VinNumber1 = "1HGCM82633A004352";
+    private final String VinNumber2 = "1M8GDM9AXKP042788";
+    private final String TestVin = "2GCEK19T7Y1156789";
 
 
     @BeforeEach
@@ -54,10 +55,9 @@ class VehicleServiceTest {
                 .seats(2)
                 .build();
 
-        String vinNumber2 = "1M8GDM9AXKP042788";
         vehicle = Vehicle.builder()
                 .id(1L)
-                .vinNumber(vinNumber2)
+                .vinNumber(VinNumber2)
                 .plateNo("abc123")
                 .color("RED")
                 .carCompany("Dodge")
@@ -149,7 +149,7 @@ class VehicleServiceTest {
     @DisplayName("Should get vehicle by VIN successfully")
     void shouldGetVehicleByVIN() {
         // Arrange
-        String vin = VinNumber1;
+        String vin = VinNumber2;
         when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.of(vehicle));
 
         // Act

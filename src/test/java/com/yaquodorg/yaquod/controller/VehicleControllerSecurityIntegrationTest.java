@@ -50,12 +50,15 @@ class VehicleControllerSecurityIntegrationTest {
     private CreateVehicleDto createVehicleDto;
     private Vehicle vehicle;
 
+    private final String VinNumber1 = "1HGCM82633A004352";
+    private final String VinNumber2 = "1M8GDM9AXKP042788";
+
     @BeforeEach
     void setUp() {
         vehicleRepository.deleteAll();
 
         createVehicleDto = CreateVehicleDto.builder()
-                .vinNumber("VIN1")
+                .vinNumber(VinNumber1)
                 .plateNo("ABC-123")
                 .color("RED")
                 .carCompany("Toyota")
@@ -65,7 +68,7 @@ class VehicleControllerSecurityIntegrationTest {
 
         vehicle = new Vehicle();
         vehicle.setId(1L);
-        vehicle.setVinNumber("VIN1");
+        vehicle.setVinNumber(VinNumber1);
         vehicle.setPlateNo("ABC-123");
         vehicle.setColor("RED");
         vehicle.setCarCompany("Toyota");
@@ -231,7 +234,7 @@ class VehicleControllerSecurityIntegrationTest {
 
         // 4. Update vehicle
         CreateVehicleDto updateDto = CreateVehicleDto.builder()
-                .vinNumber("VIN1")
+                .vinNumber(VinNumber1)
                 .plateNo("XYZ-999")
                 .color("Updated Color")
                 .carCompany("Updated Company")
@@ -267,7 +270,7 @@ class VehicleControllerSecurityIntegrationTest {
 
         // Create second vehicle with different plate
         CreateVehicleDto dto2 = CreateVehicleDto.builder()
-                .vinNumber("VIN2")
+                .vinNumber(VinNumber2)
                 .plateNo("XYZ-789")
                 .color("WHITE")
                 .carCompany("Honda")
@@ -477,7 +480,7 @@ class VehicleControllerSecurityIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldHandleSpecialCharactersInPlateNumbers() throws Exception {
         CreateVehicleDto dto = CreateVehicleDto.builder()
-                .vinNumber("VIN2")
+                .vinNumber(VinNumber2)
                 .plateNo("ABC-123!@#")
                 .color("RED")
                 .carCompany("Test")
