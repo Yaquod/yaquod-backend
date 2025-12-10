@@ -38,8 +38,8 @@ class VehicleRepositoryTest {
     private Vehicle vehicle1;
     private Vehicle vehicle2;
 
-    private String VinNumber1 = "1HGCM82633A004352";
-    private String VinNumber2 = "1M8GDM9AXKP042788";
+    private  final  String VinNumber1 = "1HGCM82633A004352";
+    private final String VinNumber2 = "1M8GDM9AXKP042788";
 
     @BeforeEach
     void setUp() {
