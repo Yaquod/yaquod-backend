@@ -38,6 +38,9 @@ class VehicleRepositoryTest {
     private Vehicle vehicle1;
     private Vehicle vehicle2;
 
+    private String VinNumber1 = "1HGCM82633A004352";
+    private String VinNumber2 = "1M8GDM9AXKP042788";
+
     @BeforeEach
     void setUp() {
         // Clean database
@@ -45,7 +48,7 @@ class VehicleRepositoryTest {
 
         // Setup test data
         vehicle1 = Vehicle.builder()
-                .vinNumber("vin-001")
+                .vinNumber(VinNumber1)
                 .plateNo("ABC-123")
                 .model("Toyota Camry")
                 .seats(4)
@@ -55,7 +58,7 @@ class VehicleRepositoryTest {
                 .build();
 
         vehicle2 = Vehicle.builder()
-                .vinNumber("vin-002")
+                .vinNumber(VinNumber2)
                 .plateNo("XYZ-789")
                 .model("Honda Accord")
                 .seats(5)
@@ -74,7 +77,7 @@ class VehicleRepositoryTest {
         // Assert
         assertThat(saved).isNotNull();
         assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getVinNumber()).isEqualTo("vin-001");
+        assertThat(saved.getVinNumber()).isEqualTo(VinNumber1);
         assertThat(saved.getPlateNo()).isEqualTo("ABC-123");
     }
 
@@ -86,7 +89,7 @@ class VehicleRepositoryTest {
         entityManager.flush();
 
         // Act
-        Optional<Vehicle> found = vehicleRepository.findByVinNumber("vin-001");
+        Optional<Vehicle> found = vehicleRepository.findByVinNumber(VinNumber1);
 
         // Assert
         assertThat(found).isPresent();
