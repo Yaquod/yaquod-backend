@@ -10,6 +10,7 @@ class YaquodApplicationTests {
 
     @Test
     void contextLoads() {
+
     }
 
 }
