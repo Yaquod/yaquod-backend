@@ -39,10 +39,14 @@ class VehicleServiceTest {
     private CreateVehicleDto createVehicleDto;
     private Vehicle vehicle;
 
+    private  final  String VinNumber1 = "1HGCM82633A004352";
+    private  final  String TestVin = "2GCEK19T7Y1156789";
+
+
     @BeforeEach
     void setUp() {
         createVehicleDto = CreateVehicleDto.builder()
-                .vinNumber("VIN1")
+                .vinNumber(VinNumber1)
                 .plateNo("abc123")
                 .color("RED")
                 .carCompany("Dodge")
@@ -50,9 +54,10 @@ class VehicleServiceTest {
                 .seats(2)
                 .build();
 
+        String vinNumber2 = "1M8GDM9AXKP042788";
         vehicle = Vehicle.builder()
                 .id(1L)
-                .vinNumber("VIN1")
+                .vinNumber(vinNumber2)
                 .plateNo("abc123")
                 .color("RED")
                 .carCompany("Dodge")
@@ -90,7 +95,7 @@ class VehicleServiceTest {
         // Arrange
         Vehicle vehicle2 = new Vehicle();
         vehicle2.setId(2L);
-        vehicle2.setVinNumber("test-vin-456");
+        vehicle2.setVinNumber(TestVin);
         vehicle2.setPlateNo("XYZ-789");
         vehicle2.setModel("Honda Accord");
 
@@ -144,7 +149,7 @@ class VehicleServiceTest {
     @DisplayName("Should get vehicle by VIN successfully")
     void shouldGetVehicleByVIN() {
         // Arrange
-        String vin = "VIN1";
+        String vin = VinNumber1;
         when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.of(vehicle));
 
         // Act
@@ -161,7 +166,7 @@ class VehicleServiceTest {
     @DisplayName("Should return empty when vehicle not found by VIN")
     void shouldReturnEmptyWhenVehicleNotFoundByVIN() {
         // Arrange
-        String vin = "non-existent-vin";
+        String vin = "3VWFE21C04M000123";
         when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.empty());
 
         // Act
@@ -177,7 +182,7 @@ class VehicleServiceTest {
     @DisplayName("Should update vehicle location successfully")
     void shouldUpdateVehicleLocation() {
         // Arrange
-        String vin = "test-vin-123";
+        String vin = TestVin;
         double longitude = 40.7128;
         double latitude = -74.0060;
 
@@ -204,7 +209,7 @@ class VehicleServiceTest {
     @DisplayName("Should throw exception when updating location for non-existent vehicle")
     void shouldThrowExceptionWhenUpdatingLocationForNonExistentVehicle() {
         // Arrange
-        String vin = "non-existent-vin";
+        String vin = "3VWFE21C04M000123";
         when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -220,7 +225,7 @@ class VehicleServiceTest {
     @DisplayName("Should update vehicle status successfully")
     void shouldUpdateVehicleStatus() {
         // Arrange
-        String vin = "test-vin-123";
+        String vin = TestVin;
         VehicleStatus newStatus = VehicleStatus.IN_USE;
 
         when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.of(vehicle));

@@ -56,6 +56,8 @@ class MqttServiceTest {
 
     private Map<String, Object> headers;
 
+    private  final  String VinNumber1 = "1HGCM82633A004352";
+
     @BeforeEach
     void setUp() {
         headers = new HashMap<>();
@@ -71,14 +73,14 @@ class MqttServiceTest {
         String topic = "topic/update_location";
         String payload = """
                 {
-                    "vinNumber": "VIN123",
+                    "vinNumber": "1HGCM82633A004352",
                     "longitude": 40.7128,
                     "latitude": -74.0060
                 }
                 """;
 
         UpdateVehicleLocationDto dto = new UpdateVehicleLocationDto();
-        dto.setVinNumber("VIN123");
+        dto.setVinNumber(VinNumber1);
         dto.setLongitude(40.7128);
         dto.setLatitude(-74.0060);
 
@@ -93,7 +95,7 @@ class MqttServiceTest {
 
         // Assert
         verify(objectMapper).readValue(payload, UpdateVehicleLocationDto.class);
-        verify(vehicleService).updateVehicleLocation("VIN123", 40.7128, -74.0060);
+        verify(vehicleService).updateVehicleLocation(VinNumber1, 40.7128, -74.0060);
     }
 
     @Test
@@ -103,13 +105,14 @@ class MqttServiceTest {
         String topic = "topic/update_status";
         String payload = """
                 {
-                    "vinNumber": "VIN456",
+                    "vinNumber": "1M8GDM9AXKP042788",
                     "status": "IN_USE"
                 }
                 """;
 
         UpdateVehicleStatusDto dto = new UpdateVehicleStatusDto();
-        dto.setVinNumber("VIN456");
+        String vinNumber2 = "1M8GDM9AXKP042788";
+        dto.setVinNumber(vinNumber2);
         dto.setStatus(VehicleStatus.IN_USE);
 
         headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
@@ -123,7 +126,7 @@ class MqttServiceTest {
 
         // Assert
         verify(objectMapper).readValue(payload, UpdateVehicleStatusDto.class);
-        verify(vehicleService).updateVehicleStatus("VIN456", VehicleStatus.IN_USE);
+        verify(vehicleService).updateVehicleStatus(vinNumber2, VehicleStatus.IN_USE);
     }
 
     @Test
@@ -204,8 +207,8 @@ class MqttServiceTest {
     void shouldPublishMessageSuccessfully() throws Exception {
         // Arrange
         String topic = "test/topic";
-        VehicleDto data = new VehicleDto("VIN789");
-        String jsonPayload = "{\"vinNumber\":\"VIN789\"}";
+        VehicleDto data = new VehicleDto("5GZCZ43D13S812715");
+        String jsonPayload = "{\"vinNumber\":\"5GZCZ43D13S812715\"}";
 
         when(objectMapper.writeValueAsString(data)).thenReturn(jsonPayload);
         doNothing().when(mqttGateway).sendToMqtt(anyString(), anyString());
@@ -244,8 +247,8 @@ class MqttServiceTest {
     void shouldPublishWithCorrectTopicAndPayload() throws Exception {
         // Arrange
         String topic = "custom/topic";
-        VehicleDto data = new VehicleDto("VIN999");
-        String expectedJson = "{\"vinNumber\":\"VIN999\"}";
+        VehicleDto data = new VehicleDto("3VWFE21C04M000001");
+        String expectedJson = "{\"vinNumber\":\"3VWFE21C04M000001\"}";
 
         when(objectMapper.writeValueAsString(data)).thenReturn(expectedJson);
 
@@ -308,12 +311,12 @@ class MqttServiceTest {
         // Arrange
         String topic = "topic/update_location";
         UpdateVehicleLocationDto dto1 = new UpdateVehicleLocationDto();
-        dto1.setVinNumber("VIN001");
+        dto1.setVinNumber("WAUZZZ8K9DA123456");  // VIN001  =WAUZZZ8K9DA123456
         dto1.setLongitude(10.0);
         dto1.setLatitude(20.0);
 
         UpdateVehicleLocationDto dto2 = new UpdateVehicleLocationDto();
-        dto2.setVinNumber("VIN002");
+        dto2.setVinNumber("WDBRF40JX3F376482");  // VIN002  = WDBRF40JX3F376482
         dto2.setLongitude(30.0);
         dto2.setLatitude(40.0);
 
@@ -328,8 +331,8 @@ class MqttServiceTest {
         mqttService.handleIncomingMessage(message);
 
         // Assert
-        verify(vehicleService).updateVehicleLocation("VIN001", 10.0, 20.0);
-        verify(vehicleService).updateVehicleLocation("VIN002", 30.0, 40.0);
+        verify(vehicleService).updateVehicleLocation("WAUZZZ8K9DA123456", 10.0, 20.0);
+        verify(vehicleService).updateVehicleLocation("WDBRF40JX3F376482", 30.0, 40.0);
     }
 
     @Test
@@ -339,14 +342,14 @@ class MqttServiceTest {
         String topic = "topic/update_location";
         String payload = """
                 {
-                    "vinNumber": "VIN123",
+                    "vinNumber": "1HGCM82633A004352",
                     "longitude": -118.2437,
                     "latitude": -34.0522
                 }
                 """;
 
         UpdateVehicleLocationDto dto = new UpdateVehicleLocationDto();
-        dto.setVinNumber("VIN123");
+        dto.setVinNumber("1HGCM82633A004352");
         dto.setLongitude(-118.2437);
         dto.setLatitude(-34.0522);
 
@@ -359,7 +362,7 @@ class MqttServiceTest {
         mqttService.handleIncomingMessage(message);
 
         // Assert
-        verify(vehicleService).updateVehicleLocation("VIN123", -118.2437, -34.0522);
+        verify(vehicleService).updateVehicleLocation("1HGCM82633A004352", -118.2437, -34.0522);
     }
 
     @Test
@@ -373,7 +376,7 @@ class MqttServiceTest {
             // Arrange
             String topic = "topic/update_status";
             UpdateVehicleStatusDto dto = new UpdateVehicleStatusDto();
-            dto.setVinNumber("VIN" + status);
+            dto.setVinNumber("1HGCM82633A004352");  // Using same VIN for simplicity
             dto.setStatus(status);
 
             headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
@@ -385,7 +388,7 @@ class MqttServiceTest {
             mqttService.handleIncomingMessage(message);
 
             // Assert
-            verify(vehicleService).updateVehicleStatus("VIN" + status, status);
+            verify(vehicleService).updateVehicleStatus("1HGCM82633A004352", status);
         }
     }
 
