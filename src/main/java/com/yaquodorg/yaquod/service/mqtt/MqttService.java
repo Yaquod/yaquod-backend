@@ -1,21 +1,23 @@
 package com.yaquodorg.yaquod.service.mqtt;
 
+import org.springframework.context.event.EventListener;
+import org.springframework.integration.annotation.ServiceActivator;
+import org.springframework.integration.mqtt.support.MqttHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.EtaStatusDto;
 import com.yaquodorg.yaquod.dtos.InitTripDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
-import com.yaquodorg.yaquod.entity.RequestStatus;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.integration.annotation.ServiceActivator;
-import org.springframework.integration.mqtt.support.MqttHeaders;
-import org.springframework.messaging.Message;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -78,8 +80,9 @@ public class MqttService {
             EtaStatusDto dto = objectMapper.readValue(payload, EtaStatusDto.class);
             log.info("Request with ID: {}, status updated to {}", dto.getRequestId(),
                     dto.getStatus());
-            requestService.updateRequest(dto.getRequestId(), RequestStatus.COMPLETED, dto.getEstimatedTime(),
+            requestService.updateRequest(dto.getRequestId(), dto.getStatus(), dto.getEstimatedTime(),
                     dto.getEstimatedFare());
+            vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.ON_HOLD);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse request status update payload: {}", payload, e);
         }

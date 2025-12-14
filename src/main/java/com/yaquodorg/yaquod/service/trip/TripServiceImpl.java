@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.yaquodorg.yaquod.dtos.InitTripDto;
 import com.yaquodorg.yaquod.entity.Request;
@@ -14,6 +15,7 @@ import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.TripStatus;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.repository.TripRepository;
 import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
@@ -34,6 +36,7 @@ public class TripServiceImpl implements TripService {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     @Override
     public void createTrip(Request request, double startLong, double startLat, double endLong, double endLat) {
         // get request's user
@@ -45,8 +48,10 @@ public class TripServiceImpl implements TripService {
             throw new RuntimeException("No vehicles available for the requested location");
         }
 
+        // get vin number and set vehicle state as processing
         Vehicle vehicle = vehicles.get(0);
         String vinNumber = vehicle.getVinNumber();
+        vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.PROCESSING);
 
         // build dto
         InitTripDto initTripDto = InitTripDto.builder()

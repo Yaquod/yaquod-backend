@@ -18,7 +18,7 @@ public interface TripService {
 
     List<Trip> getTripsByUserId(Long userId);
 
-    List<Trip> getLastNTrips(int n);
+    List<Trip> getUserLastNTrips(int n, Long userId);
 
     List<Trip> getTripsByVinNumber(String vinNumber);
 
