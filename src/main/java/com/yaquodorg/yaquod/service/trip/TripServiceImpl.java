@@ -112,8 +112,8 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public List<Trip> getLastNTrips(int n) {
-        return tripRepository.findTopN(PageRequest.of(0, n));
+    public List<Trip> getUserLastNTrips(int n, Long userId) {
+        return tripRepository.findByUserIdOrderByStartedAtDesc(userId, PageRequest.of(0, n));
     }
 
     @Override
