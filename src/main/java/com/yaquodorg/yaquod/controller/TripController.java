@@ -128,9 +128,10 @@ public class TripController {
     }
 
     @GetMapping("/last/{n}")
-    public ResponseEntity<ApiResponse<List<Trip>>> getLastNTrips(@PathVariable int n) {
+    public ResponseEntity<ApiResponse<List<Trip>>> getLastNTrips(@PathVariable int n,
+            @AuthenticationPrincipal User user) {
         try {
-            List<Trip> trips = tripService.getLastNTrips(n);
+            List<Trip> trips = tripService.getUserLastNTrips(n, user.getId());
             return ResponseEntity
                     .ok(createSuccessResponse(trips));
         } catch (Exception e) {

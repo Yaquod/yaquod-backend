@@ -1,11 +1,10 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.VehicleRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -13,15 +12,20 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class VehicleServiceImpl implements VehicleService {
+
+    private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
     private final VehicleRepository vehicleRepository;
 
@@ -71,7 +75,6 @@ public class VehicleServiceImpl implements VehicleService {
         Vehicle vehicle = vehicleRepository.findByVinNumber(vinNumber)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found with VIN: " + vinNumber));
 
-        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
         Point point = geometryFactory.createPoint(new Coordinate(longitude, latitude));
 
         vehicle.setLastUpdatedLocation(point);
@@ -104,7 +107,7 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public List<Vehicle> findKNearestVehiclesWithinDistance(double longitude, double latitude, double maxDistanceMeters,
-                                                            int k) {
+            int k) {
         Point point = createPoint(longitude, latitude);
         log.info("Finding {} nearest vehicles within {} meters of location: ({}, {})",
                 k, maxDistanceMeters, latitude, longitude);
@@ -112,7 +115,6 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     private Point createPoint(double longitude, double latitude) {
-        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
         return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
 
