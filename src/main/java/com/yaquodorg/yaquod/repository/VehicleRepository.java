@@ -1,13 +1,14 @@
 package com.yaquodorg.yaquod.repository;
 
-import com.yaquodorg.yaquod.entity.Vehicle;
+import java.util.List;
+import java.util.Optional;
+
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-import java.util.Optional;
+import com.yaquodorg.yaquod.entity.Vehicle;
 
 public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     Optional<Vehicle> findByVinNumber(String vinNumber);
@@ -17,6 +18,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
             SELECT v.*
             FROM vehicles v
             WHERE v.last_updated_location IS NOT NULL
+            AND v.status = 'IDLE'
             ORDER BY ST_Distance(v.last_updated_location, :point)
             LIMIT :limit
             """, nativeQuery = true)
@@ -27,6 +29,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
             SELECT v.*
             FROM vehicles v
             WHERE v.last_updated_location IS NOT NULL
+            AND v.status = 'IDLE'
             AND ST_DWithin(v.last_updated_location::geography, :point::geography, :maxDistance)
             ORDER BY ST_Distance(v.last_updated_location, :point)
             LIMIT :limit

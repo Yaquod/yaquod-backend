@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.yaquodorg.yaquod.entity.Trip;
@@ -15,8 +14,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     List<Trip> findByUserId(Long userId);
 
-    @Query("SELECT t FROM Trip t ORDER BY t.startedAt DESC")
-    List<Trip> findTopN(Pageable pageable);
+    List<Trip> findByUserIdOrderByStartedAtDesc(Long userId, Pageable pageable);
 
     List<Trip> findByVehicleVinNumber(String vehicleVinNumber);
 }

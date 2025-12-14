@@ -1,6 +1,7 @@
 package com.yaquodorg.yaquod.dtos;
 
 import com.yaquodorg.yaquod.utils.ValidVIN;
+
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -10,10 +11,11 @@ import lombok.Data;
 @Builder
 @Data
 public class InitTripDto {
-    @ValidVIN
+    // @ValidVIN
     private String vinNumber;
+
     @NotNull(message = "Request ID cannot be null")
-    private double requestId;
+    private Long requestId;
 
     @NotNull
     @DecimalMin("-180.0")
