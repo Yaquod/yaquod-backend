@@ -97,8 +97,7 @@ class UserControllerIntegrationTest {
         validJwtToken = jwtService.generateAccessToken(testUser);
     }
 
-    // ==================== ADMIN SIGNUP TESTS ====================
-
+    // ADMIN SIGNUP TESTS
     @Test
     @DisplayName("POST /api/auth/admin/signup - Should register admin successfully")
     void shouldRegisterAdminSuccessfully() throws Exception {
@@ -135,8 +134,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.message").value(containsString("Failed to register admin user")));
     }
 
-    // ==================== CLIENT SIGNUP TESTS ====================
-
+    // CLIENT SIGNUP TESTS
     @Test
     @DisplayName("POST /api/auth/client/signup - Should register client successfully")
     void shouldRegisterClientSuccessfully() throws Exception {
@@ -167,8 +165,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
-    // ==================== LOGIN TESTS ====================
-
+    // LOGIN TESTS
     @Test
     @DisplayName("POST /api/auth/login - Should login successfully with valid credentials")
     void shouldLoginSuccessfully() throws Exception {
@@ -226,8 +223,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
-    // ==================== VERIFY CODE TESTS ====================
-
+    // VERIFY CODE TESTS
     @Test
     @DisplayName("POST /api/auth/verify-code - Should verify user successfully")
     void shouldVerifyUserSuccessfully() throws Exception {
@@ -316,8 +312,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
-    // ==================== REGENERATE CODE TESTS ====================
-
+    // REGENERATE CODE TESTS
     @Test
     @DisplayName("POST /api/auth/regenerate-code - Should regenerate OTP successfully")
     void shouldRegenerateOtpSuccessfully() throws Exception {
@@ -363,8 +358,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.message").value("User not found"));
     }
 
-    // ==================== TOKEN REFRESH TESTS ====================
-
+    // TOKEN REFRESH TESTS
     @Test
     @DisplayName("GET /api/auth/token-refresh - Should refresh token successfully")
     void shouldRefreshTokenSuccessfully() throws Exception {
@@ -391,8 +385,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
-    // ==================== RESET PASSWORD TESTS ====================
-
+    // RESET PASSWORD TESTS
     @Test
     @DisplayName("POST /api/auth/reset-password - Should reset password successfully")
     void shouldResetPasswordSuccessfully() throws Exception {
@@ -444,8 +437,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.message").value(containsString("Reset Failed")));
     }
 
-    // ==================== FULL AUTHENTICATION FLOW ====================
-
+    // FULL AUTHENTICATION FLOW
     @Test
     @DisplayName("Should complete full authentication flow: signup -> verify -> login")
     void shouldCompleteFullAuthenticationFlow() throws Exception {
@@ -496,8 +488,7 @@ class UserControllerIntegrationTest {
         assertThat(finalUser.getFirebaseToken()).isEqualTo("fcm-token");
     }
 
-    // ==================== PASSWORD RESET FLOW ====================
-
+    // PASSWORD RESET FLOW
     @Test
     @DisplayName("Should complete password reset flow: regenerate OTP -> reset password -> login")
     void shouldCompletePasswordResetFlow() throws Exception {
@@ -540,8 +531,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.user.email").value("existing@example.com"));
     }
 
-    // ==================== CONCURRENT OPERATIONS ====================
-
+    // CONCURRENT OPERATIONS
     @Test
     @DisplayName("Should handle multiple concurrent signups")
     void shouldHandleMultipleConcurrentSignups() throws Exception {
@@ -563,8 +553,7 @@ class UserControllerIntegrationTest {
         assertThat(userRepository.count()).isEqualTo(6);
     }
 
-    // ==================== EDGE CASES ====================
-
+    // EDGE CASES
     @Test
     @DisplayName("Should handle malformed JSON in signup")
     void shouldHandleMalformedJsonInSignup() throws Exception {
