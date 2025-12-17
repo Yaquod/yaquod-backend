@@ -1,7 +1,12 @@
 package com.yaquodorg.yaquod.repository;
 
-import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.User;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,24 +16,20 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
  * <p>
- * Integration tests for UserRepository
+ * Unit tests for UserRepository
  * Uses real database (H2 in-memory or Testcontainers)
  * Tests JPA queries and database interactions
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@DisplayName("UserRepository Integration Tests")
+@DisplayName("UserRepository Unit Tests")
 class UserRepositoryTest {
 
     @Autowired
@@ -129,40 +130,6 @@ class UserRepositoryTest {
         assertThat(users).extracting(User::getPhoneNumber)
                 .containsExactlyInAnyOrder("+201010149602", "+201110149602");
     }
-
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should find users by status")
-    // void shouldFindUsersByStatus() {
-    // // Arrange
-    // entityManager.persist(user1);
-    // entityManager.persist(user2);
-    // entityManager.flush();
-    //
-    // // Act
-    // List<User> availableUsers = userRepository
-    // .findByStatus(UserStatus.IDLE);
-    //
-    // // Assert
-    // assertThat(availableUsers).hasSize(1);
-    // assertThat(availableUsers.get(0).getPlateNo()).isEqualTo("ABC-123");
-    // }
-
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should find user by license plate")
-    // void shouldFindUserByLicensePlate() {
-    // // Arrange
-    // entityManager.persist(user1);
-    // entityManager.flush();
-    //
-    // // Act
-    // Optional<User> found = userRepository.findByLicensePlate("ABC-123");
-    //
-    // // Assert
-    // assertThat(found).isPresent();
-    // assertThat(found.get().getModel()).isEqualTo("Toyota Camry");
-    // }
 
     @Test
     @DisplayName("Should update user successfully")

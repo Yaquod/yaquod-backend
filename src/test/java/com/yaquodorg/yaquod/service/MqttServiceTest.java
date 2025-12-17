@@ -1,15 +1,19 @@
 package com.yaquodorg.yaquod.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
-import com.yaquodorg.yaquod.dtos.VehicleDto;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.service.mqtt.MqttGateway;
-import com.yaquodorg.yaquod.service.mqtt.MqttService;
-import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,13 +26,16 @@ import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
+import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.service.mqtt.MqttGateway;
+import com.yaquodorg.yaquod.service.mqtt.MqttService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -56,7 +63,7 @@ class MqttServiceTest {
 
     private Map<String, Object> headers;
 
-    private  final  String VinNumber1 = "1HGCM82633A004352";
+    private final String VinNumber1 = "1HGCM82633A004352";
 
     @BeforeEach
     void setUp() {
@@ -311,12 +318,12 @@ class MqttServiceTest {
         // Arrange
         String topic = "topic/update_location";
         UpdateVehicleLocationDto dto1 = new UpdateVehicleLocationDto();
-        dto1.setVinNumber("WAUZZZ8K9DA123456");  // VIN001  =WAUZZZ8K9DA123456
+        dto1.setVinNumber("WAUZZZ8K9DA123456"); // VIN001 =WAUZZZ8K9DA123456
         dto1.setLongitude(10.0);
         dto1.setLatitude(20.0);
 
         UpdateVehicleLocationDto dto2 = new UpdateVehicleLocationDto();
-        dto2.setVinNumber("WDBRF40JX3F376482");  // VIN002  = WDBRF40JX3F376482
+        dto2.setVinNumber("WDBRF40JX3F376482"); // VIN002 = WDBRF40JX3F376482
         dto2.setLongitude(30.0);
         dto2.setLatitude(40.0);
 
@@ -369,14 +376,14 @@ class MqttServiceTest {
     @DisplayName("Should handle all vehicle statuses")
     void shouldHandleAllVehicleStatuses() throws Exception {
         // Test each status
-        VehicleStatus[] statuses = {VehicleStatus.IDLE, VehicleStatus.IN_USE, VehicleStatus.ON_WAY,
-                VehicleStatus.OUT_OF_SERVICE};
+        VehicleStatus[] statuses = { VehicleStatus.IDLE, VehicleStatus.IN_USE, VehicleStatus.ON_WAY,
+                VehicleStatus.OUT_OF_SERVICE };
 
         for (VehicleStatus status : statuses) {
             // Arrange
             String topic = "topic/update_status";
             UpdateVehicleStatusDto dto = new UpdateVehicleStatusDto();
-            dto.setVinNumber("1HGCM82633A004352");  // Using same VIN for simplicity
+            dto.setVinNumber("1HGCM82633A004352"); // Using same VIN for simplicity
             dto.setStatus(status);
 
             headers.put(MqttHeaders.RECEIVED_TOPIC, topic);

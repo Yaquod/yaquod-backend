@@ -1,10 +1,18 @@
 package com.yaquodorg.yaquod.service;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.VehicleRepository;
-import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,14 +21,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
+import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -42,7 +47,6 @@ class VehicleServiceTest {
     private final String VinNumber1 = "1HGCM82633A004352";
     private final String VinNumber2 = "1M8GDM9AXKP042788";
     private final String TestVin = "2GCEK19T7Y1156789";
-
 
     @BeforeEach
     void setUp() {
@@ -256,32 +260,13 @@ class VehicleServiceTest {
         verify(vehicleRepository, times(1)).deleteById(vehicleId);
     }
 
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should handle null DTO gracefully")
-    // void shouldHandleNullDto() {
-    // // Act & Assert
-    // assertThatThrownBy(() -> vehicleService.createVehicle(null))
-    // .isInstanceOf(NullPointerException.class)
-    // .hasMessageContaining("CreateVehicleDto cannot be null");
-    //
-    // verify(vehicleRepository, never()).save(any(Vehicle.class));
-    // }
+    @Test
+    @DisplayName("Should handle null DTO gracefully")
+    void shouldHandleNullDto() {
+        // Act & Assert
+        assertThatThrownBy(() -> vehicleService.createVehicle(null))
+                .isInstanceOf(NullPointerException.class);
 
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should validate DTO fields before creating vehicle")
-    // void shouldValidateDtoFields() {
-    // // Arrange
-    // CreateVehicleDto invalidDto = new CreateVehicleDto();
-    // createVehicleDto.setPlateNo("");
-    // createVehicleDto.setModel(null);
-    // createVehicleDto.setSeats(-1);
-    //
-    // // Act & Assert
-    // assertThatThrownBy(() -> vehicleService.createVehicle(invalidDto))
-    // .isInstanceOf(IllegalArgumentException.class);
-    //
-    // verify(vehicleRepository, never()).save(any(Vehicle.class));
-    // }
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
+    }
 }
