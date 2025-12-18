@@ -1,10 +1,19 @@
 package com.yaquodorg.yaquod.service;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.VehicleRepository;
-import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,14 +22,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
+import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -42,7 +48,6 @@ class VehicleServiceTest {
     private final String VinNumber1 = "1HGCM82633A004352";
     private final String VinNumber2 = "1M8GDM9AXKP042788";
     private final String TestVin = "2GCEK19T7Y1156789";
-
 
     @BeforeEach
     void setUp() {
@@ -256,32 +261,164 @@ class VehicleServiceTest {
         verify(vehicleRepository, times(1)).deleteById(vehicleId);
     }
 
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should handle null DTO gracefully")
-    // void shouldHandleNullDto() {
-    // // Act & Assert
-    // assertThatThrownBy(() -> vehicleService.createVehicle(null))
-    // .isInstanceOf(NullPointerException.class)
-    // .hasMessageContaining("CreateVehicleDto cannot be null");
-    //
-    // verify(vehicleRepository, never()).save(any(Vehicle.class));
-    // }
+    @Test
+    @DisplayName("Should handle null DTO gracefully")
+    void shouldHandleNullDto() {
+        // Act & Assert
+        assertThatThrownBy(() -> vehicleService.createVehicle(null))
+                .isInstanceOf(NullPointerException.class);
 
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should validate DTO fields before creating vehicle")
-    // void shouldValidateDtoFields() {
-    // // Arrange
-    // CreateVehicleDto invalidDto = new CreateVehicleDto();
-    // createVehicleDto.setPlateNo("");
-    // createVehicleDto.setModel(null);
-    // createVehicleDto.setSeats(-1);
-    //
-    // // Act & Assert
-    // assertThatThrownBy(() -> vehicleService.createVehicle(invalidDto))
-    // .isInstanceOf(IllegalArgumentException.class);
-    //
-    // verify(vehicleRepository, never()).save(any(Vehicle.class));
-    // }
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
+    }
+
+    @Test
+    @DisplayName("Should find k-nearest vehicles successfully")
+    void shouldFindKNearestVehicles() {
+        // Arrange
+        double longitude = 31.0;
+        double latitude = 30.0;
+        int k = 3;
+
+        Vehicle vehicle2 = Vehicle.builder()
+                .id(2L)
+                .vinNumber("VIN789")
+                .plateNo("XYZ-789")
+                .model("Honda Accord")
+                .status(VehicleStatus.IDLE)
+                .build();
+
+        List<Vehicle> nearestVehicles = Arrays.asList(vehicle, vehicle2);
+        when(vehicleRepository.findKNearestVehicles(any(), eq(k)))
+                .thenReturn(nearestVehicles);
+
+        // Act
+        List<Vehicle> result = vehicleService.findKNearestVehicles(longitude, latitude, k);
+
+        // Assert
+        assertThat(result).isNotEmpty();
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(Vehicle::getVinNumber)
+                .containsExactly(VinNumber2, "VIN789");
+
+        verify(vehicleRepository, times(1)).findKNearestVehicles(any(), eq(k));
+    }
+
+    @Test
+    @DisplayName("Should return empty list when no vehicles nearby")
+    void shouldReturnEmptyListWhenNoVehiclesNearby() {
+        // Arrange
+        double longitude = 31.0;
+        double latitude = 30.0;
+        int k = 5;
+
+        when(vehicleRepository.findKNearestVehicles(any(), eq(k)))
+                .thenReturn(List.of());
+
+        // Act
+        List<Vehicle> result = vehicleService.findKNearestVehicles(longitude, latitude, k);
+
+        // Assert
+        assertThat(result).isEmpty();
+
+        verify(vehicleRepository, times(1)).findKNearestVehicles(any(), eq(k));
+    }
+
+    @Test
+    @DisplayName("Should find k-nearest vehicles within distance successfully")
+    void shouldFindKNearestVehiclesWithinDistance() {
+        // Arrange
+        double longitude = 31.0;
+        double latitude = 30.0;
+        double maxDistance = 5000.0; // 5km
+        int k = 2;
+
+        List<Vehicle> nearbyVehicles = List.of(vehicle);
+        when(vehicleRepository.findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k)))
+                .thenReturn(nearbyVehicles);
+
+        // Act
+        List<Vehicle> result = vehicleService.findKNearestVehiclesWithinDistance(
+                longitude, latitude, maxDistance, k);
+
+        // Assert
+        assertThat(result).isNotEmpty();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getVinNumber()).isEqualTo(VinNumber2);
+
+        verify(vehicleRepository, times(1))
+                .findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k));
+    }
+
+    @Test
+    @DisplayName("Should return empty list when no vehicles within specified distance")
+    void shouldReturnEmptyListWhenNoVehiclesWithinDistance() {
+        // Arrange
+        double longitude = 31.0;
+        double latitude = 30.0;
+        double maxDistance = 100.0; // 100 meters
+        int k = 5;
+
+        when(vehicleRepository.findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k)))
+                .thenReturn(List.of());
+
+        // Act
+        List<Vehicle> result = vehicleService.findKNearestVehiclesWithinDistance(
+                longitude, latitude, maxDistance, k);
+
+        // Assert
+        assertThat(result).isEmpty();
+
+        verify(vehicleRepository, times(1))
+                .findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k));
+    }
+
+    @Test
+    @DisplayName("Should create Point geometry correctly for k-nearest search")
+    void shouldCreatePointGeometryCorrectlyForKNearestSearch() {
+        // Arrange
+        double longitude = 31.2345;
+        double latitude = 30.6789;
+        int k = 1;
+
+        when(vehicleRepository.findKNearestVehicles(any(), eq(k)))
+                .thenReturn(List.of(vehicle));
+
+        // Act
+        vehicleService.findKNearestVehicles(longitude, latitude, k);
+
+        // Assert
+        verify(vehicleRepository, times(1)).findKNearestVehicles(any(), eq(k));
+    }
+
+    @Test
+    @DisplayName("Should handle various k values correctly")
+    void shouldHandleVariousKValuesCorrectly() {
+        // Arrange
+        double longitude = 31.0;
+        double latitude = 30.0;
+
+        // Test with k=1
+        when(vehicleRepository.findKNearestVehicles(any(), eq(1)))
+                .thenReturn(List.of(vehicle));
+
+        // Act
+        List<Vehicle> result1 = vehicleService.findKNearestVehicles(longitude, latitude, 1);
+
+        // Assert
+        assertThat(result1).hasSize(1);
+
+        // Test with k=10
+        List<Vehicle> multipleVehicles = Arrays.asList(vehicle);
+        when(vehicleRepository.findKNearestVehicles(any(), eq(10)))
+                .thenReturn(multipleVehicles);
+
+        // Act
+        List<Vehicle> result10 = vehicleService.findKNearestVehicles(longitude, latitude, 10);
+
+        // Assert
+        assertThat(result10).isNotEmpty();
+
+        verify(vehicleRepository, times(1)).findKNearestVehicles(any(), eq(1));
+        verify(vehicleRepository, times(1)).findKNearestVehicles(any(), eq(10));
+    }
 }

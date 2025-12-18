@@ -1,10 +1,17 @@
 package com.yaquodorg.yaquod.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.VehicleRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,14 +23,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -84,8 +88,8 @@ class VehicleControllerSecurityIntegrationTest {
     @DisplayName("POST /api/vehicles - Should return 401 when not authenticated")
     void shouldReturn401WhenNotAuthenticated() throws Exception {
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
     }
@@ -95,8 +99,8 @@ class VehicleControllerSecurityIntegrationTest {
     @WithMockUser(roles = "USER")
     void shouldReturn403WhenUserLacksAdminRole() throws Exception {
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
@@ -106,8 +110,8 @@ class VehicleControllerSecurityIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldSucceedWithAdminRole() throws Exception {
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
@@ -166,8 +170,8 @@ class VehicleControllerSecurityIntegrationTest {
     @WithMockUser(roles = "USER")
     void shouldRequireAdminRoleForUpdate() throws Exception {
         mockMvc.perform(patch("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
@@ -208,8 +212,8 @@ class VehicleControllerSecurityIntegrationTest {
     void shouldPerformFullCrudFlow() throws Exception {
         // 1. Create vehicle
         String createResponse = mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
@@ -243,8 +247,8 @@ class VehicleControllerSecurityIntegrationTest {
                 .build();
 
         mockMvc.perform(patch("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -264,8 +268,8 @@ class VehicleControllerSecurityIntegrationTest {
     void shouldHandleConcurrentVehicleCreation() throws Exception {
         // Create first vehicle
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andExpect(status().isCreated());
 
         // Create second vehicle with different plate
@@ -279,8 +283,8 @@ class VehicleControllerSecurityIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto2)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto2)))
                 .andExpect(status().isCreated());
 
         // Verify both exist
@@ -295,8 +299,8 @@ class VehicleControllerSecurityIntegrationTest {
     void shouldGetVehicleByVINAfterCreation() throws Exception {
         // Create vehicle
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andExpect(status().isCreated());
 
         // Get the created vehicle's VIN
@@ -354,8 +358,8 @@ class VehicleControllerSecurityIntegrationTest {
     void shouldSendLocationUpdateViaMMQTT() throws Exception {
         // Create vehicle first
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andExpect(status().isCreated());
 
         Vehicle created = vehicleRepository.findAll().get(0);
@@ -375,8 +379,8 @@ class VehicleControllerSecurityIntegrationTest {
     void shouldSendStatusUpdateViaMQTT() throws Exception {
         // Create vehicle first
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andExpect(status().isCreated());
 
         Vehicle created = vehicleRepository.findAll().get(0);
@@ -406,42 +410,42 @@ class VehicleControllerSecurityIntegrationTest {
     /**
      * VALIDATION TESTS
      */
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should validate DTO fields on create")
-    // @WithMockUser(roles = "ADMIN")
-    // void shouldValidateDtoFieldsOnCreate() throws Exception {
-    // // Invalid DTO with empty plate number
-    // CreateVehicleDto invalidDto = CreateVehicleDto.builder()
-    // .plateNo("") // Invalid
-    // .model(null) // Invalid
-    // .seats(-1) // Invalid
-    // .build();
-    //
-    // mockMvc.perform(post("/api/vehicles")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(invalidDto)))
-    // .andDo(print())
-    // .andExpect(status().isBadRequest());
-    // }
 
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should handle malformed JSON")
-    // @WithMockUser(roles = "ADMIN")
-    // void shouldHandleMalformedJson() throws Exception {
-    // mockMvc.perform(post("/api/vehicles")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content("{invalid json"))
-    // .andDo(print())
-    // .andExpect(status().isBadRequest());
-    // }
+    @Test
+    @DisplayName("Should validate DTO fields on create")
+    @WithMockUser(roles = "ADMIN")
+    void shouldValidateDtoFieldsOnCreate() throws Exception {
+        // Invalid DTO with empty plate number
+        CreateVehicleDto invalidDto = CreateVehicleDto.builder()
+                .plateNo("") // Invalid
+                .model(null) // Invalid
+                .seats(-1) // Invalid
+                .build();
+
+        mockMvc.perform(post("/api/vehicles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should handle malformed JSON")
+    @WithMockUser(roles = "ADMIN")
+    void shouldHandleMalformedJson() throws Exception {
+        mockMvc.perform(post("/api/vehicles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{invalid json"))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
     @Test
     @DisplayName("Should handle missing content type")
     @WithMockUser(roles = "ADMIN")
     void shouldHandleMissingContentType() throws Exception {
         mockMvc.perform(post("/api/vehicles")
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isUnsupportedMediaType());
     }
@@ -455,8 +459,8 @@ class VehicleControllerSecurityIntegrationTest {
     void shouldHandleMultipleRapidRequests() throws Exception {
         // Valid VIN numbers with correct check digits
         String[] validVins = {
-            VinNumber1,
-            VinNumber2
+                VinNumber1,
+                VinNumber2
         };
 
         for (int i = 0; i < 2; i++) {
@@ -470,8 +474,8 @@ class VehicleControllerSecurityIntegrationTest {
                     .build();
 
             mockMvc.perform(post("/api/vehicles")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isCreated());
         }
 
@@ -495,8 +499,8 @@ class VehicleControllerSecurityIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated());
     }
 
@@ -506,8 +510,8 @@ class VehicleControllerSecurityIntegrationTest {
     void shouldPersistDataAcrossRequests() throws Exception {
         // Create vehicle
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andExpect(status().isCreated());
 
         // Verify it exists in second request
