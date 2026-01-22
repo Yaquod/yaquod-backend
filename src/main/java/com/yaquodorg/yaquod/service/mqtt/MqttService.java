@@ -1,21 +1,24 @@
 package com.yaquodorg.yaquod.service.mqtt;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.EtaStatusDto;
-import com.yaquodorg.yaquod.dtos.InitTripDto;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.service.request.RequestService;
-import com.yaquodorg.yaquod.service.vehicle.VehicleService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.EtaStatusDto;
+import com.yaquodorg.yaquod.dtos.InitTripDto;
+import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.service.request.RequestService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -26,7 +29,7 @@ public class MqttService {
     private static final String TOPIC_UPDATE_STATUS = "topic/update_status";
     private static final String TOPIC_INIT_TRIP = "topic/trip/init";
     private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
-
+    private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
 
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
@@ -87,7 +90,6 @@ public class MqttService {
         }
     }
 
-
     public void publish(String topic, Object data) {
         try {
             String payload = objectMapper.writeValueAsString(data);
@@ -99,9 +101,14 @@ public class MqttService {
         }
     }
 
-
     @EventListener
     public void handleTripInitiated(InitTripDto event) {
         publish(TOPIC_INIT_TRIP, event);
     }
+
+    @EventListener
+    public void handleMoveVehicleOrder(MoveVehicleDto event) {
+        publish(TOPIC_TRIP_MOVE, event);
+    }
+
 }

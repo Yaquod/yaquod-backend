@@ -1,26 +1,27 @@
 package com.yaquodorg.yaquod.service.request;
 
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.repository.RequestRepository;
-import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -28,12 +29,12 @@ import java.util.List;
 public class RequestServiceImpl implements RequestService {
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-    private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private final RequestRepository requestRepository;
 
     private final UserService userService;
     private final TripService tripService;
-    private final MqttService mqttService;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     @Override
@@ -43,7 +44,8 @@ public class RequestServiceImpl implements RequestService {
         Point startPoint = geometryFactory.createPoint(new Coordinate(startLong, startLat));
         Point endPoint = geometryFactory.createPoint(new Coordinate(endLong, endLat));
 
-        Request request = Request.builder().user(user).startLocation(startPoint).destinationLocation(endPoint).status(RequestStatus.PENDING).createdAt(new Timestamp(new Date().getTime())).build();
+        Request request = Request.builder().user(user).startLocation(startPoint).destinationLocation(endPoint)
+                .status(RequestStatus.PENDING).createdAt(new Timestamp(new Date().getTime())).build();
 
         Request savedRequest = requestRepository.save(request);
         tripService.createTrip(savedRequest, startLong, startLat, endLong, endLat);
@@ -70,7 +72,8 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     @Override
     public void updateRequest(Long requestId, RequestStatus requestStatus, double estimatedTime, double estimatedFare) {
-        Request request = requestRepository.findById(requestId).orElseThrow(() -> new RuntimeException("Request not found!"));
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found!"));
 
         request.setStatus(requestStatus);
         request.setEstimatedTime(estimatedTime);
@@ -106,7 +109,9 @@ public class RequestServiceImpl implements RequestService {
         if (!request.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized to accept this request");
         } else {
-            mqttService.publish(TOPIC_TRIP_MOVE, generateVehicleMovementDto(id));
+            // publish to broker
+            MoveVehicleDto moveVehicleDto = generateVehicleMovementDto(id);
+            eventPublisher.publishEvent(moveVehicleDto);
             request.setStatus(RequestStatus.ACCEPTED);
             log.info("Request with id {} has been accepted.", id);
             long tripId = request.getTrip().getId();
