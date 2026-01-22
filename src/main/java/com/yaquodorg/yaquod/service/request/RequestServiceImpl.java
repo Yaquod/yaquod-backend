@@ -4,6 +4,9 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
+import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
+import com.yaquodorg.yaquod.entity.Vehicle;
 import lombok.extern.java.Log;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -111,5 +114,15 @@ public class RequestServiceImpl implements RequestService {
             return request;
         }
 
+    }
+
+    @Override
+    public MoveVehicleDto generateVehicleMovementDto(Long requestId) {
+        Request request = getRequest(requestId);
+        Point startLocation = request.getStartLocation();
+        double startLat = startLocation.getY();
+        double startLong = startLocation.getX();
+        String vinNumber = request.getTrip().getVehicle().getVinNumber();
+        return new MoveVehicleDto(vinNumber, startLat, startLong);
     }
 }

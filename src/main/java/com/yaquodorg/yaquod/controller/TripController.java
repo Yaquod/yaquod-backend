@@ -167,14 +167,12 @@ public class TripController {
     public ResponseEntity<ApiResponse<Request>> acceptRequest(@PathVariable Long requestId, @RequestHeader("Authorization") String token) {
         try {
             Request request = requestService.acceptRequestById(requestId, token);
-            //TODO: Publish MQTT message to start trip
+            mqttService.publish(TOPIC_TRIP_MOVE, requestService.generateVehicleMovementDto(requestId));
             return ResponseEntity
                     .ok(createSuccessResponse(request));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.createFailureResponse("Failed to accept Request: " + e.getMessage()));
         }
-
-
     }
 }

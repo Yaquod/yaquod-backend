@@ -1,5 +1,7 @@
 package com.yaquodorg.yaquod.service.request;
 
+import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
+import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
 
@@ -21,4 +23,6 @@ public interface RequestService {
     void declineRequestById(Long id,String token);
 
     Request acceptRequestById(Long id ,String token);
+
+    MoveVehicleDto generateVehicleMovementDto(Long requestId);
 }
