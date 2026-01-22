@@ -6,7 +6,6 @@ import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
-import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +25,10 @@ import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 @Slf4j
 public class TripController {
 
-    private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
+
     private final RequestService requestService;
     private final TripService tripService;
-    private final MqttService mqttService;
+
 
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,
@@ -164,7 +163,7 @@ public class TripController {
     @PostMapping("/request/{requestId}/accept")
     public ResponseEntity<ApiResponse<Request>> acceptRequest(@PathVariable Long requestId, @RequestHeader("Authorization") String token) {
         try {
-            mqttService.publish(TOPIC_TRIP_MOVE, requestService.generateVehicleMovementDto(requestId));
+
             Request request = requestService.acceptRequestById(requestId, token);
             return ResponseEntity
                     .ok(createSuccessResponse(request));

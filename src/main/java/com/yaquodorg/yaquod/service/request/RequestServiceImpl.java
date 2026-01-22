@@ -5,6 +5,7 @@ import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.repository.RequestRepository;
+import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -20,17 +21,19 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RequestServiceImpl implements RequestService {
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-
+    private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private final RequestRepository requestRepository;
 
     private final UserService userService;
     private final TripService tripService;
+    private final MqttService mqttService;
 
     @Transactional
     @Override
@@ -103,6 +106,7 @@ public class RequestServiceImpl implements RequestService {
         if (!request.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized to accept this request");
         } else {
+            mqttService.publish(TOPIC_TRIP_MOVE, generateVehicleMovementDto(id));
             request.setStatus(RequestStatus.ACCEPTED);
             log.info("Request with id {} has been accepted.", id);
             long tripId = request.getTrip().getId();
