@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
+import lombok.extern.java.Log;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -85,5 +86,15 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public void deleteRequest(Long requestId) {
         requestRepository.deleteById(requestId);
+    }
+
+    @Override
+    public void declineRequestById(Long id) {
+        Request request = getRequest(id);
+        request.setStatus(RequestStatus.DECLINED);
+        log.info("Request with id {} has been declined.", id);
+        long tripId = request.getTrip().getId().intValue();
+        tripService.declineTripById(tripId);
+        log.info("Declining associated trip with id {}.", tripId);
     }
 }

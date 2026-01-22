@@ -151,4 +151,16 @@ public class TripController {
                     .body(ApiResponse.createFailureResponse("Failed to get Trips by VIN number: " + e.getMessage()));
         }
     }
+
+    @PostMapping("/request/{requestId}/decline")
+    public  ResponseEntity<ApiResponse<MessageResponse>>declineRequest(@PathVariable Long requestId) {
+        try {
+            requestService.declineRequestById(requestId);
+            return ResponseEntity
+                    .ok(createSuccessResponse(new MessageResponse("Request declined successfully")));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.createFailureResponse("Failed to decline Request: " + e.getMessage()));
+        }
+    }
 }

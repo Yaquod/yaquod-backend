@@ -101,6 +101,12 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public void declineTripById(Long id) {
+        Trip trip = getTripById(id);
+        trip.setStatus(TripStatus.CANCELLED);
+    }
+
+    @Override
     public List<Trip> getAllTrips() {
         return tripRepository.findAll();
     }

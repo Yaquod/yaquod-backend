@@ -23,4 +23,6 @@ public interface TripService {
     List<Trip> getTripsByVinNumber(String vinNumber);
 
     void deleteTripById(Long id);
+
+    void declineTripById(Long id);
 }

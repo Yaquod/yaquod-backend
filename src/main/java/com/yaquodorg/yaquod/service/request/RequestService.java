@@ -17,4 +17,6 @@ public interface RequestService {
     void updateRequest(Long requestId, RequestStatus requestStatus, double estimatedTime, double estimatedFare);
 
     void deleteRequest(Long requestId);
+
+    void declineRequestById(Long id);
 }
