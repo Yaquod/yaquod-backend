@@ -5,9 +5,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import lombok.extern.java.Log;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -85,6 +82,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional
     public void declineRequestById(Long id, String token) {
         User user = userService.getUserByJwt(token);
         Request request = getRequest(id);
@@ -100,6 +98,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional
     public Request acceptRequestById(Long id, String token) {
         User user = userService.getUserByJwt(token);
         Request request = getRequest(id);
@@ -123,6 +122,10 @@ public class RequestServiceImpl implements RequestService {
         double startLat = startLocation.getY();
         double startLong = startLocation.getX();
         String vinNumber = request.getTrip().getVehicle().getVinNumber();
-        return new MoveVehicleDto(vinNumber, startLat, startLong);
+        return MoveVehicleDto.builder()
+                .vinNumber(vinNumber)
+                .latitude(startLat)
+                .longitude(startLong)
+                .build();
     }
 }

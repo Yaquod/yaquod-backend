@@ -3,9 +3,11 @@ package com.yaquodorg.yaquod.dtos;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class MoveVehicleDto {
     // @ValidVIN
     private String vinNumber;
@@ -20,9 +22,4 @@ public class MoveVehicleDto {
     @DecimalMax("90.0")
     private double latitude;
 
-    public MoveVehicleDto(String vinNumber, double startLat, double startLong) {
-        this.vinNumber = vinNumber;
-        this.latitude = startLat;
-        this.longitude = startLong;
-    }
 }

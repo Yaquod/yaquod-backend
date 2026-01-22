@@ -49,7 +49,7 @@ public class TripServiceImpl implements TripService {
         }
 
         // get vin number and set vehicle state as processing
-        Vehicle vehicle = vehicles.get(0);
+        Vehicle vehicle = vehicles.getFirst();
         String vinNumber = vehicle.getVinNumber();
         vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.PROCESSING);
 
@@ -101,12 +101,14 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    @Transactional
     public void declineTripById(Long id) {
         Trip trip = getTripById(id);
         trip.setStatus(TripStatus.CANCELLED);
     }
 
     @Override
+    @Transactional
     public void acceptTripById(Long id) {
         Trip trip = getTripById(id);
         trip.setStatus(TripStatus.IN_PROGRESS);
