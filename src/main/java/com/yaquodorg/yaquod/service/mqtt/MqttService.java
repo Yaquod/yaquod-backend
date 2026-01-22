@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.EtaStatusDto;
 import com.yaquodorg.yaquod.dtos.InitTripDto;
+import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
@@ -28,6 +29,7 @@ public class MqttService {
     private static final String TOPIC_UPDATE_STATUS = "topic/update_status";
     private static final String TOPIC_INIT_TRIP = "topic/trip/init";
     private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
+    private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
 
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
@@ -103,4 +105,10 @@ public class MqttService {
     public void handleTripInitiated(InitTripDto event) {
         publish(TOPIC_INIT_TRIP, event);
     }
+
+    @EventListener
+    public void handleMoveVehicleOrder(MoveVehicleDto event) {
+        publish(TOPIC_TRIP_MOVE, event);
+    }
+
 }

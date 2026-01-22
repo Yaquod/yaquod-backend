@@ -49,7 +49,7 @@ public class TripServiceImpl implements TripService {
         }
 
         // get vin number and set vehicle state as processing
-        Vehicle vehicle = vehicles.get(0);
+        Vehicle vehicle = vehicles.getFirst();
         String vinNumber = vehicle.getVinNumber();
         vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.PROCESSING);
 
@@ -93,6 +93,14 @@ public class TripServiceImpl implements TripService {
             log.error("Trip not found for id: {}", id);
             return new RuntimeException("Trip not found for id: " + id);
         });
+    }
+
+    @Override
+    @Transactional
+    public void updateTripStatus(Long id, TripStatus tripStatus) {
+        Trip trip = tripRepository.findById(id).orElseThrow(() -> new RuntimeException("Trip not found!"));
+
+        trip.setStatus(tripStatus);
     }
 
     @Override

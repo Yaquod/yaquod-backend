@@ -106,6 +106,7 @@ public class VehicleController {
     public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleLocation(@PathVariable String vinNumber) {
         try {
             mqttService.publish(TOPIC_ORDER_UPDATE_LOCATION, new VehicleDto(vinNumber));
+
             return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Order signal sent!")));
         } catch (Exception e) {
             return ResponseEntity.badRequest()

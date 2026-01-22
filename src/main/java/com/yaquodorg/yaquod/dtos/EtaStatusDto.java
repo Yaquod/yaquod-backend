@@ -1,8 +1,6 @@
 package com.yaquodorg.yaquod.dtos;
 
 import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.utils.ValidVIN;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
