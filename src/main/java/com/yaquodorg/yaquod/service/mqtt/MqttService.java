@@ -29,6 +29,7 @@ public class MqttService {
     private static final String TOPIC_INIT_TRIP = "topic/trip/init";
     private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
 
+
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
 
@@ -88,6 +89,8 @@ public class MqttService {
         }
     }
 
+
+
     public void publish(String topic, Object data) {
         try {
             String payload = objectMapper.writeValueAsString(data);
@@ -98,6 +101,8 @@ public class MqttService {
             throw new RuntimeException("Failed to publish to topic: " + topic, e);
         }
     }
+
+
 
     @EventListener
     public void handleTripInitiated(InitTripDto event) {

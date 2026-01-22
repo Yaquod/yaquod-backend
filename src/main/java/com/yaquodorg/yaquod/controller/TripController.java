@@ -4,16 +4,11 @@ import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
 import java.util.List;
 
+import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.yaquodorg.yaquod.dtos.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
@@ -35,10 +30,12 @@ public class TripController {
 
     private final RequestService requestService;
     private final TripService tripService;
+    private final MqttService mqttService;
+    private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
 
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,
-            @AuthenticationPrincipal User user) {
+                                                              @AuthenticationPrincipal User user) {
         try {
             Request request = requestService.createRequest(user.getId(),
                     tripRequestDto.getStartLong(),
@@ -129,7 +126,7 @@ public class TripController {
 
     @GetMapping("/last/{n}")
     public ResponseEntity<ApiResponse<List<Trip>>> getLastNTrips(@PathVariable int n,
-            @AuthenticationPrincipal User user) {
+                                                                 @AuthenticationPrincipal User user) {
         try {
             List<Trip> trips = tripService.getUserLastNTrips(n, user.getId());
             return ResponseEntity
@@ -152,15 +149,32 @@ public class TripController {
         }
     }
 
+    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/request/{requestId}/decline")
-    public  ResponseEntity<ApiResponse<MessageResponse>>declineRequest(@PathVariable Long requestId) {
+    public ResponseEntity<ApiResponse<MessageResponse>> declineRequest(@PathVariable Long requestId, @RequestHeader("Authorization") String token) {
         try {
-            requestService.declineRequestById(requestId);
+            requestService.declineRequestById(requestId, token);
             return ResponseEntity
                     .ok(createSuccessResponse(new MessageResponse("Request declined successfully")));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.createFailureResponse("Failed to decline Request: " + e.getMessage()));
         }
+    }
+
+    @PreAuthorize("hasRole('CLIENT')")
+    @PostMapping("/request/{requestId}/accept")
+    public ResponseEntity<ApiResponse<Request>> acceptRequest(@PathVariable Long requestId, @RequestHeader("Authorization") String token) {
+        try {
+            Request request = requestService.acceptRequestById(requestId, token);
+            //TODO: Publish MQTT message to start trip
+            return ResponseEntity
+                    .ok(createSuccessResponse(request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.createFailureResponse("Failed to accept Request: " + e.getMessage()));
+        }
+
+
     }
 }

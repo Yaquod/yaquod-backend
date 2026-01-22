@@ -107,6 +107,12 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public void acceptTripById(Long id) {
+        Trip trip = getTripById(id);
+        trip.setStatus(TripStatus.IN_PROGRESS);
+    }
+
+    @Override
     public List<Trip> getAllTrips() {
         return tripRepository.findAll();
     }

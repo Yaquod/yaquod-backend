@@ -42,13 +42,7 @@ public class RequestServiceImpl implements RequestService {
         Point startPoint = geometryFactory.createPoint(new Coordinate(startLong, startLat));
         Point endPoint = geometryFactory.createPoint(new Coordinate(endLong, endLat));
 
-        Request request = Request.builder()
-                .user(user)
-                .startLocation(startPoint)
-                .destinationLocation(endPoint)
-                .status(RequestStatus.PENDING)
-                .createdAt(new Timestamp(new Date().getTime()))
-                .build();
+        Request request = Request.builder().user(user).startLocation(startPoint).destinationLocation(endPoint).status(RequestStatus.PENDING).createdAt(new Timestamp(new Date().getTime())).build();
 
         Request savedRequest = requestRepository.save(request);
         tripService.createTrip(savedRequest, startLong, startLat, endLong, endLat);
@@ -75,8 +69,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     @Override
     public void updateRequest(Long requestId, RequestStatus requestStatus, double estimatedTime, double estimatedFare) {
-        Request request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found!"));
+        Request request = requestRepository.findById(requestId).orElseThrow(() -> new RuntimeException("Request not found!"));
 
         request.setStatus(requestStatus);
         request.setEstimatedTime(estimatedTime);
@@ -89,12 +82,34 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public void declineRequestById(Long id) {
+    public void declineRequestById(Long id, String token) {
+        User user = userService.getUserByJwt(token);
         Request request = getRequest(id);
-        request.setStatus(RequestStatus.DECLINED);
-        log.info("Request with id {} has been declined.", id);
-        long tripId = request.getTrip().getId().intValue();
-        tripService.declineTripById(tripId);
-        log.info("Declining associated trip with id {}.", tripId);
+        if (!request.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized to decline this request");
+        } else {
+            request.setStatus(RequestStatus.DECLINED);
+            log.info("Request with id {} has been declined.", id);
+            long tripId = request.getTrip().getId().intValue();
+            tripService.declineTripById(tripId);
+            log.info("Declining associated trip with id {}.", tripId);
+        }
+    }
+
+    @Override
+    public Request acceptRequestById(Long id, String token) {
+        User user = userService.getUserByJwt(token);
+        Request request = getRequest(id);
+        if (!request.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized to accept this request");
+        } else {
+            request.setStatus(RequestStatus.ACCEPTED);
+            log.info("Request with id {} has been accepted.", id);
+            long tripId = request.getTrip().getId().intValue();
+            tripService.acceptTripById(tripId);
+            log.info("Accepting associated trip with id {}.", tripId);
+            return request;
+        }
+
     }
 }

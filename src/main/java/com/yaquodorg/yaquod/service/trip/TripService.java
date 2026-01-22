@@ -25,4 +25,6 @@ public interface TripService {
     void deleteTripById(Long id);
 
     void declineTripById(Long id);
+
+    void  acceptTripById(Long id);
 }
