@@ -15,10 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
+import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.repository.RequestRepository;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +37,7 @@ public class RequestServiceImpl implements RequestService {
 
     private final UserService userService;
     private final TripService tripService;
+    private final VehicleService vehicleService;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -95,9 +100,18 @@ public class RequestServiceImpl implements RequestService {
         } else {
             request.setStatus(RequestStatus.DECLINED);
             log.info("Request with id {} has been declined.", id);
-            long tripId = request.getTrip().getId().intValue();
+
+            Trip trip = request.getTrip();
+            long tripId = trip.getId();
             tripService.declineTripById(tripId);
             log.info("Declining associated trip with id {}.", tripId);
+
+            Vehicle vehicle = trip.getVehicle();
+            if (vehicle != null) {
+                String vinNumber = vehicle.getVinNumber();
+                vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IDLE);
+                log.info("Returning vehicle status with vin: {} to IDLE", vinNumber);
+            }
         }
     }
 
@@ -114,9 +128,19 @@ public class RequestServiceImpl implements RequestService {
             eventPublisher.publishEvent(moveVehicleDto);
             request.setStatus(RequestStatus.ACCEPTED);
             log.info("Request with id {} has been accepted.", id);
-            long tripId = request.getTrip().getId();
+
+            Trip trip = request.getTrip();
+            long tripId = trip.getId();
             tripService.acceptTripById(tripId);
             log.info("Accepting associated trip with id {}.", tripId);
+
+            Vehicle vehicle = trip.getVehicle();
+            if (vehicle != null) {
+                String vinNumber = vehicle.getVinNumber();
+                vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.ON_WAY);
+                log.info("Returning vehicle status with vin: {} to ON_WAY", vinNumber);
+            }
+
             return request;
         }
 
@@ -125,12 +149,18 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public MoveVehicleDto generateVehicleMovementDto(Long requestId) {
         Request request = getRequest(requestId);
+        Trip trip = request.getTrip();
+        Vehicle vehicle = trip.getVehicle();
+
+        String vinNumber = vehicle.getVinNumber();
+        long tripId = trip.getId();
         Point startLocation = request.getStartLocation();
         double startLat = startLocation.getY();
         double startLong = startLocation.getX();
-        String vinNumber = request.getTrip().getVehicle().getVinNumber();
+
         return MoveVehicleDto.builder()
                 .vinNumber(vinNumber)
+                .tripId(tripId)
                 .latitude(startLat)
                 .longitude(startLong)
                 .build();
