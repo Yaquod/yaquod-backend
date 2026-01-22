@@ -1,27 +1,20 @@
 package com.yaquodorg.yaquod.service.trip;
 
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-
+import com.yaquodorg.yaquod.dtos.InitTripDto;
+import com.yaquodorg.yaquod.entity.*;
+import com.yaquodorg.yaquod.repository.TripRepository;
+import com.yaquodorg.yaquod.service.user.UserService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.yaquodorg.yaquod.dtos.InitTripDto;
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.Trip;
-import com.yaquodorg.yaquod.entity.TripStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.TripRepository;
-import com.yaquodorg.yaquod.service.user.UserService;
-import com.yaquodorg.yaquod.service.vehicle.VehicleService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor

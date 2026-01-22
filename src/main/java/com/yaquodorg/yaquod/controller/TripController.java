@@ -1,26 +1,24 @@
 package com.yaquodorg.yaquod.controller;
 
-import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
-
-import java.util.List;
-
-import com.yaquodorg.yaquod.service.mqtt.MqttService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
 import com.yaquodorg.yaquod.dtos.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
+import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -28,10 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TripController {
 
+    private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private final RequestService requestService;
     private final TripService tripService;
     private final MqttService mqttService;
-    private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
 
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,

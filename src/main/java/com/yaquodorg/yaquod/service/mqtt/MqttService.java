@@ -1,11 +1,5 @@
 package com.yaquodorg.yaquod.service.mqtt;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.integration.annotation.ServiceActivator;
-import org.springframework.integration.mqtt.support.MqttHeaders;
-import org.springframework.messaging.Message;
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.EtaStatusDto;
@@ -15,9 +9,13 @@ import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.integration.annotation.ServiceActivator;
+import org.springframework.integration.mqtt.support.MqttHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -90,7 +88,6 @@ public class MqttService {
     }
 
 
-
     public void publish(String topic, Object data) {
         try {
             String payload = objectMapper.writeValueAsString(data);
@@ -101,7 +98,6 @@ public class MqttService {
             throw new RuntimeException("Failed to publish to topic: " + topic, e);
         }
     }
-
 
 
     @EventListener

@@ -1,23 +1,12 @@
 package com.yaquodorg.yaquod.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
+import com.yaquodorg.yaquod.entity.Request;
+import com.yaquodorg.yaquod.entity.RequestStatus;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.repository.RequestRepository;
+import com.yaquodorg.yaquod.service.request.RequestServiceImpl;
+import com.yaquodorg.yaquod.service.trip.TripService;
+import com.yaquodorg.yaquod.service.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,13 +20,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.repository.RequestRepository;
-import com.yaquodorg.yaquod.service.request.RequestServiceImpl;
-import com.yaquodorg.yaquod.service.trip.TripService;
-import com.yaquodorg.yaquod.service.user.UserService;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -174,7 +165,7 @@ class RequestServiceTest {
     @DisplayName("Should return empty requests list")
     void getRequestsWithEmptyList() {
         // Arrange
-        when(requestRepository.findAll()).thenReturn(Arrays.asList());
+        when(requestRepository.findAll()).thenReturn(List.of());
 
         // Act
         List<Request> result = requestService.getRequests();
@@ -188,7 +179,7 @@ class RequestServiceTest {
     @DisplayName("Should return all user requests")
     void getUserRequests() {
         // Arrange
-        List<Request> userRequests = Arrays.asList(testRequest);
+        List<Request> userRequests = Collections.singletonList(testRequest);
         testUser.setRequests(userRequests);
         when(userService.getUserById(1L)).thenReturn(testUser);
 

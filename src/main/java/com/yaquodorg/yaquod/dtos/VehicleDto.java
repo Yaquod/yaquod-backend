@@ -1,6 +1,5 @@
 package com.yaquodorg.yaquod.dtos;
 
-import com.yaquodorg.yaquod.utils.ValidVIN;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

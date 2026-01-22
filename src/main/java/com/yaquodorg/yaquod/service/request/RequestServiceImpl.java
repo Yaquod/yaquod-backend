@@ -1,10 +1,14 @@
 package com.yaquodorg.yaquod.service.request;
 
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
+import com.yaquodorg.yaquod.entity.Request;
+import com.yaquodorg.yaquod.entity.RequestStatus;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.repository.RequestRepository;
+import com.yaquodorg.yaquod.service.trip.TripService;
+import com.yaquodorg.yaquod.service.user.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -12,15 +16,9 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.repository.RequestRepository;
-import com.yaquodorg.yaquod.service.trip.TripService;
-import com.yaquodorg.yaquod.service.user.UserService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor

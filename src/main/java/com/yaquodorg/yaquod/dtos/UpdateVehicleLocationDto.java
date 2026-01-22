@@ -1,7 +1,5 @@
 package com.yaquodorg.yaquod.dtos;
 
-import com.yaquodorg.yaquod.utils.ValidVIN;
-
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
