@@ -164,8 +164,8 @@ public class TripController {
     @PostMapping("/request/{requestId}/accept")
     public ResponseEntity<ApiResponse<Request>> acceptRequest(@PathVariable Long requestId, @RequestHeader("Authorization") String token) {
         try {
-            Request request = requestService.acceptRequestById(requestId, token);
             mqttService.publish(TOPIC_TRIP_MOVE, requestService.generateVehicleMovementDto(requestId));
+            Request request = requestService.acceptRequestById(requestId, token);
             return ResponseEntity
                     .ok(createSuccessResponse(request));
         } catch (Exception e) {
