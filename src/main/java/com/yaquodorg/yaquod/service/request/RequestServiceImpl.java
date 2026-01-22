@@ -107,7 +107,7 @@ public class RequestServiceImpl implements RequestService {
         } else {
             request.setStatus(RequestStatus.ACCEPTED);
             log.info("Request with id {} has been accepted.", id);
-            long tripId = request.getTrip().getId().intValue();
+            long tripId = request.getTrip().getId();
             tripService.acceptTripById(tripId);
             log.info("Accepting associated trip with id {}.", tripId);
             return request;
