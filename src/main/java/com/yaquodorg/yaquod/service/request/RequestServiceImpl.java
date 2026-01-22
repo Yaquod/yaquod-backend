@@ -16,6 +16,7 @@ import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
 import com.yaquodorg.yaquod.entity.Trip;
+import com.yaquodorg.yaquod.entity.TripStatus;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
@@ -33,13 +34,13 @@ import lombok.extern.slf4j.Slf4j;
 public class RequestServiceImpl implements RequestService {
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+    private final ApplicationEventPublisher eventPublisher;
+
     private final RequestRepository requestRepository;
 
     private final UserService userService;
     private final TripService tripService;
     private final VehicleService vehicleService;
-
-    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     @Override
@@ -86,6 +87,15 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional
+    public void updateRequestStatus(Long requestId, RequestStatus requestStatus) {
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found!"));
+
+        request.setStatus(requestStatus);
+    }
+
+    @Override
     public void deleteRequest(Long requestId) {
         requestRepository.deleteById(requestId);
     }
@@ -98,12 +108,12 @@ public class RequestServiceImpl implements RequestService {
         if (!request.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized to decline this request");
         } else {
-            request.setStatus(RequestStatus.DECLINED);
+            updateRequestStatus(id, RequestStatus.DECLINED);
             log.info("Request with id {} has been declined.", id);
 
             Trip trip = request.getTrip();
             long tripId = trip.getId();
-            tripService.declineTripById(tripId);
+            tripService.updateTripStatus(tripId, TripStatus.CANCELLED);
             log.info("Declining associated trip with id {}.", tripId);
 
             Vehicle vehicle = trip.getVehicle();
@@ -126,12 +136,13 @@ public class RequestServiceImpl implements RequestService {
             // publish to broker
             MoveVehicleDto moveVehicleDto = generateVehicleMovementDto(id);
             eventPublisher.publishEvent(moveVehicleDto);
-            request.setStatus(RequestStatus.ACCEPTED);
+
+            updateRequestStatus(id, RequestStatus.ACCEPTED);
             log.info("Request with id {} has been accepted.", id);
 
             Trip trip = request.getTrip();
             long tripId = trip.getId();
-            tripService.acceptTripById(tripId);
+            tripService.updateTripStatus(tripId, TripStatus.IN_PROGRESS);
             log.info("Accepting associated trip with id {}.", tripId);
 
             Vehicle vehicle = trip.getVehicle();
