@@ -70,6 +70,11 @@ jobs:
       - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
+
+      - name: Write Firebase credentials
+        run: |
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" > src/main/resources/firebase-service-account.json
+
       # Run tests
       - name: Run Unit & Integration Tests
         run: mvn test
