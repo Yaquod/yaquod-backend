@@ -13,6 +13,7 @@ import com.yaquodorg.yaquod.dtos.InitTripDto;
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
+import com.yaquodorg.yaquod.dtos.VehicleArrivalDto;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
@@ -30,6 +31,7 @@ public class MqttService {
     private static final String TOPIC_INIT_TRIP = "topic/trip/init";
     private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
     private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
+    private static final String TOPIC_TRIP_ARRIVE = "topic/trip/arrive";
 
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
@@ -48,6 +50,8 @@ public class MqttService {
             handleVehicleUpdateStatus(payload);
         } else if (TOPIC_ETA_TRIP.equals(topic)) {
             handleVehicleUpdateEta(payload);
+        } else if (TOPIC_TRIP_ARRIVE.equals(topic)) {
+            handleVehicleArrival(payload);
         } else {
             log.warn("Unhandled topic: {}", topic);
         }
@@ -87,6 +91,20 @@ public class MqttService {
             vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.ON_HOLD);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse request status update payload: {}", payload, e);
+        }
+    }
+
+    private void handleVehicleArrival(String payload) {
+        try {
+            VehicleArrivalDto dto = objectMapper.readValue(payload, VehicleArrivalDto.class);
+            log.info("Vehicle with vin: {} arrived at long, lat: {}, {} for trip with id: {}",
+                    dto.getVinNumber(),
+                    dto.getLongitude(),
+                    dto.getLatitude(),
+                    dto.getTripId());
+            // TODO: Send push notification to the user to inform user of vehicle arrival
+        } catch (Exception e) {
+            log.error("Failed to parse vehicle arrival payload: {}", payload, e);
         }
     }
 
