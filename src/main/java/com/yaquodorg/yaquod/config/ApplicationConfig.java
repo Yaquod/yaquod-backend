@@ -58,20 +58,28 @@ public class ApplicationConfig {
     @Bean
     public FirebaseMessaging firebaseMessaging() throws IOException {
         try {
-            log.info("Loading Firebase credentials from classpath");
+            log.info("Initializing FirebaseMessaging bean");
 
-            InputStream serviceAccount = new ClassPathResource("firebase-service-account.json")
-                    .getInputStream();
+            FirebaseApp app;
 
-            GoogleCredentials googleCredentials = GoogleCredentials.fromStream(serviceAccount);
+            if (FirebaseApp.getApps().isEmpty()) {
+                log.info("No FirebaseApp found, creating a new one");
 
-            FirebaseOptions firebaseOptions = FirebaseOptions.builder()
-                    .setCredentials(googleCredentials)
-                    .build();
+                InputStream serviceAccount = new ClassPathResource("firebase-service-account.json").getInputStream();
 
-            FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "yaquod");
+                GoogleCredentials googleCredentials = GoogleCredentials.fromStream(serviceAccount);
 
-            log.info("Firebase application initialized successfully");
+                FirebaseOptions firebaseOptions = FirebaseOptions.builder()
+                        .setCredentials(googleCredentials)
+                        .build();
+
+                app = FirebaseApp.initializeApp(firebaseOptions, "yaquod");
+
+                log.info("Firebase application initialized successfully");
+            } else {
+                log.info("FirebaseApp already exists, reusing it");
+                app = FirebaseApp.getInstance("yaquod");
+            }
 
             return FirebaseMessaging.getInstance(app);
 
