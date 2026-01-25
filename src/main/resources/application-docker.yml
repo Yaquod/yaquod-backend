@@ -62,6 +62,8 @@ mqtt:
     - topic/update_status/order
     - topic/update_status
     - topic/trip/eta
+    - topic/trip/arrive
+    - topic/trip/status
   qos: ${MQTT_QOS:1}
   connection-timeout: ${MQTT_CONNECTION_TIMEOUT:60}
   keep-alive-interval: ${MQTT_KEEP_ALIVE_INTERVAL:60}

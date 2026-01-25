@@ -1,9 +1,11 @@
 package com.yaquodorg.yaquod.config;
 
-import com.yaquodorg.yaquod.service.user.UserService;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -12,8 +14,18 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.yaquodorg.yaquod.service.user.UserService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationConfig {
     private final UserService userService;
 
@@ -41,5 +53,39 @@ public class ApplicationConfig {
         authProvider.setPasswordEncoder(passwordEncoder());
 
         return authProvider;
+    }
+
+    @Bean
+    public FirebaseMessaging firebaseMessaging() throws IOException {
+        try {
+            log.info("Initializing FirebaseMessaging bean");
+
+            FirebaseApp app;
+
+            if (FirebaseApp.getApps().isEmpty()) {
+                log.info("No FirebaseApp found, creating a new one");
+
+                InputStream serviceAccount = new ClassPathResource("firebase-service-account.json").getInputStream();
+
+                GoogleCredentials googleCredentials = GoogleCredentials.fromStream(serviceAccount);
+
+                FirebaseOptions firebaseOptions = FirebaseOptions.builder()
+                        .setCredentials(googleCredentials)
+                        .build();
+
+                app = FirebaseApp.initializeApp(firebaseOptions, "yaquod");
+
+                log.info("Firebase application initialized successfully");
+            } else {
+                log.info("FirebaseApp already exists, reusing it");
+                app = FirebaseApp.getInstance("yaquod");
+            }
+
+            return FirebaseMessaging.getInstance(app);
+
+        } catch (IOException e) {
+            log.error("Failed to initialize Firebase", e);
+            throw e;
+        }
     }
 }

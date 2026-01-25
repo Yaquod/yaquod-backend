@@ -1,24 +1,10 @@
 package com.yaquodorg.yaquod.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.TripRequestDto;
+import com.yaquodorg.yaquod.entity.*;
+import com.yaquodorg.yaquod.service.request.RequestService;
+import com.yaquodorg.yaquod.service.trip.TripService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,16 +17,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.TripRequestDto;
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.entity.Trip;
-import com.yaquodorg.yaquod.entity.TripStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.service.request.RequestService;
-import com.yaquodorg.yaquod.service.trip.TripService;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -120,8 +106,8 @@ class TripControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/api/trips/request")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tripRequestDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tripRequestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1))
@@ -140,8 +126,8 @@ class TripControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/api/trips/request")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tripRequestDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tripRequestDto)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Failed to create trip request: Service error"));
@@ -377,7 +363,7 @@ class TripControllerTest {
     @WithMockUser
     void shouldGetLastNTrips() throws Exception {
         // Arrange
-        List<Trip> lastTrips = Arrays.asList(testTrip);
+        List<Trip> lastTrips = Collections.singletonList(testTrip);
         when(tripService.getUserLastNTrips(eq(5), any())).thenReturn(lastTrips);
 
         // Act & Assert

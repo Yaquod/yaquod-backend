@@ -5,6 +5,7 @@ public enum VehicleStatus {
     PROCESSING,
     ON_HOLD,
     ON_WAY,
+    WAITING_PASSENGER,
     IN_USE,
     OUT_OF_SERVICE
 }

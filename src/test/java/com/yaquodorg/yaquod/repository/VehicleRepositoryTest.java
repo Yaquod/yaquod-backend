@@ -1,10 +1,7 @@
 package com.yaquodorg.yaquod.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.List;
-import java.util.Optional;
-
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,8 +11,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -30,17 +29,14 @@ import com.yaquodorg.yaquod.entity.VehicleStatus;
 @DisplayName("VehicleRepository Unit Tests")
 class VehicleRepositoryTest {
 
-    @Autowired
-    private VehicleRepository vehicleRepository;
-
-    @Autowired
-    private TestEntityManager entityManager;
-
-    private Vehicle vehicle1;
-    private Vehicle vehicle2;
-
     private final String VinNumber1 = "1HGCM82633A004352";
     private final String VinNumber2 = "1M8GDM9AXKP042788";
+    @Autowired
+    private VehicleRepository vehicleRepository;
+    @Autowired
+    private TestEntityManager entityManager;
+    private Vehicle vehicle1;
+    private Vehicle vehicle2;
 
     @BeforeEach
     void setUp() {

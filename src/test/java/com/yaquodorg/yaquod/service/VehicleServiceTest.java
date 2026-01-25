@@ -1,19 +1,10 @@
 package com.yaquodorg.yaquod.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
+import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
+import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,11 +13,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.VehicleRepository;
-import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -36,18 +32,15 @@ import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
 @DisplayName("VehicleService Unit Tests")
 class VehicleServiceTest {
 
-    @Mock
-    private VehicleRepository vehicleRepository;
-
-    @InjectMocks
-    private VehicleServiceImpl vehicleService;
-
-    private CreateVehicleDto createVehicleDto;
-    private Vehicle vehicle;
-
     private final String VinNumber1 = "1HGCM82633A004352";
     private final String VinNumber2 = "1M8GDM9AXKP042788";
     private final String TestVin = "2GCEK19T7Y1156789";
+    @Mock
+    private VehicleRepository vehicleRepository;
+    @InjectMocks
+    private VehicleServiceImpl vehicleService;
+    private CreateVehicleDto createVehicleDto;
+    private Vehicle vehicle;
 
     @BeforeEach
     void setUp() {
@@ -408,7 +401,7 @@ class VehicleServiceTest {
         assertThat(result1).hasSize(1);
 
         // Test with k=10
-        List<Vehicle> multipleVehicles = Arrays.asList(vehicle);
+        List<Vehicle> multipleVehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findKNearestVehicles(any(), eq(10)))
                 .thenReturn(multipleVehicles);
 

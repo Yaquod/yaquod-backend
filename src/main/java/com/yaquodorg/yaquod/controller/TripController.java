@@ -1,20 +1,5 @@
 package com.yaquodorg.yaquod.controller;
 
-import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
-
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.yaquodorg.yaquod.dtos.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
@@ -23,9 +8,16 @@ import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -33,12 +25,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TripController {
 
+
     private final RequestService requestService;
     private final TripService tripService;
 
+
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,
-            @AuthenticationPrincipal User user) {
+                                                              @AuthenticationPrincipal User user) {
         try {
             Request request = requestService.createRequest(user.getId(),
                     tripRequestDto.getStartLong(),
@@ -129,7 +123,7 @@ public class TripController {
 
     @GetMapping("/last/{n}")
     public ResponseEntity<ApiResponse<List<Trip>>> getLastNTrips(@PathVariable int n,
-            @AuthenticationPrincipal User user) {
+                                                                 @AuthenticationPrincipal User user) {
         try {
             List<Trip> trips = tripService.getUserLastNTrips(n, user.getId());
             return ResponseEntity
@@ -149,6 +143,33 @@ public class TripController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.createFailureResponse("Failed to get Trips by VIN number: " + e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('CLIENT')")
+    @PostMapping("/request/{requestId}/decline")
+    public ResponseEntity<ApiResponse<MessageResponse>> declineRequest(@PathVariable Long requestId, @RequestHeader("Authorization") String token) {
+        try {
+            requestService.declineRequestById(requestId, token);
+            return ResponseEntity
+                    .ok(createSuccessResponse(new MessageResponse("Request declined successfully")));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.createFailureResponse("Failed to decline Request: " + e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('CLIENT')")
+    @PostMapping("/request/{requestId}/accept")
+    public ResponseEntity<ApiResponse<Request>> acceptRequest(@PathVariable Long requestId, @RequestHeader("Authorization") String token) {
+        try {
+
+            Request request = requestService.acceptRequestById(requestId, token);
+            return ResponseEntity
+                    .ok(createSuccessResponse(request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.createFailureResponse("Failed to accept Request: " + e.getMessage()));
         }
     }
 }

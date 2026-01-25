@@ -67,10 +67,13 @@ jobs:
           docker run --rm --network host eclipse-mosquitto:2 mosquitto_pub -h localhost -t test/topic -m "test" || echo "MQTT broker test failed"
           echo "MQTT broker is ready on localhost:1883"
 
+      - name: Create Firebase Config File
+        run: |
+          echo "${{ secrets.FIREBASE_CONFIG_JSON }}" | base64 --decode > src/main/resources/firebase-service-account.json
+
       - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
-      # Run tests
       - name: Run Unit & Integration Tests
         run: mvn test
 

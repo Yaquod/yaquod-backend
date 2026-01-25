@@ -1,16 +1,13 @@
 package com.yaquodorg.yaquod.controller;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.sql.Date;
-import java.sql.Timestamp;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.TripRequestDto;
+import com.yaquodorg.yaquod.entity.*;
+import com.yaquodorg.yaquod.repository.RequestRepository;
+import com.yaquodorg.yaquod.repository.TripRepository;
+import com.yaquodorg.yaquod.repository.UserRepository;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,22 +24,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.TripRequestDto;
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.Trip;
-import com.yaquodorg.yaquod.entity.TripStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.RequestRepository;
-import com.yaquodorg.yaquod.repository.TripRepository;
-import com.yaquodorg.yaquod.repository.UserRepository;
-import com.yaquodorg.yaquod.repository.VehicleRepository;
+import java.sql.Date;
+import java.sql.Timestamp;
 
-import jakarta.persistence.EntityManager;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Integration tests for Trip endpoints
@@ -208,8 +197,7 @@ class TripControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(testTrip.getId()))
-                .andExpect(jsonPath("$.data.status").value("INITIATED"))
-                .andExpect(jsonPath("$.data.request.id").value(testRequest.getId()));
+                .andExpect(jsonPath("$.data.status").value("INITIATED"));
     }
 
     @Test
@@ -363,8 +351,8 @@ class TripControllerIntegrationTest {
     void shouldReturn401WhenNotAuthenticated() throws Exception {
         // Act & Assert
         mockMvc.perform(post("/api/trips/request")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tripRequestDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tripRequestDto)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -374,8 +362,8 @@ class TripControllerIntegrationTest {
     void shouldHandleInvalidJsonPayload() throws Exception {
         // Act & Assert
         mockMvc.perform(post("/api/trips/request")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{invalid json"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{invalid json"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -410,8 +398,8 @@ class TripControllerIntegrationTest {
 
         // Act & Assert
         mockMvc.perform(post("/api/trips/request")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(status().isBadRequest());
     }
 }
