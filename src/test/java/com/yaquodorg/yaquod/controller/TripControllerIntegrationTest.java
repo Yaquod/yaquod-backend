@@ -197,8 +197,7 @@ class TripControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(testTrip.getId()))
-                .andExpect(jsonPath("$.data.status").value("INITIATED"))
-                .andExpect(jsonPath("$.data.request.id").value(testRequest.getId()));
+                .andExpect(jsonPath("$.data.status").value("INITIATED"));
     }
 
     @Test

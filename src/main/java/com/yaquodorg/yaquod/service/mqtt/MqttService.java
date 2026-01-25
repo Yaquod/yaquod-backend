@@ -12,11 +12,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.EtaStatusDto;
 import com.yaquodorg.yaquod.dtos.InitTripDto;
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
+import com.yaquodorg.yaquod.dtos.UpdateTripStatusDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
 import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
 import com.yaquodorg.yaquod.dtos.VehicleArrivalDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
+import com.yaquodorg.yaquod.entity.TripStatus;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
@@ -39,6 +41,7 @@ public class MqttService {
     private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
     private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private static final String TOPIC_TRIP_ARRIVE = "topic/trip/arrive";
+    private static final String TOPIC_TRIP_STATUS = "topic/trip/status";
 
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
@@ -61,6 +64,8 @@ public class MqttService {
             handleVehicleUpdateEta(payload);
         } else if (TOPIC_TRIP_ARRIVE.equals(topic)) {
             handleVehicleArrival(payload);
+        } else if (TOPIC_TRIP_STATUS.equals(topic)) {
+            handleVehicleUpdateTripStatus(payload);
         } else {
             log.warn("Unhandled topic: {}", topic);
         }
@@ -134,11 +139,16 @@ public class MqttService {
             String message;
             if (isNearLocation(dto.getLatitude(), dto.getLongitude(), startLat, startLong)) {
                 message = carInfo + " has arrived at your pickup location.";
+                tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_DESTINATION);
+                vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.WAITING_PASSENGER);
             } else if (isNearLocation(dto.getLatitude(), dto.getLongitude(), destinationLat, destinationLong)) {
                 message = carInfo + " has arrived at your destination.";
+                tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_PICKUP);
             } else {
                 message = String.format("%s is at location: %.6f, %.6f",
                         carInfo, dto.getLatitude(), dto.getLongitude());
+                tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_DESTINATION);
+                vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.WAITING_PASSENGER);
             }
 
             log.info("Sending notification to user {}: {}", user.getId(), message);
@@ -146,6 +156,25 @@ public class MqttService {
         } catch (Exception e) {
             log.error("Failed to parse vehicle arrival payload: {}", payload, e);
         }
+    }
+
+    private void handleVehicleUpdateTripStatus(String payload) {
+        try {
+            UpdateTripStatusDto dto = objectMapper.readValue(payload, UpdateTripStatusDto.class);
+
+            try {
+                TripStatus status = TripStatus.valueOf(dto.getTripStatus());
+                tripService.updateTripStatus(dto.getTripId(), status);
+                log.info("Trip status with id: {} updated to {}", dto.getTripId(), status);
+            } catch (IllegalArgumentException e) {
+                log.error("Trip status with id: {} updated to invalid status: {}",
+                        dto.getTripId(), dto.getTripStatus());
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to parse vehicle update status payload: {}", payload, e);
+        }
+
     }
 
     private boolean isNearLocation(double lat1, double lon1, double lat2, double lon2) {

@@ -32,6 +32,7 @@ public class Trip {
     @Column
     private Timestamp updatedAt;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "request_id", referencedColumnName = "id")
     private Request request;
