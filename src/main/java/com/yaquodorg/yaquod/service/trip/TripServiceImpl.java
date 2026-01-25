@@ -98,9 +98,10 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional
     public void updateTripStatus(Long id, TripStatus tripStatus) {
+        Date now = new Date();
         Trip trip = tripRepository.findById(id).orElseThrow(() -> new RuntimeException("Trip not found!"));
-
         trip.setStatus(tripStatus);
+        trip.setUpdatedAt(new Timestamp(now.getTime()));
     }
 
     @Override
