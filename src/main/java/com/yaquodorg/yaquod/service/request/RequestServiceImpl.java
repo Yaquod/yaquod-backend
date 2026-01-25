@@ -113,7 +113,7 @@ public class RequestServiceImpl implements RequestService {
 
             Trip trip = request.getTrip();
             long tripId = trip.getId();
-            tripService.updateTripStatus(tripId, TripStatus.CANCELLED);
+            tripService.updateTripStatus(tripId, TripStatus.CANCELLED_BY_PASSENGER);
             log.info("Declining associated trip with id {}.", tripId);
 
             Vehicle vehicle = trip.getVehicle();
@@ -142,7 +142,7 @@ public class RequestServiceImpl implements RequestService {
 
             Trip trip = request.getTrip();
             long tripId = trip.getId();
-            tripService.updateTripStatus(tripId, TripStatus.IN_PROGRESS);
+            tripService.updateTripStatus(tripId, TripStatus.VEHICLE_ON_WAY);
             log.info("Accepting associated trip with id {}.", tripId);
 
             Vehicle vehicle = trip.getVehicle();
