@@ -8,6 +8,10 @@ import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +27,18 @@ import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 @RequestMapping("/api/trips")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Trips", description = "Trip management and request APIs")
 public class TripController {
 
 
     private final RequestService requestService;
     private final TripService tripService;
 
-
+    @Operation(summary = "Create a new trip request", description = "Creates a new trip request with start and end coordinates for the authenticated user")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip request created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to create trip request")
+    })
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,
                                                               @AuthenticationPrincipal User user) {
@@ -48,8 +57,15 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Get request status", description = "Retrieves the status of a trip request by its ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Request status retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to get request status")
+    })
     @GetMapping("/request/status/{requestId}")
-    public ResponseEntity<ApiResponse<Request>> getRequest(@PathVariable Long requestId) {
+    public ResponseEntity<ApiResponse<Request>> getRequest(
+            @Parameter(description = "The unique ID of the request", required = true)
+            @PathVariable Long requestId) {
         try {
             Request request = requestService.getRequest(requestId);
             return ResponseEntity
@@ -60,8 +76,15 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Get trip by request ID", description = "Retrieves a trip associated with a specific request ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to get trip by request ID")
+    })
     @GetMapping("/by-request/{requestId}")
-    public ResponseEntity<ApiResponse<Trip>> getTripByRequestId(@PathVariable Long requestId) {
+    public ResponseEntity<ApiResponse<Trip>> getTripByRequestId(
+            @Parameter(description = "The unique ID of the request", required = true)
+            @PathVariable Long requestId) {
         try {
             Trip trip = tripService.getTripByRequestId(requestId);
             return ResponseEntity
@@ -72,8 +95,15 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Get trip by ID", description = "Retrieves a specific trip by its database ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to get trip by ID")
+    })
     @GetMapping("/{tripId}")
-    public ResponseEntity<ApiResponse<Trip>> getTripById(@PathVariable Long tripId) {
+    public ResponseEntity<ApiResponse<Trip>> getTripById(
+            @Parameter(description = "The unique database ID of the trip", required = true)
+            @PathVariable Long tripId) {
         try {
             Trip trip = tripService.getTripById(tripId);
             return ResponseEntity
@@ -84,9 +114,17 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Delete a trip", description = "Deletes a trip from the system by its ID. Requires ADMIN role.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip deleted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to delete trip"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied - requires ADMIN role")
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{tripId}")
-    public ResponseEntity<ApiResponse<MessageResponse>> deleteTripById(@PathVariable Long tripId) {
+    public ResponseEntity<ApiResponse<MessageResponse>> deleteTripById(
+            @Parameter(description = "The unique database ID of the trip to delete", required = true)
+            @PathVariable Long tripId) {
         try {
             tripService.deleteTripById(tripId);
             return ResponseEntity
@@ -97,6 +135,11 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Get all trips", description = "Retrieves a list of all trips in the system")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trips retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to get trips")
+    })
     @GetMapping()
     public ResponseEntity<ApiResponse<List<Trip>>> getAllTrips() {
         try {
@@ -109,6 +152,11 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Get trips for current user", description = "Retrieves all trips for the currently authenticated user")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User trips retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to get user trips")
+    })
     @GetMapping("/user")
     public ResponseEntity<ApiResponse<List<Trip>>> getTripsByUserId(@AuthenticationPrincipal User user) {
         try {
@@ -121,9 +169,16 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Get last N trips for current user", description = "Retrieves the last N trips for the currently authenticated user")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Last N trips retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to get last N trips")
+    })
     @GetMapping("/last/{n}")
-    public ResponseEntity<ApiResponse<List<Trip>>> getLastNTrips(@PathVariable int n,
-                                                                 @AuthenticationPrincipal User user) {
+    public ResponseEntity<ApiResponse<List<Trip>>> getLastNTrips(
+            @Parameter(description = "Number of recent trips to retrieve", required = true, example = "5")
+            @PathVariable int n,
+            @AuthenticationPrincipal User user) {
         try {
             List<Trip> trips = tripService.getUserLastNTrips(n, user.getId());
             return ResponseEntity
@@ -134,8 +189,15 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Get trips by vehicle VIN", description = "Retrieves all trips associated with a specific vehicle by its VIN number")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trips retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to get trips by VIN number")
+    })
     @GetMapping("/vehicle/{vinNumber}")
-    public ResponseEntity<ApiResponse<List<Trip>>> getTripsByVinNumber(@PathVariable String vinNumber) {
+    public ResponseEntity<ApiResponse<List<Trip>>> getTripsByVinNumber(
+            @Parameter(description = "The Vehicle Identification Number (VIN)", required = true, example = "1HGBH41JXMN109186")
+            @PathVariable String vinNumber) {
         try {
             List<Trip> trips = tripService.getTripsByVinNumber(vinNumber);
             return ResponseEntity
@@ -146,9 +208,19 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Decline a trip request", description = "Declines a pending trip request. Requires CLIENT role.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Request declined successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to decline request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied - requires CLIENT role")
+    })
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/request/{requestId}/decline")
-    public ResponseEntity<ApiResponse<MessageResponse>> declineRequest(@PathVariable Long requestId, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<ApiResponse<MessageResponse>> declineRequest(
+            @Parameter(description = "The unique ID of the request to decline", required = true)
+            @PathVariable Long requestId,
+            @Parameter(description = "Bearer authorization token", required = true)
+            @RequestHeader("Authorization") String token) {
         try {
             requestService.declineRequestById(requestId, token);
             return ResponseEntity
@@ -159,9 +231,19 @@ public class TripController {
         }
     }
 
+    @Operation(summary = "Accept a trip request", description = "Accepts a pending trip request. Requires CLIENT role.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Request accepted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to accept request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied - requires CLIENT role")
+    })
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/request/{requestId}/accept")
-    public ResponseEntity<ApiResponse<Request>> acceptRequest(@PathVariable Long requestId, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<ApiResponse<Request>> acceptRequest(
+            @Parameter(description = "The unique ID of the request to accept", required = true)
+            @PathVariable Long requestId,
+            @Parameter(description = "Bearer authorization token", required = true)
+            @RequestHeader("Authorization") String token) {
         try {
 
             Request request = requestService.acceptRequestById(requestId, token);
