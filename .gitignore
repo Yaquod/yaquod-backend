@@ -63,3 +63,6 @@ build/
 /src/main/resources/*.json
 
 
+/.agents
+/.github/skills
+/.windsurf
