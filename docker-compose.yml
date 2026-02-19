@@ -18,9 +18,12 @@ services:
       retries: 10
 
   springboot:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # Use image from Docker Hub (built with Jib)
+    image: yaquod/yaquod-backend:latest
+    # Alternatively, uncomment below to build locally with Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     container_name: springboot-app
     depends_on:
       postgis:
