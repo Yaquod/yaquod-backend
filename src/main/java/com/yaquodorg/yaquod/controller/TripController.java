@@ -30,7 +30,6 @@ import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 @Tag(name = "Trips", description = "Trip management and request APIs")
 public class TripController {
 
-
     private final RequestService requestService;
     private final TripService tripService;
 
@@ -41,7 +40,7 @@ public class TripController {
     })
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,
-                                                              @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal User user) {
         try {
             Request request = requestService.createRequest(user.getId(),
                     tripRequestDto.getStartLong(),
@@ -64,8 +63,7 @@ public class TripController {
     })
     @GetMapping("/request/status/{requestId}")
     public ResponseEntity<ApiResponse<Request>> getRequest(
-            @Parameter(description = "The unique ID of the request", required = true)
-            @PathVariable Long requestId) {
+            @Parameter(description = "The unique ID of the request", required = true) @PathVariable Long requestId) {
         try {
             Request request = requestService.getRequest(requestId);
             return ResponseEntity
@@ -83,8 +81,7 @@ public class TripController {
     })
     @GetMapping("/by-request/{requestId}")
     public ResponseEntity<ApiResponse<Trip>> getTripByRequestId(
-            @Parameter(description = "The unique ID of the request", required = true)
-            @PathVariable Long requestId) {
+            @Parameter(description = "The unique ID of the request", required = true) @PathVariable Long requestId) {
         try {
             Trip trip = tripService.getTripByRequestId(requestId);
             return ResponseEntity
@@ -102,8 +99,7 @@ public class TripController {
     })
     @GetMapping("/{tripId}")
     public ResponseEntity<ApiResponse<Trip>> getTripById(
-            @Parameter(description = "The unique database ID of the trip", required = true)
-            @PathVariable Long tripId) {
+            @Parameter(description = "The unique database ID of the trip", required = true) @PathVariable Long tripId) {
         try {
             Trip trip = tripService.getTripById(tripId);
             return ResponseEntity
@@ -123,8 +119,7 @@ public class TripController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{tripId}")
     public ResponseEntity<ApiResponse<MessageResponse>> deleteTripById(
-            @Parameter(description = "The unique database ID of the trip to delete", required = true)
-            @PathVariable Long tripId) {
+            @Parameter(description = "The unique database ID of the trip to delete", required = true) @PathVariable Long tripId) {
         try {
             tripService.deleteTripById(tripId);
             return ResponseEntity
@@ -176,8 +171,7 @@ public class TripController {
     })
     @GetMapping("/last/{n}")
     public ResponseEntity<ApiResponse<List<Trip>>> getLastNTrips(
-            @Parameter(description = "Number of recent trips to retrieve", required = true, example = "5")
-            @PathVariable int n,
+            @Parameter(description = "Number of recent trips to retrieve", required = true, example = "5") @PathVariable int n,
             @AuthenticationPrincipal User user) {
         try {
             List<Trip> trips = tripService.getUserLastNTrips(n, user.getId());
@@ -196,8 +190,7 @@ public class TripController {
     })
     @GetMapping("/vehicle/{vinNumber}")
     public ResponseEntity<ApiResponse<List<Trip>>> getTripsByVinNumber(
-            @Parameter(description = "The Vehicle Identification Number (VIN)", required = true, example = "1HGBH41JXMN109186")
-            @PathVariable String vinNumber) {
+            @Parameter(description = "The Vehicle Identification Number (VIN)", required = true, example = "1HGBH41JXMN109186") @PathVariable String vinNumber) {
         try {
             List<Trip> trips = tripService.getTripsByVinNumber(vinNumber);
             return ResponseEntity
@@ -217,10 +210,8 @@ public class TripController {
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/request/{requestId}/decline")
     public ResponseEntity<ApiResponse<MessageResponse>> declineRequest(
-            @Parameter(description = "The unique ID of the request to decline", required = true)
-            @PathVariable Long requestId,
-            @Parameter(description = "Bearer authorization token", required = true)
-            @RequestHeader("Authorization") String token) {
+            @Parameter(description = "The unique ID of the request to decline", required = true) @PathVariable Long requestId,
+            @Parameter(description = "Bearer authorization token", required = true) @RequestHeader("Authorization") String token) {
         try {
             requestService.declineRequestById(requestId, token);
             return ResponseEntity
@@ -240,10 +231,8 @@ public class TripController {
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/request/{requestId}/accept")
     public ResponseEntity<ApiResponse<Request>> acceptRequest(
-            @Parameter(description = "The unique ID of the request to accept", required = true)
-            @PathVariable Long requestId,
-            @Parameter(description = "Bearer authorization token", required = true)
-            @RequestHeader("Authorization") String token) {
+            @Parameter(description = "The unique ID of the request to accept", required = true) @PathVariable Long requestId,
+            @Parameter(description = "Bearer authorization token", required = true) @RequestHeader("Authorization") String token) {
         try {
 
             Request request = requestService.acceptRequestById(requestId, token);
@@ -252,6 +241,27 @@ public class TripController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.createFailureResponse("Failed to accept Request: " + e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Start a trip", description = "Moves vehicle and starts trip. Requires CLIENT role.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip started successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to start trip"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied - requires CLIENT role")
+    })
+    @PreAuthorize("hasRole('CLIENT')")
+    @PostMapping("/request/{requestId}/start")
+    public ResponseEntity<ApiResponse<MessageResponse>> startTrip(
+            @Parameter(description = "The unique ID of the request assigned with trip", required = true) @PathVariable Long requestId,
+            @Parameter(description = "Bearer authorization token", required = true) @RequestHeader("Authorization") String token) {
+        try {
+            tripService.startTrip(requestId);
+            return ResponseEntity
+                    .ok(ApiResponse.createSuccessResponse(new MessageResponse("Trip started successfully!")));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.createFailureResponse("Failed to start trip: " + e.getMessage()));
         }
     }
 }

@@ -13,8 +13,6 @@ public interface TripService {
 
     Trip getTripById(Long id);
 
-    // Trip updateTrip(Long id, Trip updatedTrip);
-
     List<Trip> getAllTrips();
 
     List<Trip> getTripsByUserId(Long userId);
@@ -26,4 +24,6 @@ public interface TripService {
     void updateTripStatus(Long id, TripStatus tripStatus);
 
     void deleteTripById(Long id);
+
+    void startTrip(Long requestId);
 }

@@ -4,12 +4,14 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
+import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yaquodorg.yaquod.dtos.InitTripDto;
+import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.TripStatus;
@@ -136,5 +138,49 @@ public class TripServiceImpl implements TripService {
                 () -> new RuntimeException("Vehicle not found for vin number: " + vinNumber));
 
         return tripRepository.findByVehicleVinNumber(vehicle.getVinNumber());
+    }
+
+    @Transactional
+    @Override
+    public void startTrip(Long requestId) {
+        Trip trip = getTripByRequestId(requestId);
+        Long tripId = trip.getId();
+
+        Vehicle vehicle = trip.getVehicle();
+        if (vehicle == null) {
+            log.error("No vehicle was matched with trip: {}", tripId);
+            throw new RuntimeException("No vehicle was matched with trip: " + tripId);
+        }
+        String vinNumber = vehicle.getVinNumber();
+
+        Request request = trip.getRequest();
+        if (request == null) {
+            log.error("Trip: {} was not assigned with a request", tripId);
+            throw new RuntimeException("Trip: " + tripId + " was not assigned with a request");
+        }
+        Point destinationLocation = request.getDestinationLocation();
+
+        // TODO: I think we should validate the current states of both the trip and the
+        // vehicle before ordering the vehicle to move and update their statuses
+
+        // Send moving signal to the vehicle with the destination location
+        MoveVehicleDto moveVehicleDto = buildMoveVehicleDto(vinNumber, tripId, destinationLocation);
+        eventPublisher.publishEvent(moveVehicleDto);
+
+        // Update vehicle and trip statuses
+        vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IN_USE);
+        updateTripStatus(tripId, TripStatus.IN_PROGRESS);
+    }
+
+    private MoveVehicleDto buildMoveVehicleDto(String vinNumber, Long tripId, Point destinationLocation) {
+        double destinationLat = destinationLocation.getY();
+        double destinationLong = destinationLocation.getX();
+
+        return MoveVehicleDto.builder()
+                .vinNumber(vinNumber)
+                .tripId(tripId)
+                .latitude(destinationLat)
+                .longitude(destinationLong)
+                .build();
     }
 }
