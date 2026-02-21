@@ -264,4 +264,26 @@ public class TripController {
                     .body(ApiResponse.createFailureResponse("Failed to start trip: " + e.getMessage()));
         }
     }
+
+    @Operation(summary = "End a trip", description = "Ends a trip and updates vehicle status. Requires CLIENT role.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip ended successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to end trip"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied - requires CLIENT role")
+    })
+    @PreAuthorize("hasRole('CLIENT')")
+    @PostMapping("/request/{requestId}/end")
+    public ResponseEntity<ApiResponse<MessageResponse>> endTrip(
+            @Parameter(description = "The unique ID of the request assigned with trip", required = true) @PathVariable Long requestId,
+            @Parameter(description = "Bearer authorization token", required = true) @RequestHeader("Authorization") String token) {
+        try {
+            tripService.endTrip(requestId);
+            return ResponseEntity
+                    .ok(ApiResponse.createSuccessResponse(new MessageResponse("Trip ended successfully!")));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.createFailureResponse("Failed to end trip: " + e.getMessage()));
+        }
+    }
+
 }
