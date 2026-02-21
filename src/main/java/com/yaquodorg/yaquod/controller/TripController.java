@@ -41,7 +41,7 @@ public class TripController {
     @PostMapping("/request")
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,
-                                                              @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal User user) {
         try {
             Request request = requestService.createRequest(user.getId(),
                     tripRequestDto.getStartLong(),
@@ -254,8 +254,7 @@ public class TripController {
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/request/{requestId}/start")
     public ResponseEntity<ApiResponse<MessageResponse>> startTrip(
-            @Parameter(description = "The unique ID of the request assigned with trip", required = true) @PathVariable Long requestId,
-            @Parameter(description = "Bearer authorization token", required = true) @RequestHeader("Authorization") String token) {
+            @Parameter(description = "The unique ID of the request assigned with trip", required = true) @PathVariable Long requestId) {
         try {
             tripService.startTrip(requestId);
             return ResponseEntity
@@ -275,8 +274,7 @@ public class TripController {
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/request/{requestId}/end")
     public ResponseEntity<ApiResponse<MessageResponse>> endTrip(
-            @Parameter(description = "The unique ID of the request assigned with trip", required = true) @PathVariable Long requestId,
-            @Parameter(description = "Bearer authorization token", required = true) @RequestHeader("Authorization") String token) {
+            @Parameter(description = "The unique ID of the request assigned with trip", required = true) @PathVariable Long requestId) {
         try {
             tripService.endTrip(requestId);
             return ResponseEntity
