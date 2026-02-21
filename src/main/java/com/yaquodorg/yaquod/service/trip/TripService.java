@@ -26,4 +26,6 @@ public interface TripService {
     void deleteTripById(Long id);
 
     void startTrip(Long requestId);
+
+    void endTrip(Long requestId);
 }

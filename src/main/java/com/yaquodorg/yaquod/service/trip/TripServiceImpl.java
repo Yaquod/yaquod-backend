@@ -1,29 +1,23 @@
 package com.yaquodorg.yaquod.service.trip;
 
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-
+import com.yaquodorg.yaquod.dtos.InitTripDto;
+import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
+import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.entity.*;
+import com.yaquodorg.yaquod.repository.TripRepository;
+import com.yaquodorg.yaquod.service.user.UserService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.yaquodorg.yaquod.dtos.InitTripDto;
-import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.Trip;
-import com.yaquodorg.yaquod.entity.TripStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.TripRepository;
-import com.yaquodorg.yaquod.service.user.UserService;
-import com.yaquodorg.yaquod.service.vehicle.VehicleService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -143,22 +137,10 @@ public class TripServiceImpl implements TripService {
     @Transactional
     @Override
     public void startTrip(Long requestId) {
-        Trip trip = getTripByRequestId(requestId);
+        Trip trip = getValidatedTrip(requestId);
         Long tripId = trip.getId();
-
-        Vehicle vehicle = trip.getVehicle();
-        if (vehicle == null) {
-            log.error("No vehicle was matched with trip: {}", tripId);
-            throw new RuntimeException("No vehicle was matched with trip: " + tripId);
-        }
-        String vinNumber = vehicle.getVinNumber();
-
-        Request request = trip.getRequest();
-        if (request == null) {
-            log.error("Trip: {} was not assigned with a request", tripId);
-            throw new RuntimeException("Trip: " + tripId + " was not assigned with a request");
-        }
-        Point destinationLocation = request.getDestinationLocation();
+        String vinNumber = trip.getVehicle().getVinNumber();
+        Point destinationLocation = trip.getRequest().getDestinationLocation();
 
         // TODO: I think we should validate the current states of both the trip and the
         // vehicle before ordering the vehicle to move and update their statuses
@@ -170,6 +152,43 @@ public class TripServiceImpl implements TripService {
         // Update vehicle and trip statuses
         vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IN_USE);
         updateTripStatus(tripId, TripStatus.IN_PROGRESS);
+    }
+
+    @Override
+    @Transactional
+    public void endTrip(Long requestId) {
+        Trip trip = getValidatedTrip(requestId);
+        Long tripId = trip.getId();
+        String vinNumber = trip.getVehicle().getVinNumber();
+
+        VehicleDto vehicleDto = VehicleDto.builder()
+                .vinNumber(vinNumber)
+                .build();
+
+        eventPublisher.publishEvent(vehicleDto);
+
+        // Update vehicle and trip statuses
+        vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IDLE);
+        updateTripStatus(tripId, TripStatus.COMPLETED);
+    }
+
+    private Trip getValidatedTrip(Long requestId) {
+        Trip trip = getTripByRequestId(requestId);
+        Long tripId = trip.getId();
+
+        Vehicle vehicle = trip.getVehicle();
+        if (vehicle == null) {
+            log.error("No vehicle was matched with trip: {}", tripId);
+            throw new RuntimeException("No vehicle was matched with trip: " + tripId);
+        }
+
+        Request request = trip.getRequest();
+        if (request == null) {
+            log.error("Trip: {} was not assigned with a request", tripId);
+            throw new RuntimeException("Trip: " + tripId + " was not assigned with a request");
+        }
+
+        return trip;
     }
 
     private MoveVehicleDto buildMoveVehicleDto(String vinNumber, Long tripId, Point destinationLocation) {
