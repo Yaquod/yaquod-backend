@@ -11,11 +11,12 @@ import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
-import org.springframework.context.event.EventListener;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Service
@@ -183,17 +184,17 @@ public class MqttService {
         }
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleTripInitiated(InitTripDto event) {
         publish(TOPIC_INIT_TRIP, event);
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleMoveVehicleOrder(MoveVehicleDto event) {
         publish(TOPIC_TRIP_MOVE, event);
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderVehicleUpdateOrder(VehicleDto event) {
         publish(TOPIC_ORDER_UPDATE_LOCATION, event);
         publish(TOPIC_ORDER_UPDATE_STATUS, event);
