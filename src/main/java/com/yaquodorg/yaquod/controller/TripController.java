@@ -39,8 +39,9 @@ public class TripController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to create trip request")
     })
     @PostMapping("/request")
+    @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,
-            @AuthenticationPrincipal User user) {
+                                                              @AuthenticationPrincipal User user) {
         try {
             Request request = requestService.createRequest(user.getId(),
                     tripRequestDto.getStartLong(),
