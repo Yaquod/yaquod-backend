@@ -1,6 +1,8 @@
 package com.yaquodorg.yaquod.repository;
 
 import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -37,4 +39,8 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
             @Param("point") Point point,
             @Param("maxDistance") double maxDistanceMeters,
             @Param("limit") int limit);
+
+    List<Vehicle> findByStatus(VehicleStatus status);
+
+    Optional<Vehicle> findByPlateNo(String plateNo);
 }
