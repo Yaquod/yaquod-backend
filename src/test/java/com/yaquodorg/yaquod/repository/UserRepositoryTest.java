@@ -1,7 +1,12 @@
 package com.yaquodorg.yaquod.repository;
 
-import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.User;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,12 +16,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -58,7 +59,7 @@ class UserRepositoryTest {
                 .imageUrl("")
                 .role(Role.ADMIN)
                 .code(111111)
-                .isEmailVerified(true)
+                .emailVerified(true)
                 .build();
 
         user2 = User.builder()
@@ -71,7 +72,7 @@ class UserRepositoryTest {
                 .imageUrl("")
                 .role(Role.CLIENT)
                 .code(111111)
-                .isEmailVerified(true)
+                .emailVerified(true)
                 .build();
     }
 
