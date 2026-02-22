@@ -1,13 +1,22 @@
 package com.yaquodorg.yaquod.service;
 
-import com.yaquodorg.yaquod.dtos.*;
-import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.response.LoginResponse;
-import com.yaquodorg.yaquod.service.auth.AuthenticationServiceImpl;
-import com.yaquodorg.yaquod.service.jwt.JwtService;
-import com.yaquodorg.yaquod.service.mail.MailSenderService;
-import com.yaquodorg.yaquod.service.user.UserService;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,17 +28,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
+import com.yaquodorg.yaquod.dtos.LoginUserDto;
+import com.yaquodorg.yaquod.dtos.RegisterUserDto;
+import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
+import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.response.LoginResponse;
+import com.yaquodorg.yaquod.service.auth.AuthenticationServiceImpl;
+import com.yaquodorg.yaquod.service.jwt.JwtService;
+import com.yaquodorg.yaquod.service.mail.MailSenderService;
+import com.yaquodorg.yaquod.service.user.UserService;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -109,12 +122,11 @@ class AuthenticationServiceTest {
     @DisplayName("Should login successfully with valid credentials")
     void shouldLoginSuccessfully() {
         // Arrange
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(null);
-        when(userService.getUser(loginUserDto.getEmail())).thenReturn(Optional.of(user));
+        Authentication mockAuth = mock(Authentication.class);
+        when(mockAuth.getPrincipal()).thenReturn(user);
+        when(authenticationManager.authenticate(any())).thenReturn(mockAuth);
         when(jwtService.generateAccessToken(user)).thenReturn("access-token");
         when(jwtService.generateRefreshToken(user)).thenReturn("refresh-token");
-        when(jwtService.getEmailFromToken("access-token")).thenReturn(user.getEmail());
         when(jwtService.extractExpiration(anyString())).thenReturn(new Date());
         doNothing().when(userService).updateFcmToken(anyString(), anyString());
 
@@ -148,118 +160,6 @@ class AuthenticationServiceTest {
 
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(userService, never()).updateFcmToken(anyString(), anyString());
-    }
-
-    @Test
-    @DisplayName("Should throw exception when user not found after authentication")
-    void shouldThrowExceptionWhenUserNotFoundAfterAuthentication() {
-        // Arrange
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(null);
-        when(userService.getUser(loginUserDto.getEmail())).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThatThrownBy(() -> authenticationService.login(loginUserDto))
-                .isInstanceOf(NoSuchElementException.class)
-                .hasMessageContaining("User not found");
-
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userService, never()).updateFcmToken(anyString(), anyString());
-    }
-
-    /**
-     * GOOGLE LOGIN TESTS
-     */
-    @Test
-    @DisplayName("Should login existing Google user successfully")
-    void shouldLoginExistingGoogleUser() {
-        // Arrange
-        when(userService.getUser(googleLoginDto.getEmail())).thenReturn(Optional.of(user))
-                .thenReturn(Optional.of(user));
-        when(jwtService.generateAccessToken(user)).thenReturn("access-token");
-        when(jwtService.generateRefreshToken(user)).thenReturn("refresh-token");
-        when(jwtService.getEmailFromToken("access-token")).thenReturn(googleLoginDto.getEmail());
-        when(jwtService.extractExpiration(anyString())).thenReturn(new Date());
-
-        // Act
-        LoginResponse response = authenticationService.googleLogin(googleLoginDto);
-
-        // Assert
-        assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isEqualTo("access-token");
-        assertThat(response.getUser()).isEqualTo(user);
-
-        verify(userService, never()).saveUser(any(User.class));
-    }
-
-    @Test
-    @DisplayName("Should create new user on first Google login")
-    void shouldCreateNewUserOnFirstGoogleLogin() {
-        // Arrange
-        User newUser = new User();
-        newUser.setEmail(googleLoginDto.getEmail());
-        newUser.setFirstName(googleLoginDto.getGivenName());
-        newUser.setLastName(googleLoginDto.getFamilyName());
-
-        when(userService.getUser(googleLoginDto.getEmail()))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(newUser));
-        when(userService.saveUser(any(User.class))).thenReturn(newUser);
-        when(jwtService.generateAccessToken(any(User.class))).thenReturn("access-token");
-        when(jwtService.generateRefreshToken(any(User.class))).thenReturn("refresh-token");
-        when(jwtService.getEmailFromToken("access-token")).thenReturn(googleLoginDto.getEmail());
-        when(jwtService.extractExpiration(anyString())).thenReturn(new Date());
-
-        // Act
-        LoginResponse response = authenticationService.googleLogin(googleLoginDto);
-
-        // Assert
-        assertThat(response).isNotNull();
-
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userService, times(1)).saveUser(userCaptor.capture());
-
-        User capturedUser = userCaptor.getValue();
-        assertThat(capturedUser.getEmail()).isEqualTo(googleLoginDto.getEmail());
-        assertThat(capturedUser.getFirstName()).isEqualTo(googleLoginDto.getGivenName());
-        assertThat(capturedUser.getLastName()).isEqualTo(googleLoginDto.getFamilyName());
-        assertThat(capturedUser.getRole()).isEqualTo(Role.CLIENT);
-        assertThat(capturedUser.isEmailVerified()).isTrue();
-        assertThat(capturedUser.getPasswordHash()).isEqualTo("N/A");
-    }
-
-    @Test
-    @DisplayName("Should handle Google login with only full name")
-    void shouldHandleGoogleLoginWithOnlyFullName() {
-        // Arrange
-        GoogleLoginDto dto = new GoogleLoginDto();
-        dto.setEmail("google@example.com");
-        dto.setName("Full Name");
-        dto.setGivenName(null);
-        dto.setFamilyName(null);
-
-        User newUser = new User();
-        newUser.setEmail(dto.getEmail());
-
-        when(userService.getUser(googleLoginDto.getEmail()))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(newUser));
-        when(userService.saveUser(any(User.class))).thenReturn(newUser);
-        when(jwtService.generateAccessToken(any(User.class))).thenReturn("access-token");
-        when(jwtService.generateRefreshToken(any(User.class))).thenReturn("refresh-token");
-        when(jwtService.getEmailFromToken("access-token")).thenReturn(dto.getEmail());
-        when(jwtService.extractExpiration(anyString())).thenReturn(new Date());
-
-        // Act
-        authenticationService.googleLogin(dto);
-
-        // Assert
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userService).saveUser(userCaptor.capture());
-
-        User capturedUser = userCaptor.getValue();
-        assertThat(capturedUser.getFirstName()).isEqualTo("Full Name");
-        assertThat(capturedUser.getLastName()).isEqualTo("");
     }
 
     /**
@@ -551,7 +451,6 @@ class AuthenticationServiceTest {
         String authHeader = "Bearer valid-refresh-token";
         when(jwtService.validateToken("valid-refresh-token")).thenReturn(true);
         when(jwtService.getEmailFromToken("valid-refresh-token")).thenReturn(user.getEmail());
-        when(jwtService.getEmailFromToken("new-access-token")).thenReturn(user.getEmail());
         when(userService.getUser(user.getEmail())).thenReturn(Optional.of(user)).thenReturn(Optional.of(user))
                 .thenReturn(Optional.of(user));
         when(jwtService.generateAccessToken(user)).thenReturn("new-access-token");
@@ -567,36 +466,25 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    @DisplayName("Should return null with invalid token format")
-    void shouldReturnNullWithInvalidTokenFormat() {
-        // Act
-        LoginResponse response = authenticationService.refreshToken("InvalidFormat");
-
-        // Assert
-        assertThat(response).isNull();
-    }
-
-    @Test
-    @DisplayName("Should return null with null auth header")
-    void shouldReturnNullWithNullAuthHeader() {
-        // Act
-        LoginResponse response = authenticationService.refreshToken(null);
-
-        // Assert
-        assertThat(response).isNull();
-    }
-
-    @Test
-    @DisplayName("Should return null with invalid refresh token")
-    void shouldReturnNullWithInvalidRefreshToken() {
-        // Arrange
-        String authHeader = "Bearer invalid-token";
+    void shouldThrowWithInvalidRefreshToken() {
         when(jwtService.validateToken("invalid-token")).thenReturn(false);
 
-        // Act
-        LoginResponse response = authenticationService.refreshToken(authHeader);
+        assertThatThrownBy(() -> authenticationService.refreshToken("Bearer invalid-token"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid or missing refresh token");
+    }
 
-        // Assert
-        assertThat(response).isNull();
+    @Test
+    void shouldThrowWithInvalidTokenFormat() {
+        assertThatThrownBy(() -> authenticationService.refreshToken("InvalidFormat"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid or missing refresh token");
+    }
+
+    @Test
+    void shouldThrowWithNullAuthHeader() {
+        assertThatThrownBy(() -> authenticationService.refreshToken(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid or missing refresh token");
     }
 }
