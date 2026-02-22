@@ -1,45 +1,56 @@
 package com.yaquodorg.yaquod.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
-import com.yaquodorg.yaquod.response.ApiResponse;
-import com.yaquodorg.yaquod.response.LoginResponse;
-import com.yaquodorg.yaquod.service.auth.AuthenticationService;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.context.annotation.Lazy;
+import java.io.IOException;
+
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.response.ApiResponse;
+import com.yaquodorg.yaquod.response.LoginResponse;
+import com.yaquodorg.yaquod.service.jwt.JwtService;
+import com.yaquodorg.yaquod.service.user.UserService;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Component
+@RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final AuthenticationService authenticationService;
+    private final UserService userService;
+    private final JwtService jwtService;
     private final ObjectMapper objectMapper;
-
-    public OAuth2LoginSuccessHandler(@Lazy AuthenticationService authenticationService,
-                                     ObjectMapper objectMapper) {
-        this.authenticationService = authenticationService;
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        org.springframework.security.core.Authentication authentication)
+            org.springframework.security.core.Authentication authentication)
             throws IOException, ServletException {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String email = oAuth2User.getAttribute("email");
-        String name = oAuth2User.getAttribute("name");
-        String givenName = oAuth2User.getAttribute("given_name");
-        String familyName = oAuth2User.getAttribute("family_name");
 
-        GoogleLoginDto googleLoginDto = new GoogleLoginDto(email, name, givenName, familyName);
-        LoginResponse loginResponse = authenticationService.googleLogin(googleLoginDto);
+        GoogleLoginDto googleLoginDto = new GoogleLoginDto(
+                oAuth2User.getAttribute("email"),
+                oAuth2User.getAttribute("name"),
+                oAuth2User.getAttribute("given_name"),
+                oAuth2User.getAttribute("family_name"));
+
+        User user = userService.findOrCreateGoogleUser(googleLoginDto);
+
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setAccessToken(accessToken);
+        loginResponse.setRefreshToken(refreshToken);
+        loginResponse.setAccessTokenExpiresIn(jwtService.extractExpiration(accessToken));
+        loginResponse.setRefreshTokenExpiresIn(jwtService.extractExpiration(refreshToken));
+        loginResponse.setUser(user);
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");

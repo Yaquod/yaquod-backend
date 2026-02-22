@@ -1,19 +1,24 @@
 package com.yaquodorg.yaquod.service.user;
 
-import com.yaquodorg.yaquod.dtos.UpdateUserDto;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.repository.UserRepository;
-import com.yaquodorg.yaquod.service.jwt.JwtService;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
+import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
+import com.yaquodorg.yaquod.dtos.UpdateUserDto;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.repository.UserRepository;
+import com.yaquodorg.yaquod.service.jwt.JwtService;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +37,23 @@ public class UserServiceImpl implements UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    @Override
+    public User findOrCreateGoogleUser(GoogleLoginDto dto) {
+        return getUser(dto.getEmail())
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setEmail(dto.getEmail());
+                    newUser.setFirstName(dto.getGivenName() != null ? dto.getGivenName() : dto.getName());
+                    newUser.setLastName(dto.getFamilyName() != null ? dto.getFamilyName() : "");
+                    newUser.setRole(Role.CLIENT);
+                    newUser.setPasswordHash("N/A");
+                    newUser.setPhoneNumber("N/A");
+                    newUser.setJoin_date(new Timestamp(new java.util.Date().getTime()));
+                    newUser.setEmailVerified(true);
+                    return saveUser(newUser);
+                });
     }
 
     @Override
