@@ -1,12 +1,12 @@
 package com.yaquodorg.yaquod.config;
 
-import com.yaquodorg.yaquod.filter.AuthenticationEntryPointFilter;
-import com.yaquodorg.yaquod.filter.CustomAccessDeniedFilter;
-import com.yaquodorg.yaquod.filter.JwtAuthenticationFilter;
-import lombok.RequiredArgsConstructor;
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,7 +16,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+import com.yaquodorg.yaquod.filter.AuthenticationEntryPointFilter;
+import com.yaquodorg.yaquod.filter.CustomAccessDeniedFilter;
+import com.yaquodorg.yaquod.filter.JwtAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +32,11 @@ public class SecurityConfig {
     private final CustomAccessDeniedFilter accessDeniedFilter;
     private final AuthenticationEntryPointFilter authenticationEntryPoint;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
