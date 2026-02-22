@@ -1,34 +1,22 @@
 package com.yaquodorg.yaquod.service.mqtt;
 
-import org.locationtech.jts.geom.Point;
-import org.springframework.context.event.EventListener;
-import org.springframework.integration.annotation.ServiceActivator;
-import org.springframework.integration.mqtt.support.MqttHeaders;
-import org.springframework.messaging.Message;
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.EtaStatusDto;
-import com.yaquodorg.yaquod.dtos.InitTripDto;
-import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
-import com.yaquodorg.yaquod.dtos.UpdateTripStatusDto;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleLocationDto;
-import com.yaquodorg.yaquod.dtos.UpdateVehicleStatusDto;
-import com.yaquodorg.yaquod.dtos.VehicleArrivalDto;
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.Trip;
-import com.yaquodorg.yaquod.entity.TripStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.dtos.*;
+import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.service.messaging.FirebaseMessagingService;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Point;
+import org.springframework.integration.annotation.ServiceActivator;
+import org.springframework.integration.mqtt.support.MqttHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Service
@@ -42,6 +30,8 @@ public class MqttService {
     private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private static final String TOPIC_TRIP_ARRIVE = "topic/trip/arrive";
     private static final String TOPIC_TRIP_STATUS = "topic/trip/status";
+    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/update_location/order";
+    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/update_status/order";
 
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
@@ -194,14 +184,20 @@ public class MqttService {
         }
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleTripInitiated(InitTripDto event) {
         publish(TOPIC_INIT_TRIP, event);
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleMoveVehicleOrder(MoveVehicleDto event) {
         publish(TOPIC_TRIP_MOVE, event);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleOrderVehicleUpdateOrder(VehicleDto event) {
+        publish(TOPIC_ORDER_UPDATE_LOCATION, event);
+        publish(TOPIC_ORDER_UPDATE_STATUS, event);
     }
 
 }
