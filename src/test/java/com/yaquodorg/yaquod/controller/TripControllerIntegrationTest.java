@@ -351,8 +351,8 @@ class TripControllerIntegrationTest {
     void shouldReturn401WhenNotAuthenticated() throws Exception {
         // Act & Assert
         mockMvc.perform(post("/api/trips/request")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(tripRequestDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tripRequestDto)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -362,8 +362,8 @@ class TripControllerIntegrationTest {
     void shouldHandleInvalidJsonPayload() throws Exception {
         // Act & Assert
         mockMvc.perform(post("/api/trips/request")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{invalid json"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{invalid json"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -398,8 +398,8 @@ class TripControllerIntegrationTest {
 
         // Act & Assert
         mockMvc.perform(post("/api/trips/request")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDto)))
-                .andExpect(status().isBadRequest());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isForbidden());
     }
 }

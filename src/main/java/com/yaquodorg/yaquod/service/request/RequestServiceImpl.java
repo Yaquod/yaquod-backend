@@ -130,42 +130,38 @@ public class RequestServiceImpl implements RequestService {
     public Request acceptRequestById(Long id, String token) {
         User user = userService.getUserByJwt(token);
         Request request = getRequest(id);
+
         if (!request.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized to accept this request");
-        } else {
-            // publish to broker
-            MoveVehicleDto moveVehicleDto = generateVehicleMovementDto(id);
-            eventPublisher.publishEvent(moveVehicleDto);
-
-            updateRequestStatus(id, RequestStatus.ACCEPTED);
-            log.info("Request with id {} has been accepted.", id);
-
-            Trip trip = request.getTrip();
-            long tripId = trip.getId();
-            tripService.updateTripStatus(tripId, TripStatus.VEHICLE_ON_WAY);
-            log.info("Accepting associated trip with id {}.", tripId);
-
-            Vehicle vehicle = trip.getVehicle();
-            if (vehicle != null) {
-                String vinNumber = vehicle.getVinNumber();
-                vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.ON_WAY);
-                log.info("Returning vehicle status with vin: {} to ON_WAY", vinNumber);
-            }
-
-            return request;
         }
 
+        Trip trip = request.getTrip();
+        long tripId = trip.getId();
+        Vehicle vehicle = trip.getVehicle();
+        String vinNumber = vehicle.getVinNumber();
+        Point startLocation = request.getStartLocation();
+
+        // TODO: I think we should validate the current states of both the trip and the
+        // vehicle before ordering the vehicle to move and update their statuses
+
+        // publish to broker
+        MoveVehicleDto moveVehicleDto = generateVehicleMovementDto(startLocation, tripId, vinNumber);
+        eventPublisher.publishEvent(moveVehicleDto);
+
+        // Update statuses
+        updateRequestStatus(id, RequestStatus.ACCEPTED);
+        log.info("Request with id {} has been accepted.", id);
+
+        tripService.updateTripStatus(tripId, TripStatus.VEHICLE_ON_WAY);
+        log.info("Accepting associated trip with id {}.", tripId);
+
+        vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.ON_WAY);
+        log.info("Returning vehicle status with vin: {} to ON_WAY", vinNumber);
+
+        return request;
     }
 
-    @Override
-    public MoveVehicleDto generateVehicleMovementDto(Long requestId) {
-        Request request = getRequest(requestId);
-        Trip trip = request.getTrip();
-        Vehicle vehicle = trip.getVehicle();
-
-        String vinNumber = vehicle.getVinNumber();
-        long tripId = trip.getId();
-        Point startLocation = request.getStartLocation();
+    private MoveVehicleDto generateVehicleMovementDto(Point startLocation, Long tripId, String vinNumber) {
         double startLat = startLocation.getY();
         double startLong = startLocation.getX();
 
