@@ -1,19 +1,21 @@
 package com.yaquodorg.yaquod.service.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Date;
+import java.util.UUID;
+import java.util.function.Function;
+
+import javax.crypto.SecretKey;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.UUID;
-import java.util.function.Function;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -28,6 +30,8 @@ public class JwtServiceImpl implements JwtService {
     @Value("${spring.application.security.jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
+    private SecretKey signingKey;
+
     @Override
     public String generateAccessToken(UserDetails userDetails) {
         Date now = new Date();
@@ -39,7 +43,7 @@ public class JwtServiceImpl implements JwtService {
                 .setExpiration(expiryDate)
                 .claim("roles", userDetails.getAuthorities())
                 .setId(UUID.randomUUID().toString())
-                .signWith(getKey(), SignatureAlgorithm.HS512)
+                .signWith(getKey())
                 .compact();
     }
 
@@ -52,7 +56,7 @@ public class JwtServiceImpl implements JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(getKey(), SignatureAlgorithm.HS512)
+                .signWith(getKey())
                 .compact();
     }
 
@@ -71,6 +75,8 @@ public class JwtServiceImpl implements JwtService {
         try {
             Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token);
             return true;
+        } catch (ExpiredJwtException e) {
+            throw e;
         } catch (JwtException | IllegalArgumentException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
             return false;
@@ -78,7 +84,10 @@ public class JwtServiceImpl implements JwtService {
     }
 
     private SecretKey getKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
+        if (signingKey == null) {
+            signingKey = Keys.hmacShaKeyFor(secretKey.getBytes());
+        }
+        return signingKey;
     }
 
     @Override
