@@ -9,6 +9,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -102,47 +103,75 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional
-    public void declineRequestById(Long id, String token) {
-        User user = userService.getUserByJwt(token);
+    public void declineRequestById(Long id, Long userId) {
         Request request = getRequest(id);
-        if (!request.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized to decline this request");
-        } else {
-            updateRequestStatus(id, RequestStatus.DECLINED);
-            log.info("Request with id {} has been declined.", id);
-
-            Trip trip = request.getTrip();
-            long tripId = trip.getId();
-            tripService.updateTripStatus(tripId, TripStatus.CANCELLED_BY_PASSENGER);
-            log.info("Declining associated trip with id {}.", tripId);
-
-            Vehicle vehicle = trip.getVehicle();
-            if (vehicle != null) {
-                String vinNumber = vehicle.getVinNumber();
-                vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IDLE);
-                log.info("Returning vehicle status with vin: {} to IDLE", vinNumber);
-            }
+        if (!request.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("Unauthorized to decline this request");
         }
+
+        Trip trip = request.getTrip();
+        if (trip == null) {
+            throw new RuntimeException("No trip associated with request " + id);
+        }
+        long tripId = trip.getId();
+
+        Vehicle vehicle = trip.getVehicle();
+        if (vehicle == null) {
+            throw new RuntimeException("No vehicle associated with trip of request " + id);
+        }
+        String vinNumber = vehicle.getVinNumber();
+
+        if (request.getStatus() != RequestStatus.COMPLETED) {
+            throw new IllegalStateException("Request is not in COMPLETED state");
+        }
+        if (trip.getStatus() != TripStatus.INITIATED) {
+            throw new IllegalStateException("Trip is not in INITIATED state");
+        }
+        if (vehicle.getStatus() != VehicleStatus.ON_HOLD) {
+            throw new IllegalStateException("Vehicle is not in ON_HOLD state");
+        }
+
+        updateRequestStatus(id, RequestStatus.DECLINED);
+        log.info("Request with id {} has changed to DECLINED.", id);
+
+        tripService.updateTripStatus(tripId, TripStatus.CANCELLED_BY_PASSENGER);
+        log.info("Trip with id {} has changed to CANCELLED_BY_PASSENGER", tripId);
+
+        vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IDLE);
+        log.info("Vehicle with vinNumber {} has been changed to IDLE", vinNumber);
     }
 
     @Override
     @Transactional
-    public Request acceptRequestById(Long id, String token) {
-        User user = userService.getUserByJwt(token);
+    public Request acceptRequestById(Long id, Long userId) {
         Request request = getRequest(id);
-
-        if (!request.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized to accept this request");
+        if (!request.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("Unauthorized to accept this request");
         }
 
         Trip trip = request.getTrip();
+        if (trip == null) {
+            throw new RuntimeException("No trip associated with request " + id);
+        }
         long tripId = trip.getId();
+
         Vehicle vehicle = trip.getVehicle();
+        if (vehicle == null) {
+            throw new RuntimeException("No vehicle associated with trip of request " + id);
+        }
         String vinNumber = vehicle.getVinNumber();
+
         Point startLocation = request.getStartLocation();
 
-        // TODO: I think we should validate the current states of both the trip and the
-        // vehicle before ordering the vehicle to move and update their statuses
+        if (request.getStatus() != RequestStatus.COMPLETED) {
+            throw new IllegalStateException("Request is not in COMPLETED state");
+        }
+        if (trip.getStatus() != TripStatus.INITIATED) {
+            throw new IllegalStateException("Trip is not in INITIATED state");
+        }
+        if (vehicle.getStatus() != VehicleStatus.ON_HOLD) {
+            throw new IllegalStateException("Vehicle is not in ON_HOLD state");
+        }
 
         // publish to broker
         MoveVehicleDto moveVehicleDto = generateVehicleMovementDto(startLocation, tripId, vinNumber);
@@ -150,13 +179,13 @@ public class RequestServiceImpl implements RequestService {
 
         // Update statuses
         updateRequestStatus(id, RequestStatus.ACCEPTED);
-        log.info("Request with id {} has been accepted.", id);
+        log.info("Request with id {} has changed to ACCEPTED.", id);
 
         tripService.updateTripStatus(tripId, TripStatus.VEHICLE_ON_WAY);
-        log.info("Accepting associated trip with id {}.", tripId);
+        log.info("Trip with id {} has changed to VEHICLE_ON_WAY", tripId);
 
         vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.ON_WAY);
-        log.info("Returning vehicle status with vin: {} to ON_WAY", vinNumber);
+        log.info("Vehicle with vinNumber {} has been changed to ON_WAY", vinNumber);
 
         return request;
     }
