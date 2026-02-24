@@ -1,11 +1,33 @@
 package com.yaquodorg.yaquod.controller;
 
-import com.yaquodorg.yaquod.dtos.*;
+import static com.yaquodorg.yaquod.response.ApiResponse.createFailureResponse;
+import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+
+import java.util.NoSuchElementException;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.yaquodorg.yaquod.dtos.LoginUserDto;
+import com.yaquodorg.yaquod.dtos.RegenerateCodeDto;
+import com.yaquodorg.yaquod.dtos.RegisterUserDto;
+import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
+import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
 import com.yaquodorg.yaquod.service.auth.AuthenticationService;
+
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,14 +36,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.NoSuchElementException;
-
-import static com.yaquodorg.yaquod.response.ApiResponse.createFailureResponse;
-import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
-import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -55,7 +69,7 @@ public class AuthenticationController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid registration data or registration failed")
     })
     @PostMapping("/client/signup")
-    public ResponseEntity<ApiResponse<User>> studentRegister(@Valid @RequestBody RegisterUserDto registerUserDto) {
+    public ResponseEntity<ApiResponse<User>> clientRegister(@Valid @RequestBody RegisterUserDto registerUserDto) {
         try {
             User registeredUser = authenticationService.signup(registerUserDto, "CLIENT");
             return ResponseEntity.status(CREATED)
@@ -137,8 +151,7 @@ public class AuthenticationController {
     })
     @GetMapping("/token-refresh")
     public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(
-            @Parameter(description = "Bearer refresh token", required = true)
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @Parameter(description = "Bearer refresh token", required = true) @RequestHeader("Authorization") String authorizationHeader) {
         try {
             LoginResponse loginResponse = authenticationService.refreshToken(authorizationHeader);
             if (loginResponse == null)
@@ -164,7 +177,8 @@ public class AuthenticationController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<MessageResponse>> resetPassword(@Valid @RequestBody ResetPasswordDto resetPasswordDto) {
+    public ResponseEntity<ApiResponse<MessageResponse>> resetPassword(
+            @Valid @RequestBody ResetPasswordDto resetPasswordDto) {
         try {
             boolean success = authenticationService.resetPassword(resetPasswordDto);
             if (success) {

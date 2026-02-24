@@ -20,7 +20,7 @@ public interface RequestService {
 
     void deleteRequest(Long requestId);
 
-    void declineRequestById(Long id, String token);
+    void declineRequestById(Long id, Long userId);
 
-    Request acceptRequestById(Long id, String token);
+    Request acceptRequestById(Long id, Long userId);
 }

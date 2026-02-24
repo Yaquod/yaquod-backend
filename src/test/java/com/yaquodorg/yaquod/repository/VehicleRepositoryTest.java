@@ -1,7 +1,10 @@
 package com.yaquodorg.yaquod.repository;
 
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,10 +14,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
@@ -120,39 +121,37 @@ class VehicleRepositoryTest {
                 .containsExactlyInAnyOrder("ABC-123", "XYZ-789");
     }
 
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should find vehicles by status")
-    // void shouldFindVehiclesByStatus() {
-    // // Arrange
-    // entityManager.persist(vehicle1);
-    // entityManager.persist(vehicle2);
-    // entityManager.flush();
-    //
-    // // Act
-    // List<Vehicle> availableVehicles = vehicleRepository
-    // .findByStatus(VehicleStatus.IDLE);
-    //
-    // // Assert
-    // assertThat(availableVehicles).hasSize(1);
-    // assertThat(availableVehicles.get(0).getPlateNo()).isEqualTo("ABC-123");
-    // }
+    @Test
+    @DisplayName("Should find vehicles by status")
+    void shouldFindVehiclesByStatus() {
+        // Arrange
+        entityManager.persist(vehicle1);
+        entityManager.persist(vehicle2);
+        entityManager.flush();
 
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("Should find vehicle by license plate")
-    // void shouldFindVehicleByLicensePlate() {
-    // // Arrange
-    // entityManager.persist(vehicle1);
-    // entityManager.flush();
-    //
-    // // Act
-    // Optional<Vehicle> found = vehicleRepository.findByLicensePlate("ABC-123");
-    //
-    // // Assert
-    // assertThat(found).isPresent();
-    // assertThat(found.get().getModel()).isEqualTo("Toyota Camry");
-    // }
+        // Act
+        List<Vehicle> availableVehicles = vehicleRepository
+                .findByStatus(VehicleStatus.IDLE);
+
+        // Assert
+        assertThat(availableVehicles).hasSize(1);
+        assertThat(availableVehicles.get(0).getPlateNo()).isEqualTo("ABC-123");
+    }
+
+    @Test
+    @DisplayName("Should find vehicle by license plate")
+    void shouldFindVehicleByLicensePlate() {
+        // Arrange
+        entityManager.persist(vehicle1);
+        entityManager.flush();
+
+        // Act
+        Optional<Vehicle> found = vehicleRepository.findByPlateNo("ABC-123");
+
+        // Assert
+        assertThat(found).isPresent();
+        assertThat(found.get().getModel()).isEqualTo("Toyota Camry");
+    }
 
     @Test
     @DisplayName("Should update vehicle successfully")

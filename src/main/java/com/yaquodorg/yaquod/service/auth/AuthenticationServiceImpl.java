@@ -1,24 +1,30 @@
 package com.yaquodorg.yaquod.service.auth;
 
-import com.yaquodorg.yaquod.dtos.*;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.NoSuchElementException;
+import java.util.Random;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.yaquodorg.yaquod.dtos.LoginUserDto;
+import com.yaquodorg.yaquod.dtos.RegisterUserDto;
+import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
+import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.mail.MailSenderService;
 import com.yaquodorg.yaquod.service.user.UserService;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.NoSuchElementException;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +36,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MailSenderService mailSenderService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final int ONE_DAY = 86400000;
+    private static final long ONE_DAY_MS = 86_400_000L;
 
     @Override
     public LoginResponse login(LoginUserDto loginUserDto) {
@@ -40,47 +46,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String accessToken = jwtService.generateAccessToken(authenticatedUser);
         String refreshToken = jwtService.generateRefreshToken(authenticatedUser);
 
-        return createLoginResponse(accessToken, refreshToken);
-    }
-
-    @Override
-    public LoginResponse googleLogin(GoogleLoginDto googleLoginDto) {
-        Date now = new Date();
-
-        String email = googleLoginDto.getEmail();
-        String name = googleLoginDto.getName();
-        String givenName = googleLoginDto.getGivenName();
-        String familyName = googleLoginDto.getFamilyName();
-
-        User user = userService.getUser(email)
-                .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setEmail(email);
-                    newUser.setFirstName(givenName != null ? givenName : name);
-                    newUser.setLastName(familyName != null ? familyName : "");
-                    newUser.setRole(Role.CLIENT);
-                    newUser.setPasswordHash("N/A");
-                    newUser.setPhoneNumber("N/A");
-                    newUser.setJoin_date(new Timestamp(now.getTime()));
-                    newUser.setEmailVerified(true);
-
-                    return userService.saveUser(newUser);
-                });
-
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
-
-        return createLoginResponse(accessToken, refreshToken);
+        return createLoginResponse(accessToken, refreshToken, authenticatedUser);
     }
 
     private User authenticate(LoginUserDto loginUserDto) {
-        authenticationManager.authenticate(
+        // 1. calls the UserDetailsService.loadUserByUsername() to fetch the user from
+        // the database by email.
+        // 2. uses the BCryptPasswordEncoder to compare the raw password from the
+        // request against the stored hash.
+        // 3. It automatically checks isAccountNonExpired(), isAccountNonLocked(),
+        // isCredentialsNonExpired(), and isEnabled()
+        Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginUserDto.getEmail(),
                         loginUserDto.getPassword()));
 
-        return userService.getUser(loginUserDto.getEmail())
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
+        return (User) auth.getPrincipal();
     }
 
     @Override
@@ -100,7 +81,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private User createUserFromDto(RegisterUserDto registerUserDto) {
         User user = new User();
         Date now = new Date();
-        Date codeExpiryDate = new Date(now.getTime() + ONE_DAY);
+        Date codeExpiryDate = new Date(now.getTime() + ONE_DAY_MS);
 
         user.setEmail(registerUserDto.getEmail());
         user.setPasswordHash(passwordEncoder.encode(registerUserDto.getPassword()));
@@ -136,7 +117,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 return handleValidToken(refreshToken);
         }
 
-        return null;
+        throw new IllegalArgumentException("Invalid or missing refresh token");
     }
 
     private LoginResponse handleValidToken(String refreshToken) {
@@ -145,14 +126,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String accessToken = jwtService.generateAccessToken(user);
 
-        return createLoginResponse(accessToken, refreshToken);
+        return createLoginResponse(accessToken, refreshToken, user);
     }
 
-    private LoginResponse createLoginResponse(String accessToken, String refreshToken) {
+    private LoginResponse createLoginResponse(String accessToken, String refreshToken, User user) {
         LoginResponse loginResponse = new LoginResponse();
-        String email = jwtService.getEmailFromToken(accessToken);
-        User user = userService.getUser(email).orElseThrow(() -> new NoSuchElementException("User not found"));
-
         loginResponse.setAccessToken(accessToken);
         loginResponse.setRefreshToken(refreshToken);
         loginResponse.setAccessTokenExpiresIn(jwtService.extractExpiration(accessToken));
@@ -183,7 +161,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public void regenerateOtp(String email) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + ONE_DAY);
+        Date expiryDate = new Date(now.getTime() + ONE_DAY_MS);
         User user = userService.getUser(email).orElseThrow(() -> new NoSuchElementException("User not found"));
         int newOtp = generateRandomOtp();
 
