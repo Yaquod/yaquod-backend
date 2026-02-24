@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -82,7 +82,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         ApiResponse<Object> apiResponse = ApiResponse.createFailureResponse(message);
         PrintWriter out = response.getWriter();
-        out.println(objectMapper.writeValueAsString(apiResponse)); // Serializing the ApiResponse
+        out.write(objectMapper.writeValueAsString(apiResponse));
         out.flush();
     }
 }
