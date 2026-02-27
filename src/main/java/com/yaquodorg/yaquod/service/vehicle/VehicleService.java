@@ -16,6 +16,8 @@ public interface VehicleService {
 
     Vehicle getVehicle(Long id);
 
+    Vehicle getVehicleByApiKey(String apiKey);
+
     Optional<Vehicle> getVehicleByVinNumber(String vinNumber);
 
     Vehicle updateVehicle(CreateVehicleDto createVehicleDto);

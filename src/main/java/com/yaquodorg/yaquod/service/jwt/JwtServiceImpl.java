@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.Vehicle;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -55,6 +58,22 @@ public class JwtServiceImpl implements JwtService {
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getKey())
+                .compact();
+    }
+
+    @Override
+    public String generateVehicleToken(Vehicle vehicle) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + refreshTokenExpiration);
+
+        return Jwts.builder()
+                .setSubject(vehicle.getApiKey())
+                .setIssuedAt(now)
+                .claim("roles", Role.VEHICLE)
+                .claim("adminEmail", vehicle.getCreatedByAdmin().getUsername())
+                .setId(UUID.randomUUID().toString())
                 .setExpiration(expiryDate)
                 .signWith(getKey())
                 .compact();

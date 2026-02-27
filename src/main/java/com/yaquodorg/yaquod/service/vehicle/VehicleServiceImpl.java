@@ -71,6 +71,15 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
+    public Vehicle getVehicleByApiKey(String apiKey) {
+        log.info("Retrieving vehicle with apiKey: {}", apiKey);
+        return vehicleRepository.findByApiKey(apiKey).orElseThrow(() -> {
+            log.warn("Vehicle not found with apiKey: {}", apiKey);
+            return new RuntimeException("Vehicle not found!");
+        });
+    }
+
+    @Override
     public Optional<Vehicle> getVehicleByVinNumber(String vinNumber) {
         log.info("Retrieving vehicle with VIN: {}", vinNumber);
         return vehicleRepository.findByVinNumber(vinNumber);

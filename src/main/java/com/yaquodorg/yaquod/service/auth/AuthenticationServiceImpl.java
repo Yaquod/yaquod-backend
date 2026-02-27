@@ -14,13 +14,17 @@ import org.springframework.stereotype.Service;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
 import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
+import com.yaquodorg.yaquod.dtos.VehicleLoginDto;
 import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.response.LoginResponse;
+import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.mail.MailSenderService;
 import com.yaquodorg.yaquod.service.user.UserService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +40,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MailSenderService mailSenderService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final VehicleService vehicleService;
     private static final long ONE_DAY_MS = 86_400_000L;
 
     @Override
@@ -49,6 +54,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         log.info("Login successful for email: {}", loginUserDto.getEmail());
         return createLoginResponse(accessToken, refreshToken, authenticatedUser);
+    }
+
+    @Override
+    public VehicleLoginResponse vehicleLogin(VehicleLoginDto vehicleLoginDto) {
+        log.info("Login attempt for apiKey: {}", vehicleLoginDto.getApiKey());
+        // TODO: see later
+        // User authenticatedUser = authenticate(loginUserDto);
+
+        Vehicle vehicle = vehicleService.getVehicleByApiKey(vehicleLoginDto.getApiKey());
+        String accessToken = jwtService.generateVehicleToken(vehicle);
+        Date expirationDate = jwtService.extractExpiration(accessToken);
+
+        log.info("Login successful for apiKey: {}", vehicleLoginDto.getApiKey());
+        return VehicleLoginResponse.builder()
+                .accessToken(accessToken)
+                .accessTokenExpiresIn(expirationDate)
+                .vehicle(vehicle)
+                .build();
     }
 
     private User authenticate(LoginUserDto loginUserDto) {
