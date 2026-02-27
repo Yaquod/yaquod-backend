@@ -50,14 +50,30 @@ class TripRepositoryTest {
     private TripRepository tripRepository;
 
     private User testUser;
+    private User adminUser;
     private Vehicle testVehicle;
     private Request testRequest;
     private Trip testTrip;
+    private Date now;
 
     @BeforeEach
     void setUp() {
 
-        Date now = new Date(0);
+        now = new Date(0);
+
+        // Setup admin user
+        adminUser = User.builder()
+                .email("admin@example.com")
+                .passwordHash("adminpassword")
+                .firstName("Admin")
+                .lastName("User")
+                .phoneNumber("+9876543210")
+                .join_date(new Timestamp(now.getTime()))
+                .role(Role.ADMIN)
+                .code(222222)
+                .emailVerified(true)
+                .build();
+        entityManager.persist(adminUser);
 
         testUser = User.builder()
                 .email("test@example.com")
@@ -76,6 +92,10 @@ class TripRepositoryTest {
                 .vinNumber("VIN123456789")
                 .model("Camry")
                 .status(VehicleStatus.IDLE)
+                .createdAt(new Timestamp(now.getTime()))
+                .createdByAdmin(adminUser)
+                .apiKey("VEH_test-api-key")
+                .apiSecretHash("test-secret-hash")
                 .build();
         entityManager.persist(testVehicle);
 
@@ -320,6 +340,10 @@ class TripRepositoryTest {
                 .vinNumber("VIN987654321")
                 .model("Accord")
                 .status(VehicleStatus.IDLE)
+                .createdAt(new Timestamp(now.getTime()))
+                .createdByAdmin(adminUser)
+                .apiKey("VEH_different-api-key")
+                .apiSecretHash("test-secret-hash-2")
                 .build();
         entityManager.persist(anotherVehicle);
         entityManager.flush();
