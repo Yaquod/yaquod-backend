@@ -265,7 +265,7 @@ public class TripController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip started successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to start trip"),
     })
-    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN', 'VEHICLE')")
     @PostMapping("/request/{requestId}/start")
     public ResponseEntity<ApiResponse<MessageResponse>> startTrip(
             @Parameter(description = "The unique ID of the request assigned with trip", required = true) @PathVariable Long requestId) {
@@ -284,7 +284,7 @@ public class TripController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip ended successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to end trip"),
     })
-    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN', 'VEHICLE')")
     @PostMapping("/request/{requestId}/end")
     public ResponseEntity<ApiResponse<MessageResponse>> endTrip(
             @Parameter(description = "The unique ID of the request assigned with trip", required = true) @PathVariable Long requestId) {

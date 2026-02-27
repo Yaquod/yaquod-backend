@@ -72,11 +72,23 @@ public class JwtServiceImpl implements JwtService {
                 .setSubject(vehicle.getApiKey())
                 .setIssuedAt(now)
                 .claim("roles", Role.VEHICLE)
-                .claim("adminEmail", vehicle.getCreatedByAdmin().getUsername())
+                .claim("vehicleId", vehicle.getId())
+                .claim("adminId", vehicle.getCreatedByAdmin().getId())
                 .setId(UUID.randomUUID().toString())
                 .setExpiration(expiryDate)
                 .signWith(getKey())
                 .compact();
+    }
+
+    @Override
+    public String getTokenType(String token) {
+        Claims claims = extractAllClaims(token);
+        Object roles = claims.get("roles");
+
+        if (roles != null && roles.toString().contains(Role.VEHICLE.toString())) {
+            return "vehicle";
+        }
+        return "user";
     }
 
     @Override
@@ -119,7 +131,8 @@ public class JwtServiceImpl implements JwtService {
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
+    @Override
+    public Claims extractAllClaims(String token) {
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getKey())
