@@ -98,6 +98,10 @@ public class User implements UserDetails {
     @OrderBy("id ASC")
     private List<Request> requests = new ArrayList<>();
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Vehicle> managedVehicles = new ArrayList<>();
+
     @Override
     public String getUsername() {
         return email;

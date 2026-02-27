@@ -1,14 +1,16 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-
 import java.util.List;
 import java.util.Optional;
 
+import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.response.CreateVehicleResponse;
+
 public interface VehicleService {
-    Vehicle createVehicle(CreateVehicleDto createVehicleDto);
+    CreateVehicleResponse createVehicle(CreateVehicleDto createVehicleDto, User user);
 
     List<Vehicle> getVehicles();
 

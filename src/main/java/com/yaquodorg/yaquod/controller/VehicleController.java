@@ -1,12 +1,33 @@
 package com.yaquodorg.yaquod.controller;
 
+import static com.yaquodorg.yaquod.response.ApiResponse.createFailureResponse;
+import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
+import static org.springframework.http.HttpStatus.CREATED;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
 import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.response.ApiResponse;
+import com.yaquodorg.yaquod.response.CreateVehicleResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
 import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -14,15 +35,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-import static com.yaquodorg.yaquod.response.ApiResponse.createFailureResponse;
-import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
-import static org.springframework.http.HttpStatus.CREATED;
 
 @RestController
 @RequestMapping("/api/vehicles")
@@ -44,11 +56,13 @@ public class VehicleController {
     })
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<ApiResponse<Vehicle>> createVehicle(@Valid @RequestBody CreateVehicleDto createVehicleDto) {
+    public ResponseEntity<ApiResponse<CreateVehicleResponse>> createVehicle(
+            @Valid @RequestBody CreateVehicleDto createVehicleDto,
+            @AuthenticationPrincipal User user) {
         try {
-            Vehicle vehicle = vehicleService.createVehicle(createVehicleDto);
+            CreateVehicleResponse response = vehicleService.createVehicle(createVehicleDto, user);
             return ResponseEntity.status(CREATED)
-                    .body(createSuccessResponse(vehicle));
+                    .body(createSuccessResponse(response));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(createFailureResponse("Failed to create vehicle: " + e.getMessage()));
@@ -75,8 +89,7 @@ public class VehicleController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/id/{vehicleId}")
     public ResponseEntity<ApiResponse<Vehicle>> getVehicle(
-            @Parameter(description = "The unique database ID of the vehicle", required = true)
-            @PathVariable Long vehicleId) {
+            @Parameter(description = "The unique database ID of the vehicle", required = true) @PathVariable Long vehicleId) {
         try {
             Vehicle vehicle = vehicleService.getVehicle(vehicleId);
             return ResponseEntity.ok(createSuccessResponse(vehicle));
@@ -95,8 +108,7 @@ public class VehicleController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/vin/{vinNumber}")
     public ResponseEntity<ApiResponse<Vehicle>> getVehicle(
-            @Parameter(description = "The Vehicle Identification Number (VIN)", required = true, example = "1HGBH41JXMN109186")
-            @PathVariable String vinNumber) {
+            @Parameter(description = "The Vehicle Identification Number (VIN)", required = true, example = "1HGBH41JXMN109186") @PathVariable String vinNumber) {
         try {
             Vehicle vehicle = vehicleService.getVehicleByVinNumber(vinNumber)
                     .orElseThrow(() -> new RuntimeException("Vehicle not found!"));
@@ -134,8 +146,7 @@ public class VehicleController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/id/{vehicleId}")
     public ResponseEntity<ApiResponse<MessageResponse>> deleteVehicle(
-            @Parameter(description = "The unique database ID of the vehicle to delete", required = true)
-            @PathVariable Long vehicleId) {
+            @Parameter(description = "The unique database ID of the vehicle to delete", required = true) @PathVariable Long vehicleId) {
         try {
             vehicleService.deleteVehicle(vehicleId);
             return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Vehicle deleted successfully!")));
@@ -155,8 +166,7 @@ public class VehicleController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/vin/{vinNumber}/location-update")
     public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleLocation(
-            @Parameter(description = "The Vehicle Identification Number (VIN)", required = true, example = "1HGBH41JXMN109186")
-            @PathVariable String vinNumber) {
+            @Parameter(description = "The Vehicle Identification Number (VIN)", required = true, example = "1HGBH41JXMN109186") @PathVariable String vinNumber) {
         try {
             mqttService.publish(TOPIC_ORDER_UPDATE_LOCATION, new VehicleDto(vinNumber));
 
@@ -177,8 +187,7 @@ public class VehicleController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/vin/{vinNumber}/status-update")
     public ResponseEntity<ApiResponse<MessageResponse>> updateVehicleStatus(
-            @Parameter(description = "The Vehicle Identification Number (VIN)", required = true, example = "1HGBH41JXMN109186")
-            @PathVariable String vinNumber) {
+            @Parameter(description = "The Vehicle Identification Number (VIN)", required = true, example = "1HGBH41JXMN109186") @PathVariable String vinNumber) {
         try {
             mqttService.publish(TOPIC_ORDER_UPDATE_STATUS, new VehicleDto(vinNumber));
             return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Order signal sent!")));
