@@ -1,9 +1,12 @@
 package com.yaquodorg.yaquod.service;
 
 import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.repository.VehicleRepository;
+import com.yaquodorg.yaquod.response.CreateVehicleResponse;
 import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,13 +41,25 @@ class VehicleServiceTest {
     private final String TestVin = "2GCEK19T7Y1156789";
     @Mock
     private VehicleRepository vehicleRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
     @InjectMocks
     private VehicleServiceImpl vehicleService;
     private CreateVehicleDto createVehicleDto;
     private Vehicle vehicle;
+    private User adminUser;
 
     @BeforeEach
     void setUp() {
+        // Setup admin user
+        adminUser = User.builder()
+                .id(1L)
+                .email("admin@example.com")
+                .firstName("Admin")
+                .lastName("User")
+                .role(Role.ADMIN)
+                .build();
+
         createVehicleDto = CreateVehicleDto.builder()
                 .vinNumber(VinNumber1)
                 .plateNo("abc123")
@@ -72,19 +88,21 @@ class VehicleServiceTest {
     @DisplayName("Should create vehicle successfully")
     void shouldCreateVehicle() {
         // Arrange
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed-secret");
         when(vehicleRepository.save(any(Vehicle.class))).thenReturn(vehicle);
 
         // Act
-        Vehicle result = vehicleService.createVehicle(createVehicleDto);
+        CreateVehicleResponse result = vehicleService.createVehicle(createVehicleDto, adminUser);
 
         // Assert
         assertThat(result).isNotNull();
-        assertThat(result.getPlateNo()).isEqualTo("abc123");
-        assertThat(result.getModel()).isEqualTo("Charger");
-        assertThat(result.getStatus()).isEqualTo(VehicleStatus.IDLE);
+        assertThat(result.getVehicle().getPlateNo()).isEqualTo("abc123");
+        assertThat(result.getVehicle().getModel()).isEqualTo("Charger");
+        assertThat(result.getVehicle().getStatus()).isEqualTo(VehicleStatus.IDLE);
 
         // Verify repository was called
         verify(vehicleRepository, times(1)).save(any(Vehicle.class));
+        verify(passwordEncoder, times(1)).encode(anyString());
     }
 
     @Test
@@ -258,7 +276,7 @@ class VehicleServiceTest {
     @DisplayName("Should handle null DTO gracefully")
     void shouldHandleNullDto() {
         // Act & Assert
-        assertThatThrownBy(() -> vehicleService.createVehicle(null))
+        assertThatThrownBy(() -> vehicleService.createVehicle(null, adminUser))
                 .isInstanceOf(NullPointerException.class);
 
         verify(vehicleRepository, never()).save(any(Vehicle.class));

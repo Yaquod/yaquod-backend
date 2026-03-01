@@ -13,8 +13,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.response.ApiResponse;
+import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -52,17 +54,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            final String username = jwtService.getEmailFromToken(jwt);
+            String tokenType = jwtService.getTokenType(jwt);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities());
-
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            if ("vehicle".equals(tokenType)) {
+                handleVehicleAuthentication(jwt, request);
+            } else {
+                handleUserAuthentication(jwt, request);
             }
 
             filterChain.doFilter(request, response);
@@ -73,6 +70,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
                     "JWT authentication failed: " + e.getMessage());
             log.error("JwtAuthenticationFilterError: {}", e.getMessage());
+        }
+    }
+
+    private void handleUserAuthentication(String jwt, HttpServletRequest request) {
+        final String username = jwtService.getEmailFromToken(jwt);
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities());
+
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    }
+
+    private void handleVehicleAuthentication(String jwt, HttpServletRequest request) {
+        final String apiKey = jwtService.getEmailFromToken(jwt);
+
+        if (apiKey != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            Claims claims = jwtService.extractAllClaims(jwt);
+            Long vehicleId = claims.get("vehicleId", Long.class);
+            Long adminId = claims.get("adminId", Long.class);
+
+            VehicleAuthenticationToken authToken = new VehicleAuthenticationToken(
+                    vehicleId,
+                    apiKey,
+                    adminId,
+                    claims);
+
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
         }
     }
 

@@ -60,6 +60,24 @@ public class Vehicle {
     @Column
     private double lastUpdatedLat;
 
+    @Column(unique = true, nullable = false)
+    private String apiKey;
+
+    @JsonIgnore
+    @Column(nullable = false)
+    private String apiSecretHash;
+
+    @Column(nullable = false)
+    private Timestamp createdAt;
+
+    @Column
+    private Timestamp lastAuthenticatedAt;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_admin_id", nullable = false)
+    private User createdByAdmin;
+
     @JsonIgnore
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("id ASC")

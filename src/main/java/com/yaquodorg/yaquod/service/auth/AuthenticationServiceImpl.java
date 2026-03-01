@@ -14,10 +14,14 @@ import org.springframework.stereotype.Service;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
 import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
+import com.yaquodorg.yaquod.dtos.VehicleLoginDto;
 import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.response.LoginResponse;
+import com.yaquodorg.yaquod.response.VehicleLoginResponse;
+import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.mail.MailSenderService;
 import com.yaquodorg.yaquod.service.user.UserService;
@@ -51,6 +55,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return createLoginResponse(accessToken, refreshToken, authenticatedUser);
     }
 
+    @Override
+    public VehicleLoginResponse vehicleLogin(VehicleLoginDto vehicleLoginDto) {
+        log.info("Login attempt for apiKey: {}", vehicleLoginDto.getApiKey());
+        Vehicle vehicle = authenticateVehicle(vehicleLoginDto);
+
+        String accessToken = jwtService.generateVehicleToken(vehicle);
+        Date accessTokenExpiration = jwtService.extractExpiration(accessToken);
+        String refreshToken = jwtService.generateVehicleRefreshToken(vehicle);
+        Date refreshTokenExpiration = jwtService.extractExpiration(refreshToken);
+
+        log.info("Login successful for apiKey: {}", vehicleLoginDto.getApiKey());
+        return VehicleLoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .accessTokenExpiresIn(accessTokenExpiration)
+                .refreshTokenExpiresIn(refreshTokenExpiration)
+                .vehicle(vehicle)
+                .build();
+    }
+
     private User authenticate(LoginUserDto loginUserDto) {
         log.debug("Authenticating user with email: {}", loginUserDto.getEmail());
         // 1. calls the UserDetailsService.loadUserByUsername() to fetch the user from
@@ -66,6 +90,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         log.debug("Authentication successful for email: {}", loginUserDto.getEmail());
         return (User) auth.getPrincipal();
+    }
+
+    private Vehicle authenticateVehicle(VehicleLoginDto vehicleLoginDto) {
+        log.debug("Authenticating vehicle with apiKey: {}", vehicleLoginDto.getApiKey());
+        Authentication auth = authenticationManager.authenticate(
+                new VehicleAuthenticationToken(
+                        vehicleLoginDto.getApiKey(),
+                        vehicleLoginDto.getApiSecret()));
+
+        log.debug("Authentication successful for apiKey: {}", vehicleLoginDto.getApiKey());
+        return (Vehicle) auth.getDetails();
     }
 
     @Override

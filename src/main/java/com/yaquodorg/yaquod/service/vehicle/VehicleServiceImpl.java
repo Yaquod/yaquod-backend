@@ -1,22 +1,29 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-import com.yaquodorg.yaquod.repository.VehicleRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
+import com.yaquodorg.yaquod.response.CreateVehicleResponse;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +34,11 @@ public class VehicleServiceImpl implements VehicleService {
 
     private final VehicleRepository vehicleRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
     @Override
-    public Vehicle createVehicle(CreateVehicleDto createVehicleDto) {
+    @Transactional
+    public CreateVehicleResponse createVehicle(CreateVehicleDto createVehicleDto, User user) {
         Optional<Vehicle> vehicleOptional = vehicleRepository.findByVinNumber(createVehicleDto.getVinNumber());
         if (vehicleOptional.isPresent()) {
             log.warn("Attempted to create vehicle with existing VIN: {}", createVehicleDto.getVinNumber());
@@ -36,9 +46,11 @@ public class VehicleServiceImpl implements VehicleService {
         }
 
         Vehicle vehicle = new Vehicle();
-        buildVehicleFromDto(vehicle, createVehicleDto);
+        CreateVehicleResponse response = buildVehicleFromDto(vehicle, user, createVehicleDto);
         log.info("Creating new vehicle with VIN: {}", createVehicleDto.getVinNumber());
-        return vehicleRepository.save(vehicle);
+        vehicleRepository.save(vehicle);
+
+        return response;
     }
 
     @Override
@@ -53,10 +65,18 @@ public class VehicleServiceImpl implements VehicleService {
     public Vehicle getVehicle(Long id) {
         log.info("Retrieving vehicle with ID: {}", id);
         return vehicleRepository.findById(id).orElseThrow(() -> {
-                    log.warn("Vehicle not found with ID: {}", id);
-                    return new RuntimeException("Vehicle not found!");
-                }
-        );
+            log.warn("Vehicle not found with ID: {}", id);
+            return new RuntimeException("Vehicle not found!");
+        });
+    }
+
+    @Override
+    public Vehicle getVehicleByApiKey(String apiKey) {
+        log.info("Retrieving vehicle with apiKey: {}", apiKey);
+        return vehicleRepository.findByApiKey(apiKey).orElseThrow(() -> {
+            log.warn("Vehicle not found with apiKey: {}", apiKey);
+            return new RuntimeException("Vehicle not found!");
+        });
     }
 
     @Override
@@ -75,7 +95,13 @@ public class VehicleServiceImpl implements VehicleService {
                             "Vehicle with VIN " + createVehicleDto.getVinNumber() + " not found!");
                 });
 
-        buildVehicleFromDto(vehicle, createVehicleDto);
+        vehicle.setVinNumber(createVehicleDto.getVinNumber());
+        vehicle.setPlateNo(createVehicleDto.getPlateNo());
+        vehicle.setColor(createVehicleDto.getColor());
+        vehicle.setCarCompany(createVehicleDto.getCarCompany());
+        vehicle.setModel(createVehicleDto.getModel());
+        vehicle.setSeats(createVehicleDto.getSeats());
+
         log.info("Updating vehicle with VIN: {}", createVehicleDto.getVinNumber());
         return vehicle;
     }
@@ -132,7 +158,7 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public List<Vehicle> findKNearestVehiclesWithinDistance(double longitude, double latitude, double maxDistanceMeters,
-                                                            int k) {
+            int k) {
         log.info("Finding {} nearest vehicles within {} meters of location: ({}, {})",
                 k, maxDistanceMeters, longitude, latitude);
         Point point = createPoint(longitude, latitude);
@@ -145,13 +171,39 @@ public class VehicleServiceImpl implements VehicleService {
         return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
 
-    private Vehicle buildVehicleFromDto(Vehicle vehicle, CreateVehicleDto dto) {
+    private CreateVehicleResponse buildVehicleFromDto(Vehicle vehicle, User user, CreateVehicleDto dto) {
+        Date now = new Date();
+
         vehicle.setVinNumber(dto.getVinNumber());
         vehicle.setPlateNo(dto.getPlateNo());
         vehicle.setColor(dto.getColor());
         vehicle.setCarCompany(dto.getCarCompany());
         vehicle.setModel(dto.getModel());
         vehicle.setSeats(dto.getSeats());
-        return vehicle;
+        vehicle.setCreatedAt(new Timestamp(now.getTime()));
+        vehicle.setCreatedByAdmin(user);
+        CreateVehicleResponse credentials = generateCredentials(vehicle);
+
+        return credentials;
+    }
+
+    private CreateVehicleResponse generateCredentials(Vehicle vehicle) {
+        String apiKey = "VEH_" + UUID.randomUUID().toString();
+        String apiSecret = generateSecureSecret();
+        String apiSecretHash = passwordEncoder.encode(apiSecret);
+
+        vehicle.setApiKey(apiKey);
+        vehicle.setApiSecretHash(apiSecretHash);
+
+        return CreateVehicleResponse.builder()
+                .vehicle(vehicle)
+                .apiKey(apiKey)
+                .apiSecret(apiSecret)
+                .build();
+    }
+
+    private String generateSecureSecret() {
+        String randomString = UUID.randomUUID().toString() + System.currentTimeMillis();
+        return DigestUtils.sha256Hex(randomString);
     }
 }

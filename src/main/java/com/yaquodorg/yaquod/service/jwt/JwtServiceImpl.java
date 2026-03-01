@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.Vehicle;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -29,6 +32,12 @@ public class JwtServiceImpl implements JwtService {
 
     @Value("${spring.application.security.jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
+
+    @Value("${spring.application.security.jwt.vehicle-token-expiration}")
+    private long vehicleTokenExpiration;
+
+    @Value("${spring.application.security.jwt.vehicle-refresh-token-expiration}")
+    private long vehicleRefreshTokenExpiration;
 
     private SecretKey signingKey;
 
@@ -58,6 +67,47 @@ public class JwtServiceImpl implements JwtService {
                 .setExpiration(expiryDate)
                 .signWith(getKey())
                 .compact();
+    }
+
+    @Override
+    public String generateVehicleToken(Vehicle vehicle) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + vehicleTokenExpiration);
+
+        return Jwts.builder()
+                .setSubject(vehicle.getApiKey())
+                .setIssuedAt(now)
+                .claim("roles", Role.VEHICLE)
+                .claim("vehicleId", vehicle.getId())
+                .claim("adminId", vehicle.getCreatedByAdmin().getId())
+                .setId(UUID.randomUUID().toString())
+                .setExpiration(expiryDate)
+                .signWith(getKey())
+                .compact();
+    }
+
+    @Override
+    public String generateVehicleRefreshToken(Vehicle vehicle) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + vehicleRefreshTokenExpiration);
+
+        return Jwts.builder()
+                .setSubject(vehicle.getApiKey())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getKey())
+                .compact();
+    }
+
+    @Override
+    public String getTokenType(String token) {
+        Claims claims = extractAllClaims(token);
+        Object roles = claims.get("roles");
+
+        if (roles != null && roles.toString().contains(Role.VEHICLE.toString())) {
+            return "vehicle";
+        }
+        return "user";
     }
 
     @Override
@@ -100,7 +150,8 @@ public class JwtServiceImpl implements JwtService {
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
+    @Override
+    public Claims extractAllClaims(String token) {
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getKey())

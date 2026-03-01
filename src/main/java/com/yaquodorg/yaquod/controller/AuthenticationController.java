@@ -21,11 +21,13 @@ import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegenerateCodeDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
 import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
+import com.yaquodorg.yaquod.dtos.VehicleLoginDto;
 import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
+import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.service.auth.AuthenticationService;
 
 import io.jsonwebtoken.ExpiredJwtException;
@@ -135,6 +137,23 @@ public class AuthenticationController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginUserDto loginUserDto) {
         try {
             LoginResponse loginResponse = authenticationService.login(loginUserDto);
+            return ResponseEntity.ok(createSuccessResponse(loginResponse));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(createFailureResponse("Failed to login: " + e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Vehicle login", description = "Authenticates a vehicle and returns access and refresh tokens")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Login successful, tokens returned"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid credentials or login failed")
+    })
+    @PostMapping("/vehicle/login")
+    public ResponseEntity<ApiResponse<VehicleLoginResponse>> vehicleLogin(
+            @Valid @RequestBody VehicleLoginDto vehicleLoginDto) {
+        try {
+            VehicleLoginResponse loginResponse = authenticationService.vehicleLogin(vehicleLoginDto);
             return ResponseEntity.ok(createSuccessResponse(loginResponse));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
