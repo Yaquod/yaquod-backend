@@ -21,10 +21,10 @@ import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.response.VehicleLoginResponse;
+import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.mail.MailSenderService;
 import com.yaquodorg.yaquod.service.user.UserService;
-import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MailSenderService mailSenderService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final VehicleService vehicleService;
     private static final long ONE_DAY_MS = 86_400_000L;
 
     @Override
@@ -59,10 +58,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public VehicleLoginResponse vehicleLogin(VehicleLoginDto vehicleLoginDto) {
         log.info("Login attempt for apiKey: {}", vehicleLoginDto.getApiKey());
-        // TODO: see later
-        // User authenticatedUser = authenticate(loginUserDto);
+        Vehicle vehicle = authenticateVehicle(vehicleLoginDto);
 
-        Vehicle vehicle = vehicleService.getVehicleByApiKey(vehicleLoginDto.getApiKey());
         String accessToken = jwtService.generateVehicleToken(vehicle);
         Date expirationDate = jwtService.extractExpiration(accessToken);
 
@@ -89,6 +86,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         log.debug("Authentication successful for email: {}", loginUserDto.getEmail());
         return (User) auth.getPrincipal();
+    }
+
+    private Vehicle authenticateVehicle(VehicleLoginDto vehicleLoginDto) {
+        log.debug("Authenticating vehicle with apiKey: {}", vehicleLoginDto.getApiKey());
+        Authentication auth = authenticationManager.authenticate(
+                new VehicleAuthenticationToken(
+                        vehicleLoginDto.getApiKey(),
+                        vehicleLoginDto.getApiSecret()));
+
+        log.debug("Authentication successful for apiKey: {}", vehicleLoginDto.getApiKey());
+        return (Vehicle) auth.getDetails();
     }
 
     @Override

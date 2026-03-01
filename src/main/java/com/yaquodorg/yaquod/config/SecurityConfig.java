@@ -2,10 +2,13 @@ package com.yaquodorg.yaquod.config;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,6 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.yaquodorg.yaquod.filter.AuthenticationEntryPointFilter;
 import com.yaquodorg.yaquod.filter.CustomAccessDeniedFilter;
 import com.yaquodorg.yaquod.filter.JwtAuthenticationFilter;
+import com.yaquodorg.yaquod.security.VehicleAuthenticationProvider;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,10 +36,20 @@ public class SecurityConfig {
     private final CustomAccessDeniedFilter accessDeniedFilter;
     private final AuthenticationEntryPointFilter authenticationEntryPoint;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final VehicleAuthenticationProvider vehicleAuthenticationProvider;
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authenticationConfiguration,
+            VehicleAuthenticationProvider vehicleAuthenticationProvider) throws Exception {
+
+        // Get the default authentication manager
+        AuthenticationManager defaultManager = authenticationConfiguration.getAuthenticationManager();
+
+        // Create a provider manager with both user and vehicle providers
+        return new ProviderManager(
+                List.of(vehicleAuthenticationProvider),
+                defaultManager);
     }
 
     @Bean

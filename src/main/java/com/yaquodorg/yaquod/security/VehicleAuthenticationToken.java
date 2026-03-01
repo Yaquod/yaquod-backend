@@ -1,27 +1,48 @@
 package com.yaquodorg.yaquod.security;
 
-import io.jsonwebtoken.Claims;
+import java.util.Collection;
+import java.util.List;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.Collection;
-import java.util.List;
+import io.jsonwebtoken.Claims;
 
 public class VehicleAuthenticationToken implements Authentication {
 
     private final Long vehicleId;
     private final String apiKey;
+    private final String apiSecret;
     private final Long adminId;
     private final Claims claims;
-    private boolean authenticated = true;
+    private boolean authenticated;
     private Object details;
 
+    /**
+     * Constructor for authentication (before login)
+     * Used when vehicle is trying to authenticate with apiKey + apiSecret
+     */
+    public VehicleAuthenticationToken(String apiKey, String apiSecret) {
+        this.vehicleId = null;
+        this.apiKey = apiKey;
+        this.apiSecret = apiSecret;
+        this.adminId = null;
+        this.claims = null;
+        this.authenticated = false;
+    }
+
+    /**
+     * Constructor for authenticated token (after successful login)
+     * Used after vehicle has been authenticated
+     */
     public VehicleAuthenticationToken(Long vehicleId, String apiKey, Long adminId, Claims claims) {
         this.vehicleId = vehicleId;
         this.apiKey = apiKey;
+        this.apiSecret = null;
         this.adminId = adminId;
         this.claims = claims;
+        this.authenticated = true;
     }
 
     @Override
@@ -32,8 +53,8 @@ public class VehicleAuthenticationToken implements Authentication {
 
     @Override
     public Object getCredentials() {
-        // Token already validated
-        return null;
+        // Return apiSecret during authentication, null after
+        return apiSecret;
     }
 
     @Override
@@ -47,7 +68,8 @@ public class VehicleAuthenticationToken implements Authentication {
 
     @Override
     public Object getPrincipal() {
-        return vehicleId;
+        // Return vehicleId if authenticated, apiKey if authenticating
+        return vehicleId != null ? vehicleId : apiKey;
     }
 
     @Override
@@ -56,7 +78,7 @@ public class VehicleAuthenticationToken implements Authentication {
     }
 
     @Override
-    public void setAuthenticated(boolean authenticated) {
+    public void setAuthenticated(boolean authenticated) throws IllegalArgumentException {
         this.authenticated = authenticated;
     }
 
@@ -67,6 +89,14 @@ public class VehicleAuthenticationToken implements Authentication {
 
     public Long getVehicleId() {
         return vehicleId;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public String getApiSecret() {
+        return apiSecret;
     }
 
     public Long getAdminId() {
