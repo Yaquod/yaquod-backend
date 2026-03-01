@@ -46,8 +46,8 @@ public class TripController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trip request created successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to create trip request")
     })
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @PostMapping("/request")
-    @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<ApiResponse<Request>> createRequest(@RequestBody TripRequestDto tripRequestDto,
             @AuthenticationPrincipal User user) {
         try {
@@ -223,7 +223,7 @@ public class TripController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to decline request"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied - requires CLIENT role")
     })
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @PostMapping("/request/{requestId}/decline")
     public ResponseEntity<ApiResponse<MessageResponse>> declineRequest(
             @Parameter(description = "The unique ID of the request to decline", required = true) @PathVariable Long requestId,
@@ -244,7 +244,7 @@ public class TripController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Failed to accept request"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied - requires CLIENT role")
     })
-    @PreAuthorize("hasRole('CLIENT')")
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @PostMapping("/request/{requestId}/accept")
     public ResponseEntity<ApiResponse<Request>> acceptRequest(
             @Parameter(description = "The unique ID of the request to accept", required = true) @PathVariable Long requestId,
