@@ -353,7 +353,7 @@ class VehicleControllerSecurityIntegrationTest {
     @Test
     @DisplayName("MQTT location update should work with valid VIN")
     @WithMockCustomUser(email = "admin@example.com", role = Role.ADMIN)
-    void shouldSendLocationUpdateViaMMQTT() throws Exception {
+    void shouldSendLocationUpdateViaMQTT() throws Exception {
         // Create vehicle first
         mockMvc.perform(post("/api/vehicles")
                 .contentType(MediaType.APPLICATION_JSON)
