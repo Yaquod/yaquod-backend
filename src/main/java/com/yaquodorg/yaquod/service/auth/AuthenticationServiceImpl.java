@@ -61,12 +61,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Vehicle vehicle = authenticateVehicle(vehicleLoginDto);
 
         String accessToken = jwtService.generateVehicleToken(vehicle);
-        Date expirationDate = jwtService.extractExpiration(accessToken);
+        Date accessTokenExpiration = jwtService.extractExpiration(accessToken);
+        String refreshToken = jwtService.generateVehicleRefreshToken(vehicle);
+        Date refreshTokenExpiration = jwtService.extractExpiration(refreshToken);
 
         log.info("Login successful for apiKey: {}", vehicleLoginDto.getApiKey());
         return VehicleLoginResponse.builder()
                 .accessToken(accessToken)
-                .accessTokenExpiresIn(expirationDate)
+                .refreshToken(refreshToken)
+                .accessTokenExpiresIn(accessTokenExpiration)
+                .refreshTokenExpiresIn(refreshTokenExpiration)
                 .vehicle(vehicle)
                 .build();
     }

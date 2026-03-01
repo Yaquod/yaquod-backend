@@ -33,6 +33,12 @@ public class JwtServiceImpl implements JwtService {
     @Value("${spring.application.security.jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
+    @Value("${spring.application.security.jwt.vehicle-token-expiration}")
+    private long vehicleTokenExpiration;
+
+    @Value("${spring.application.security.jwt.vehicle-refresh-token-expiration}")
+    private long vehicleRefreshTokenExpiration;
+
     private SecretKey signingKey;
 
     @Override
@@ -66,7 +72,7 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public String generateVehicleToken(Vehicle vehicle) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + refreshTokenExpiration);
+        Date expiryDate = new Date(now.getTime() + vehicleTokenExpiration);
 
         return Jwts.builder()
                 .setSubject(vehicle.getApiKey())
@@ -75,6 +81,19 @@ public class JwtServiceImpl implements JwtService {
                 .claim("vehicleId", vehicle.getId())
                 .claim("adminId", vehicle.getCreatedByAdmin().getId())
                 .setId(UUID.randomUUID().toString())
+                .setExpiration(expiryDate)
+                .signWith(getKey())
+                .compact();
+    }
+
+    @Override
+    public String generateVehicleRefreshToken(Vehicle vehicle) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + vehicleRefreshTokenExpiration);
+
+        return Jwts.builder()
+                .setSubject(vehicle.getApiKey())
+                .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getKey())
                 .compact();

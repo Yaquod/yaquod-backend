@@ -15,6 +15,8 @@ public interface JwtService {
 
     String generateVehicleToken(Vehicle vehicle);
 
+    String generateVehicleRefreshToken(Vehicle vehicle);
+
     String getTokenType(String token);
 
     String getEmailFromToken(String token);

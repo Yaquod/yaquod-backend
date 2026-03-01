@@ -11,6 +11,8 @@ import lombok.Data;
 @Builder
 public class VehicleLoginResponse {
     private String accessToken;
+    private String refreshToken;
     private Date accessTokenExpiresIn;
+    private Date refreshTokenExpiresIn;
     private Vehicle vehicle;
 }
