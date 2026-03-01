@@ -141,6 +141,13 @@
             <version>2.7.0</version> <!-- Use a compatible version for your Spring Boot version -->
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/com.google.api-client/google-api-client -->
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.9.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

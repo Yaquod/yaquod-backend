@@ -7,6 +7,8 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.NoSuchElementException;
 
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yaquodorg.yaquod.dtos.GoogleIdTokenRequest;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegenerateCodeDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
@@ -201,5 +204,34 @@ public class AuthenticationController {
     @GetMapping("/test")
     public String test() {
         return "Authentication Service is up and running!";
+    }
+
+    @Operation(summary = "Google OAuth login", description = "Authenticates a user using Google ID token from Flutter Google Sign-In. Creates a new user if one doesn't exist.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Google login successful, tokens returned"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid Google ID token"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error during token verification")
+    })
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(
+            @Valid @RequestBody GoogleIdTokenRequest request) {
+        log.info("Google login request received");
+        try {
+            LoginResponse loginResponse = authenticationService.googleLogin(request);
+            log.info("Google login successful");
+            return ResponseEntity.ok(createSuccessResponse(loginResponse));
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid Google ID token: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(createFailureResponse("Invalid Google ID token: " + e.getMessage()));
+        } catch (GeneralSecurityException | IOException e) {
+            log.error("Google login verification failed: {}", e.getMessage());
+            return ResponseEntity.status(INTERNAL_SERVER_ERROR)
+                    .body(createFailureResponse("Google login verification failed: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error during Google login: {}", e.getMessage());
+            return ResponseEntity.status(INTERNAL_SERVER_ERROR)
+                    .body(createFailureResponse("Unexpected error: " + e.getMessage()));
+        }
     }
 }

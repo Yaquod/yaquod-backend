@@ -19,12 +19,9 @@ public class GoogleLoginDto {
     @Email(message = "Email must be valid")
     private String email;
 
-    @NotBlank(message = "Name is required")
     private String name;
 
-    @NotBlank(message = "Given name is required")
     private String givenName;
 
-    @NotBlank(message = "Family name is required")
     private String familyName;
 }
