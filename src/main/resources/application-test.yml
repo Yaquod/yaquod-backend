@@ -65,3 +65,9 @@ mqtt:
 server:
   address: 0.0.0.0
   port: ${SERVER_PORT:8000}
+
+google:
+  android:
+    client-id: google-client-id-for-android.apps.googleusercontent.com
+  ios:
+    client-id: google-client-id-for-ios.apps.googleusercontent.com
