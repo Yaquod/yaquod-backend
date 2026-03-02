@@ -24,7 +24,7 @@ import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.response.LoginResponse;
-import com.yaquodorg.yaquod.service.google.GoogleTokenService;
+import com.yaquodorg.yaquod.service.google.GoogleTokenServiceImpl;
 import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
@@ -45,7 +45,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MailSenderService mailSenderService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final GoogleTokenService googleTokenService;
+    private final GoogleTokenServiceImpl googleTokenService;
     private static final long ONE_DAY_MS = 86_400_000L;
 
     @Override
