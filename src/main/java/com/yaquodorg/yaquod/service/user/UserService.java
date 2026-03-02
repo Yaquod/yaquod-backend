@@ -8,21 +8,21 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
-  User saveUser(User user);
+    User saveUser(User user);
 
-  User findOrCreateGoogleUser(GoogleLoginDto dto);
+    User findOrCreateGoogleUser(GoogleLoginDto dto);
 
-  Optional<User> getUser(String email);
+    Optional<User> getUser(String email);
 
-  User getUserByJwt(String authHeader);
+    User getUserByJwt(String authHeader);
 
-  User getUserById(Long id);
+    User getUserById(Long id);
 
-  List<User> getUsers();
+    List<User> getUsers();
 
-  User updateUser(String authHeader, UpdateUserDto updateUserDto) throws ParseException;
+    User updateUser(String authHeader, UpdateUserDto updateUserDto) throws ParseException;
 
-  void updateUserPhoto(String authHeader, String url);
+    void updateUserPhoto(String authHeader, String url);
 
-  void updateFcmToken(String email, String fcmToken);
+    void updateFcmToken(String email, String fcmToken);
 }

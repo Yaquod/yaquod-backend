@@ -6,17 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO for Google OAuth login request from mobile apps (Flutter). Contains the Google ID token
- * received from Google Sign-In.
+ * DTO for Google OAuth login request from mobile apps (Flutter). Contains the
+ * Google ID token received from Google Sign-In.
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class GoogleIdTokenRequest {
 
-  @NotBlank(message = "ID token is required")
-  private String idToken;
+    @NotBlank(message = "ID token is required")
+    private String idToken;
 
-  /** Optional FCM token for push notifications. */
-  private String fcmToken;
+    /** Optional FCM token for push notifications. */
+    private String fcmToken;
 }

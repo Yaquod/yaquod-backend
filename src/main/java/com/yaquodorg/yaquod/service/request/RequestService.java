@@ -5,23 +5,21 @@ import com.yaquodorg.yaquod.entity.RequestStatus;
 import java.util.List;
 
 public interface RequestService {
-  Request createRequest(
-      Long userId, double startLong, double startLat, double endLong, double endLat);
+    Request createRequest(Long userId, double startLong, double startLat, double endLong, double endLat);
 
-  List<Request> getRequests();
+    List<Request> getRequests();
 
-  List<Request> getUserRequests(Long userId);
+    List<Request> getUserRequests(Long userId);
 
-  Request getRequest(Long requestId);
+    Request getRequest(Long requestId);
 
-  void updateRequest(
-      Long requestId, RequestStatus requestStatus, double estimatedTime, double estimatedFare);
+    void updateRequest(Long requestId, RequestStatus requestStatus, double estimatedTime, double estimatedFare);
 
-  void updateRequestStatus(Long requestId, RequestStatus requestStatus);
+    void updateRequestStatus(Long requestId, RequestStatus requestStatus);
 
-  void deleteRequest(Long requestId);
+    void deleteRequest(Long requestId);
 
-  void declineRequestById(Long id, Long userId);
+    void declineRequestById(Long id, Long userId);
 
-  Request acceptRequestById(Long id, Long userId);
+    Request acceptRequestById(Long id, Long userId);
 }

@@ -6,9 +6,9 @@ import lombok.Data;
 
 @Data
 public class VerifyCodeDto {
-  @Email(message = "Email must be valid")
-  @NotBlank(message = "Email cannot be blank")
-  private String email;
+    @Email(message = "Email must be valid")
+    @NotBlank(message = "Email cannot be blank")
+    private String email;
 
-  private int code;
+    private int code;
 }

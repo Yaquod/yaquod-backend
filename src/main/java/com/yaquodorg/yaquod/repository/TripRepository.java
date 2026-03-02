@@ -8,11 +8,11 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TripRepository extends JpaRepository<Trip, Long> {
-  Trip findByRequestId(Long requestId);
+    Trip findByRequestId(Long requestId);
 
-  List<Trip> findByUserId(Long userId);
+    List<Trip> findByUserId(Long userId);
 
-  List<Trip> findByUserIdOrderByStartedAtDesc(Long userId, Pageable pageable);
+    List<Trip> findByUserIdOrderByStartedAtDesc(Long userId, Pageable pageable);
 
-  List<Trip> findByVehicleVinNumber(String vehicleVinNumber);
+    List<Trip> findByVehicleVinNumber(String vehicleVinNumber);
 }

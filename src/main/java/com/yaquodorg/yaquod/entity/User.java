@@ -35,103 +35,102 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Table(name = "users")
 public class User implements UserDetails {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(unique = true, nullable = false)
-  private String email;
+    @Column(unique = true, nullable = false)
+    private String email;
 
-  @Column(nullable = false)
-  private String phoneNumber;
+    @Column(nullable = false)
+    private String phoneNumber;
 
-  @JsonIgnore
-  @Column(nullable = false, columnDefinition = "TEXT")
-  private String passwordHash;
+    @JsonIgnore
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String passwordHash;
 
-  @Column(nullable = false)
-  private String firstName;
+    @Column(nullable = false)
+    private String firstName;
 
-  @Column(nullable = false)
-  private String lastName;
+    @Column(nullable = false)
+    private String lastName;
 
-  @Column(columnDefinition = "TEXT")
-  private String imageUrl;
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
 
-  @Column private Date dob;
+    @Column
+    private Date dob;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private Role role = Role.CLIENT;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.CLIENT;
 
-  @Column(nullable = false)
-  private Timestamp join_date;
+    @Column(nullable = false)
+    private Timestamp join_date;
 
-  // TODO: model last_updated_location
-  // TODO: model last_updated_location_at
+    // TODO: model last_updated_location
+    // TODO: model last_updated_location_at
 
-  @JsonIgnore @Column private int code;
+    @JsonIgnore
+    @Column
+    private int code;
 
-  @JsonIgnore @Column private Timestamp codeExpiredAt;
+    @JsonIgnore
+    @Column
+    private Timestamp codeExpiredAt;
 
-  @Column private boolean emailVerified;
+    @Column
+    private boolean emailVerified;
 
-  @Column private String firebaseToken;
+    @Column
+    private String firebaseToken;
 
-  @JsonIgnore
-  @OneToMany(
-      mappedBy = "user",
-      cascade = CascadeType.ALL,
-      orphanRemoval = true,
-      fetch = FetchType.LAZY)
-  @OrderBy("id ASC")
-  private List<Trip> trips = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
+    private List<Trip> trips = new ArrayList<>();
 
-  @JsonIgnore
-  @OneToMany(
-      mappedBy = "user",
-      cascade = CascadeType.ALL,
-      orphanRemoval = true,
-      fetch = FetchType.LAZY)
-  @OrderBy("id ASC")
-  private List<Request> requests = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
+    private List<Request> requests = new ArrayList<>();
 
-  @JsonIgnore
-  @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  private List<Vehicle> managedVehicles = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Vehicle> managedVehicles = new ArrayList<>();
 
-  @Override
-  public String getUsername() {
-    return email;
-  }
+    @Override
+    public String getUsername() {
+        return email;
+    }
 
-  @Override
-  public boolean isAccountNonExpired() {
-    return true;
-  }
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
-  @Override
-  public boolean isAccountNonLocked() {
-    return true;
-  }
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return true;
-  }
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
-  @Override
-  public boolean isEnabled() {
-    return isEmailVerified();
-  }
+    @Override
+    public boolean isEnabled() {
+        return isEmailVerified();
+    }
 
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    return List.of(() -> role.getAuthority());
-  }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(() -> role.getAuthority());
+    }
 
-  @Override
-  public String getPassword() {
-    return passwordHash;
-  }
+    @Override
+    public String getPassword() {
+        return passwordHash;
+    }
 }

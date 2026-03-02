@@ -7,10 +7,10 @@ import lombok.Data;
 
 @Data
 public class UpdateVehicleStatusDto {
-  // @ValidVIN
-  private String vinNumber;
+    // @ValidVIN
+    private String vinNumber;
 
-  @JsonFormat(shape = JsonFormat.Shape.STRING)
-  @NotNull(message = "Status cannot be blank")
-  private VehicleStatus status;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    @NotNull(message = "Status cannot be blank")
+    private VehicleStatus status;
 }

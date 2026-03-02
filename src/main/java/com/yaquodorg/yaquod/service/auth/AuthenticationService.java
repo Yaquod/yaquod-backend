@@ -13,29 +13,32 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 public interface AuthenticationService {
-  LoginResponse login(LoginUserDto loginUserDto);
+    LoginResponse login(LoginUserDto loginUserDto);
 
-  VehicleLoginResponse vehicleLogin(VehicleLoginDto vehicleLoginDto);
+    VehicleLoginResponse vehicleLogin(VehicleLoginDto vehicleLoginDto);
 
-  User signup(RegisterUserDto registerUserDto, String role);
+    User signup(RegisterUserDto registerUserDto, String role);
 
-  LoginResponse refreshToken(String authHeader);
+    LoginResponse refreshToken(String authHeader);
 
-  boolean verifyUser(VerifyCodeDto verifyCodeDto);
+    boolean verifyUser(VerifyCodeDto verifyCodeDto);
 
-  void regenerateOtp(String email);
+    void regenerateOtp(String email);
 
-  boolean resetPassword(ResetPasswordDto resetPasswordDto);
+    boolean resetPassword(ResetPasswordDto resetPasswordDto);
 
-  /**
-   * Authenticates a user using Google ID token from Flutter Google Sign-In. Creates a new user if
-   * one doesn't exist with the Google email.
-   *
-   * @param request The Google ID token request containing the ID token and optional FCM token
-   * @return LoginResponse with access and refresh tokens
-   * @throws GeneralSecurityException if token verification fails due to security issues
-   * @throws IOException if there's an I/O error during token verification
-   */
-  LoginResponse googleLogin(GoogleIdTokenRequest request)
-      throws GeneralSecurityException, IOException;
+    /**
+     * Authenticates a user using Google ID token from Flutter Google Sign-In.
+     * Creates a new user if one doesn't exist with the Google email.
+     *
+     * @param request
+     *            The Google ID token request containing the ID token and optional
+     *            FCM token
+     * @return LoginResponse with access and refresh tokens
+     * @throws GeneralSecurityException
+     *             if token verification fails due to security issues
+     * @throws IOException
+     *             if there's an I/O error during token verification
+     */
+    LoginResponse googleLogin(GoogleIdTokenRequest request) throws GeneralSecurityException, IOException;
 }

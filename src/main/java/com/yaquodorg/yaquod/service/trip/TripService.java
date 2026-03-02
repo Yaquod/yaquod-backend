@@ -6,26 +6,25 @@ import com.yaquodorg.yaquod.entity.TripStatus;
 import java.util.List;
 
 public interface TripService {
-  void createTrip(
-      Request request, double startLong, double startLat, double endLong, double endLat);
+    void createTrip(Request request, double startLong, double startLat, double endLong, double endLat);
 
-  Trip getTripByRequestId(Long requestId);
+    Trip getTripByRequestId(Long requestId);
 
-  Trip getTripById(Long id);
+    Trip getTripById(Long id);
 
-  List<Trip> getAllTrips();
+    List<Trip> getAllTrips();
 
-  List<Trip> getTripsByUserId(Long userId);
+    List<Trip> getTripsByUserId(Long userId);
 
-  List<Trip> getUserLastNTrips(int n, Long userId);
+    List<Trip> getUserLastNTrips(int n, Long userId);
 
-  List<Trip> getTripsByVinNumber(String vinNumber);
+    List<Trip> getTripsByVinNumber(String vinNumber);
 
-  void updateTripStatus(Long id, TripStatus tripStatus);
+    void updateTripStatus(Long id, TripStatus tripStatus);
 
-  void deleteTripById(Long id);
+    void deleteTripById(Long id);
 
-  void startTrip(Long requestId);
+    void startTrip(Long requestId);
 
-  void endTrip(Long requestId);
+    void endTrip(Long requestId);
 }

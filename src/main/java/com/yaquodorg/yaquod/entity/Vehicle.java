@@ -16,63 +16,69 @@ import org.locationtech.jts.geom.Geometry;
 @Entity
 @Table(name = "vehicles")
 public class Vehicle {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(unique = true)
-  private String vinNumber;
+    @Column(unique = true)
+    private String vinNumber;
 
-  @Column private String plateNo;
+    @Column
+    private String plateNo;
 
-  // TODO: Should be enum later
-  @Column private String color;
+    // TODO: Should be enum later
+    @Column
+    private String color;
 
-  @Column private String carCompany;
+    @Column
+    private String carCompany;
 
-  @Column private String model;
+    @Column
+    private String model;
 
-  @Column private int seats;
+    @Column
+    private int seats;
 
-  @Column
-  @Enumerated(EnumType.STRING)
-  private VehicleStatus status = VehicleStatus.IDLE;
+    @Column
+    @Enumerated(EnumType.STRING)
+    private VehicleStatus status = VehicleStatus.IDLE;
 
-  @Column private Timestamp lastUpdatedStatusAt;
+    @Column
+    private Timestamp lastUpdatedStatusAt;
 
-  @Column(columnDefinition = "geometry")
-  @JsonIgnore
-  private Geometry lastUpdatedLocation;
+    @Column(columnDefinition = "geometry")
+    @JsonIgnore
+    private Geometry lastUpdatedLocation;
 
-  @Column private Timestamp lastUpdatedLocationAt;
+    @Column
+    private Timestamp lastUpdatedLocationAt;
 
-  @Column private double lastUpdatedLong;
+    @Column
+    private double lastUpdatedLong;
 
-  @Column private double lastUpdatedLat;
+    @Column
+    private double lastUpdatedLat;
 
-  @Column(unique = true, nullable = false)
-  private String apiKey;
+    @Column(unique = true, nullable = false)
+    private String apiKey;
 
-  @JsonIgnore
-  @Column(nullable = false)
-  private String apiSecretHash;
+    @JsonIgnore
+    @Column(nullable = false)
+    private String apiSecretHash;
 
-  @Column(nullable = false)
-  private Timestamp createdAt;
+    @Column(nullable = false)
+    private Timestamp createdAt;
 
-  @Column private Timestamp lastAuthenticatedAt;
+    @Column
+    private Timestamp lastAuthenticatedAt;
 
-  @JsonIgnore
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "created_by_admin_id", nullable = false)
-  private User createdByAdmin;
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_admin_id", nullable = false)
+    private User createdByAdmin;
 
-  @JsonIgnore
-  @OneToMany(
-      mappedBy = "vehicle",
-      cascade = CascadeType.ALL,
-      orphanRemoval = true,
-      fetch = FetchType.LAZY)
-  @OrderBy("id ASC")
-  private List<Trip> trips = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
+    private List<Trip> trips = new ArrayList<>();
 }

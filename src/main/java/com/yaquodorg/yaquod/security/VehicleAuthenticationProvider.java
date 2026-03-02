@@ -15,48 +15,43 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class VehicleAuthenticationProvider implements AuthenticationProvider {
 
-  private final VehicleRepository vehicleRepository;
-  private final PasswordEncoder passwordEncoder;
+    private final VehicleRepository vehicleRepository;
+    private final PasswordEncoder passwordEncoder;
 
-  @Override
-  public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-    VehicleAuthenticationToken token = (VehicleAuthenticationToken) authentication;
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        VehicleAuthenticationToken token = (VehicleAuthenticationToken) authentication;
 
-    String apiKey = token.getApiKey();
-    String apiSecret = (String) token.getCredentials();
+        String apiKey = token.getApiKey();
+        String apiSecret = (String) token.getCredentials();
 
-    // Find vehicle by API key
-    Vehicle vehicle =
-        vehicleRepository
-            .findByApiKey(apiKey)
-            .orElseThrow(() -> new BadCredentialsException("Invalid vehicle credentials"));
+        // Find vehicle by API key
+        Vehicle vehicle = vehicleRepository.findByApiKey(apiKey)
+                .orElseThrow(() -> new BadCredentialsException("Invalid vehicle credentials"));
 
-    // Verify the API secret
-    if (!passwordEncoder.matches(apiSecret, vehicle.getApiSecretHash())) {
-      throw new BadCredentialsException("Invalid vehicle credentials");
+        // Verify the API secret
+        if (!passwordEncoder.matches(apiSecret, vehicle.getApiSecretHash())) {
+            throw new BadCredentialsException("Invalid vehicle credentials");
+        }
+
+        // Update last authenticated timestamp
+        vehicle.setLastAuthenticatedAt(new Timestamp(System.currentTimeMillis()));
+        vehicleRepository.save(vehicle);
+
+        // Create authenticated token with vehicle details
+        VehicleAuthenticationToken authenticatedToken = new VehicleAuthenticationToken(vehicle.getId(),
+                vehicle.getApiKey(), vehicle.getCreatedByAdmin().getId(),
+                // No claims needed here, will be in JWT
+                null);
+
+        // Store vehicle in details for easy retrieval
+        authenticatedToken.setDetails(vehicle);
+
+        return authenticatedToken;
     }
 
-    // Update last authenticated timestamp
-    vehicle.setLastAuthenticatedAt(new Timestamp(System.currentTimeMillis()));
-    vehicleRepository.save(vehicle);
-
-    // Create authenticated token with vehicle details
-    VehicleAuthenticationToken authenticatedToken =
-        new VehicleAuthenticationToken(
-            vehicle.getId(),
-            vehicle.getApiKey(),
-            vehicle.getCreatedByAdmin().getId(),
-            // No claims needed here, will be in JWT
-            null);
-
-    // Store vehicle in details for easy retrieval
-    authenticatedToken.setDetails(vehicle);
-
-    return authenticatedToken;
-  }
-
-  @Override
-  public boolean supports(Class<?> authentication) {
-    return VehicleAuthenticationToken.class.isAssignableFrom(authentication);
-  }
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return VehicleAuthenticationToken.class.isAssignableFrom(authentication);
+    }
 }

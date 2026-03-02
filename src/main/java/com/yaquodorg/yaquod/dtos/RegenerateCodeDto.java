@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class RegenerateCodeDto {
-  @Email(message = "Email must be valid")
-  private String email;
+    @Email(message = "Email must be valid")
+    private String email;
 }

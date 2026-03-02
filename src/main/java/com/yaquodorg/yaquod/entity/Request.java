@@ -14,35 +14,37 @@ import org.locationtech.jts.geom.Point;
 @Entity
 @Table(name = "requests")
 public class Request {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @JsonIgnore
-  @Column(columnDefinition = "geometry(Point, 4326)")
-  private Point startLocation;
+    @JsonIgnore
+    @Column(columnDefinition = "geometry(Point, 4326)")
+    private Point startLocation;
 
-  @JsonIgnore
-  @Column(columnDefinition = "geometry(Point, 4326)")
-  private Point destinationLocation;
+    @JsonIgnore
+    @Column(columnDefinition = "geometry(Point, 4326)")
+    private Point destinationLocation;
 
-  @Column
-  @Enumerated(EnumType.STRING)
-  private RequestStatus status = RequestStatus.PENDING;
+    @Column
+    @Enumerated(EnumType.STRING)
+    private RequestStatus status = RequestStatus.PENDING;
 
-  @Column(nullable = false)
-  private Timestamp createdAt;
+    @Column(nullable = false)
+    private Timestamp createdAt;
 
-  @Column private double estimatedTime;
+    @Column
+    private double estimatedTime;
 
-  @Column private double estimatedFare;
+    @Column
+    private double estimatedFare;
 
-  @JsonIgnore
-  @ManyToOne
-  @JoinColumn(name = "user_id", referencedColumnName = "id")
-  private User user;
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
-  @JsonIgnore
-  @OneToOne(mappedBy = "request", cascade = CascadeType.ALL)
-  private Trip trip;
+    @JsonIgnore
+    @OneToOne(mappedBy = "request", cascade = CascadeType.ALL)
+    private Trip trip;
 }

@@ -27,203 +27,172 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class VehicleServiceImpl implements VehicleService {
 
-  private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+    private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
-  private final VehicleRepository vehicleRepository;
+    private final VehicleRepository vehicleRepository;
 
-  private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-  @Override
-  @Transactional
-  public CreateVehicleResponse createVehicle(CreateVehicleDto createVehicleDto, User user) {
-    Optional<Vehicle> vehicleOptional =
-        vehicleRepository.findByVinNumber(createVehicleDto.getVinNumber());
-    if (vehicleOptional.isPresent()) {
-      log.warn(
-          "Attempted to create vehicle with existing VIN: {}", createVehicleDto.getVinNumber());
-      throw new RuntimeException("Vehicle already exists!");
+    @Override
+    @Transactional
+    public CreateVehicleResponse createVehicle(CreateVehicleDto createVehicleDto, User user) {
+        Optional<Vehicle> vehicleOptional = vehicleRepository.findByVinNumber(createVehicleDto.getVinNumber());
+        if (vehicleOptional.isPresent()) {
+            log.warn("Attempted to create vehicle with existing VIN: {}", createVehicleDto.getVinNumber());
+            throw new RuntimeException("Vehicle already exists!");
+        }
+
+        Vehicle vehicle = new Vehicle();
+        CreateVehicleResponse response = buildVehicleFromDto(vehicle, user, createVehicleDto);
+        log.info("Creating new vehicle with VIN: {}", createVehicleDto.getVinNumber());
+        vehicleRepository.save(vehicle);
+
+        return response;
     }
 
-    Vehicle vehicle = new Vehicle();
-    CreateVehicleResponse response = buildVehicleFromDto(vehicle, user, createVehicleDto);
-    log.info("Creating new vehicle with VIN: {}", createVehicleDto.getVinNumber());
-    vehicleRepository.save(vehicle);
+    @Override
+    public List<Vehicle> getVehicles() {
+        log.debug("Fetching all vehicles");
+        List<Vehicle> vehicles = vehicleRepository.findAll();
+        log.debug("Found {} vehicles", vehicles.size());
+        return vehicles;
+    }
 
-    return response;
-  }
+    @Override
+    public Vehicle getVehicle(Long id) {
+        log.info("Retrieving vehicle with ID: {}", id);
+        return vehicleRepository.findById(id).orElseThrow(() -> {
+            log.warn("Vehicle not found with ID: {}", id);
+            return new RuntimeException("Vehicle not found!");
+        });
+    }
 
-  @Override
-  public List<Vehicle> getVehicles() {
-    log.debug("Fetching all vehicles");
-    List<Vehicle> vehicles = vehicleRepository.findAll();
-    log.debug("Found {} vehicles", vehicles.size());
-    return vehicles;
-  }
+    @Override
+    public Vehicle getVehicleByApiKey(String apiKey) {
+        log.info("Retrieving vehicle with apiKey: {}", apiKey);
+        return vehicleRepository.findByApiKey(apiKey).orElseThrow(() -> {
+            log.warn("Vehicle not found with apiKey: {}", apiKey);
+            return new RuntimeException("Vehicle not found!");
+        });
+    }
 
-  @Override
-  public Vehicle getVehicle(Long id) {
-    log.info("Retrieving vehicle with ID: {}", id);
-    return vehicleRepository
-        .findById(id)
-        .orElseThrow(
-            () -> {
-              log.warn("Vehicle not found with ID: {}", id);
-              return new RuntimeException("Vehicle not found!");
-            });
-  }
+    @Override
+    public Optional<Vehicle> getVehicleByVinNumber(String vinNumber) {
+        log.info("Retrieving vehicle with VIN: {}", vinNumber);
+        return vehicleRepository.findByVinNumber(vinNumber);
+    }
 
-  @Override
-  public Vehicle getVehicleByApiKey(String apiKey) {
-    log.info("Retrieving vehicle with apiKey: {}", apiKey);
-    return vehicleRepository
-        .findByApiKey(apiKey)
-        .orElseThrow(
-            () -> {
-              log.warn("Vehicle not found with apiKey: {}", apiKey);
-              return new RuntimeException("Vehicle not found!");
-            });
-  }
+    @Override
+    @Transactional
+    public Vehicle updateVehicle(CreateVehicleDto createVehicleDto) {
+        Vehicle vehicle = vehicleRepository.findByVinNumber(createVehicleDto.getVinNumber()).orElseThrow(() -> {
+            log.warn("Vehicle not found with VIN: {}", createVehicleDto.getVinNumber());
+            return new RuntimeException("Vehicle with VIN " + createVehicleDto.getVinNumber() + " not found!");
+        });
 
-  @Override
-  public Optional<Vehicle> getVehicleByVinNumber(String vinNumber) {
-    log.info("Retrieving vehicle with VIN: {}", vinNumber);
-    return vehicleRepository.findByVinNumber(vinNumber);
-  }
+        vehicle.setVinNumber(createVehicleDto.getVinNumber());
+        vehicle.setPlateNo(createVehicleDto.getPlateNo());
+        vehicle.setColor(createVehicleDto.getColor());
+        vehicle.setCarCompany(createVehicleDto.getCarCompany());
+        vehicle.setModel(createVehicleDto.getModel());
+        vehicle.setSeats(createVehicleDto.getSeats());
 
-  @Override
-  @Transactional
-  public Vehicle updateVehicle(CreateVehicleDto createVehicleDto) {
-    Vehicle vehicle =
-        vehicleRepository
-            .findByVinNumber(createVehicleDto.getVinNumber())
-            .orElseThrow(
-                () -> {
-                  log.warn("Vehicle not found with VIN: {}", createVehicleDto.getVinNumber());
-                  return new RuntimeException(
-                      "Vehicle with VIN " + createVehicleDto.getVinNumber() + " not found!");
-                });
+        log.info("Updating vehicle with VIN: {}", createVehicleDto.getVinNumber());
+        return vehicle;
+    }
 
-    vehicle.setVinNumber(createVehicleDto.getVinNumber());
-    vehicle.setPlateNo(createVehicleDto.getPlateNo());
-    vehicle.setColor(createVehicleDto.getColor());
-    vehicle.setCarCompany(createVehicleDto.getCarCompany());
-    vehicle.setModel(createVehicleDto.getModel());
-    vehicle.setSeats(createVehicleDto.getSeats());
+    @Override
+    @Transactional
+    public void updateVehicleLocation(String vinNumber, double longitude, double latitude) {
+        log.info("Updating location for vehicle VIN: {} to ({}, {})", vinNumber, longitude, latitude);
+        Date now = new Date();
+        Vehicle vehicle = vehicleRepository.findByVinNumber(vinNumber).orElseThrow(() -> {
+            log.warn("Vehicle not found with VIN: {}", vinNumber);
+            return new RuntimeException("Vehicle not found with VIN: " + vinNumber);
+        });
 
-    log.info("Updating vehicle with VIN: {}", createVehicleDto.getVinNumber());
-    return vehicle;
-  }
+        Point point = geometryFactory.createPoint(new Coordinate(longitude, latitude));
 
-  @Override
-  @Transactional
-  public void updateVehicleLocation(String vinNumber, double longitude, double latitude) {
-    log.info("Updating location for vehicle VIN: {} to ({}, {})", vinNumber, longitude, latitude);
-    Date now = new Date();
-    Vehicle vehicle =
-        vehicleRepository
-            .findByVinNumber(vinNumber)
-            .orElseThrow(
-                () -> {
-                  log.warn("Vehicle not found with VIN: {}", vinNumber);
-                  return new RuntimeException("Vehicle not found with VIN: " + vinNumber);
-                });
+        vehicle.setLastUpdatedLocation(point);
+        vehicle.setLastUpdatedLong(longitude);
+        vehicle.setLastUpdatedLat(latitude);
+        vehicle.setLastUpdatedLocationAt(new Timestamp(now.getTime()));
+        log.debug("Location updated successfully for vehicle VIN: {}", vinNumber);
+    }
 
-    Point point = geometryFactory.createPoint(new Coordinate(longitude, latitude));
+    @Override
+    @Transactional
+    public void updateVehicleStatus(String vinNumber, VehicleStatus status) {
+        log.info("Updating status for vehicle VIN: {} to {}", vinNumber, status);
+        Date now = new Date();
+        Vehicle vehicle = vehicleRepository.findByVinNumber(vinNumber).orElseThrow(() -> {
+            log.warn("Vehicle not found with VIN: {}", vinNumber);
+            return new RuntimeException("Vehicle not found with VIN: " + vinNumber);
+        });
+        vehicle.setStatus(status);
+        vehicle.setLastUpdatedStatusAt(new Timestamp(now.getTime()));
+        log.debug("Status updated successfully for vehicle VIN: {}", vinNumber);
+    }
 
-    vehicle.setLastUpdatedLocation(point);
-    vehicle.setLastUpdatedLong(longitude);
-    vehicle.setLastUpdatedLat(latitude);
-    vehicle.setLastUpdatedLocationAt(new Timestamp(now.getTime()));
-    log.debug("Location updated successfully for vehicle VIN: {}", vinNumber);
-  }
+    @Override
+    public void deleteVehicle(Long id) {
+        vehicleRepository.deleteById(id);
+        log.debug("Vehicle deleted successfully with ID: {}", id);
+    }
 
-  @Override
-  @Transactional
-  public void updateVehicleStatus(String vinNumber, VehicleStatus status) {
-    log.info("Updating status for vehicle VIN: {} to {}", vinNumber, status);
-    Date now = new Date();
-    Vehicle vehicle =
-        vehicleRepository
-            .findByVinNumber(vinNumber)
-            .orElseThrow(
-                () -> {
-                  log.warn("Vehicle not found with VIN: {}", vinNumber);
-                  return new RuntimeException("Vehicle not found with VIN: " + vinNumber);
-                });
-    vehicle.setStatus(status);
-    vehicle.setLastUpdatedStatusAt(new Timestamp(now.getTime()));
-    log.debug("Status updated successfully for vehicle VIN: {}", vinNumber);
-  }
+    @Override
+    public List<Vehicle> findKNearestVehicles(double longitude, double latitude, int k) {
+        log.info("Finding {} nearest vehicles to location: ({}, {})", k, longitude, latitude);
+        Point point = createPoint(longitude, latitude);
+        List<Vehicle> vehicles = vehicleRepository.findKNearestVehicles(point, k);
+        log.debug("Found {} nearest vehicles", vehicles.size());
+        return vehicles;
+    }
 
-  @Override
-  public void deleteVehicle(Long id) {
-    vehicleRepository.deleteById(id);
-    log.debug("Vehicle deleted successfully with ID: {}", id);
-  }
+    @Override
+    public List<Vehicle> findKNearestVehiclesWithinDistance(double longitude, double latitude, double maxDistanceMeters,
+            int k) {
+        log.info("Finding {} nearest vehicles within {} meters of location: ({}, {})", k, maxDistanceMeters, longitude,
+                latitude);
+        Point point = createPoint(longitude, latitude);
+        List<Vehicle> vehicles = vehicleRepository.findKNearestVehiclesWithinDistance(point, maxDistanceMeters, k);
+        log.debug("Found {} vehicles within distance", vehicles.size());
+        return vehicles;
+    }
 
-  @Override
-  public List<Vehicle> findKNearestVehicles(double longitude, double latitude, int k) {
-    log.info("Finding {} nearest vehicles to location: ({}, {})", k, longitude, latitude);
-    Point point = createPoint(longitude, latitude);
-    List<Vehicle> vehicles = vehicleRepository.findKNearestVehicles(point, k);
-    log.debug("Found {} nearest vehicles", vehicles.size());
-    return vehicles;
-  }
+    private Point createPoint(double longitude, double latitude) {
+        return geometryFactory.createPoint(new Coordinate(longitude, latitude));
+    }
 
-  @Override
-  public List<Vehicle> findKNearestVehiclesWithinDistance(
-      double longitude, double latitude, double maxDistanceMeters, int k) {
-    log.info(
-        "Finding {} nearest vehicles within {} meters of location: ({}, {})",
-        k,
-        maxDistanceMeters,
-        longitude,
-        latitude);
-    Point point = createPoint(longitude, latitude);
-    List<Vehicle> vehicles =
-        vehicleRepository.findKNearestVehiclesWithinDistance(point, maxDistanceMeters, k);
-    log.debug("Found {} vehicles within distance", vehicles.size());
-    return vehicles;
-  }
+    private CreateVehicleResponse buildVehicleFromDto(Vehicle vehicle, User user, CreateVehicleDto dto) {
+        Date now = new Date();
 
-  private Point createPoint(double longitude, double latitude) {
-    return geometryFactory.createPoint(new Coordinate(longitude, latitude));
-  }
+        vehicle.setVinNumber(dto.getVinNumber());
+        vehicle.setPlateNo(dto.getPlateNo());
+        vehicle.setColor(dto.getColor());
+        vehicle.setCarCompany(dto.getCarCompany());
+        vehicle.setModel(dto.getModel());
+        vehicle.setSeats(dto.getSeats());
+        vehicle.setCreatedAt(new Timestamp(now.getTime()));
+        vehicle.setCreatedByAdmin(user);
+        CreateVehicleResponse credentials = generateCredentials(vehicle);
 
-  private CreateVehicleResponse buildVehicleFromDto(
-      Vehicle vehicle, User user, CreateVehicleDto dto) {
-    Date now = new Date();
+        return credentials;
+    }
 
-    vehicle.setVinNumber(dto.getVinNumber());
-    vehicle.setPlateNo(dto.getPlateNo());
-    vehicle.setColor(dto.getColor());
-    vehicle.setCarCompany(dto.getCarCompany());
-    vehicle.setModel(dto.getModel());
-    vehicle.setSeats(dto.getSeats());
-    vehicle.setCreatedAt(new Timestamp(now.getTime()));
-    vehicle.setCreatedByAdmin(user);
-    CreateVehicleResponse credentials = generateCredentials(vehicle);
+    private CreateVehicleResponse generateCredentials(Vehicle vehicle) {
+        String apiKey = "VEH_" + UUID.randomUUID().toString();
+        String apiSecret = generateSecureSecret();
+        String apiSecretHash = passwordEncoder.encode(apiSecret);
 
-    return credentials;
-  }
+        vehicle.setApiKey(apiKey);
+        vehicle.setApiSecretHash(apiSecretHash);
 
-  private CreateVehicleResponse generateCredentials(Vehicle vehicle) {
-    String apiKey = "VEH_" + UUID.randomUUID().toString();
-    String apiSecret = generateSecureSecret();
-    String apiSecretHash = passwordEncoder.encode(apiSecret);
+        return CreateVehicleResponse.builder().vehicle(vehicle).apiKey(apiKey).apiSecret(apiSecret).build();
+    }
 
-    vehicle.setApiKey(apiKey);
-    vehicle.setApiSecretHash(apiSecretHash);
-
-    return CreateVehicleResponse.builder()
-        .vehicle(vehicle)
-        .apiKey(apiKey)
-        .apiSecret(apiSecret)
-        .build();
-  }
-
-  private String generateSecureSecret() {
-    String randomString = UUID.randomUUID().toString() + System.currentTimeMillis();
-    return DigestUtils.sha256Hex(randomString);
-  }
+    private String generateSecureSecret() {
+        String randomString = UUID.randomUUID().toString() + System.currentTimeMillis();
+        return DigestUtils.sha256Hex(randomString);
+    }
 }

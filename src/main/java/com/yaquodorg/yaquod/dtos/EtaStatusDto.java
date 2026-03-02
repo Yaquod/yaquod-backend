@@ -8,17 +8,17 @@ import lombok.Data;
 @Builder
 @Data
 public class EtaStatusDto {
-  private RequestStatus status;
+    private RequestStatus status;
 
-  // @ValidVIN
-  private String vinNumber;
+    // @ValidVIN
+    private String vinNumber;
 
-  @NotNull(message = "Request ID cannot be null")
-  private Long requestId;
+    @NotNull(message = "Request ID cannot be null")
+    private Long requestId;
 
-  @NotNull(message = "Estimated time cannot be null")
-  private double estimatedTime;
+    @NotNull(message = "Estimated time cannot be null")
+    private double estimatedTime;
 
-  @NotNull(message = "Estimated fare cannot be null")
-  private double estimatedFare;
+    @NotNull(message = "Estimated fare cannot be null")
+    private double estimatedFare;
 }

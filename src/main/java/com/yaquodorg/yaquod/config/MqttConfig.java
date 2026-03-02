@@ -25,63 +25,62 @@ import org.springframework.messaging.MessageHandler;
 @Setter
 public class MqttConfig {
 
-  private String brokerUrl;
-  private String clientId;
-  private String[] topics;
-  private int qos = 1;
-  private int connectionTimeout = 60;
-  private int keepAliveInterval = 60;
+    private String brokerUrl;
+    private String clientId;
+    private String[] topics;
+    private int qos = 1;
+    private int connectionTimeout = 60;
+    private int keepAliveInterval = 60;
 
-  @Bean
-  public MqttPahoClientFactory mqttClientFactory() {
-    DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
-    MqttConnectOptions options = new MqttConnectOptions();
+    @Bean
+    public MqttPahoClientFactory mqttClientFactory() {
+        DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
+        MqttConnectOptions options = new MqttConnectOptions();
 
-    String envBroker = System.getenv("MQTT_BROKER_URL");
-    String resolvedUrl = (envBroker != null && !envBroker.isBlank()) ? envBroker : brokerUrl;
+        String envBroker = System.getenv("MQTT_BROKER_URL");
+        String resolvedUrl = (envBroker != null && !envBroker.isBlank()) ? envBroker : brokerUrl;
 
-    log.info("Connecting to MQTT Broker at: {}", resolvedUrl);
+        log.info("Connecting to MQTT Broker at: {}", resolvedUrl);
 
-    options.setServerURIs(new String[] {resolvedUrl});
-    options.setConnectionTimeout(connectionTimeout);
-    options.setKeepAliveInterval(keepAliveInterval);
-    options.setCleanSession(true);
-    options.setAutomaticReconnect(true);
+        options.setServerURIs(new String[]{resolvedUrl});
+        options.setConnectionTimeout(connectionTimeout);
+        options.setKeepAliveInterval(keepAliveInterval);
+        options.setCleanSession(true);
+        options.setAutomaticReconnect(true);
 
-    factory.setConnectionOptions(options);
-    return factory;
-  }
+        factory.setConnectionOptions(options);
+        return factory;
+    }
 
-  @Bean
-  public MessageChannel mqttInputChannel() {
-    return new DirectChannel();
-  }
+    @Bean
+    public MessageChannel mqttInputChannel() {
+        return new DirectChannel();
+    }
 
-  @Bean
-  public MessageChannel mqttOutboundChannel() {
-    return new DirectChannel();
-  }
+    @Bean
+    public MessageChannel mqttOutboundChannel() {
+        return new DirectChannel();
+    }
 
-  @Bean
-  public MessageProducer inbound() {
-    MqttPahoMessageDrivenChannelAdapter adapter =
-        new MqttPahoMessageDrivenChannelAdapter(clientId + "-inbound", mqttClientFactory(), topics);
+    @Bean
+    public MessageProducer inbound() {
+        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(clientId + "-inbound",
+                mqttClientFactory(), topics);
 
-    adapter.setCompletionTimeout(5000);
-    adapter.setConverter(new DefaultPahoMessageConverter());
-    adapter.setQos(qos);
-    adapter.setOutputChannel(mqttInputChannel());
-    return adapter;
-  }
+        adapter.setCompletionTimeout(5000);
+        adapter.setConverter(new DefaultPahoMessageConverter());
+        adapter.setQos(qos);
+        adapter.setOutputChannel(mqttInputChannel());
+        return adapter;
+    }
 
-  @Bean
-  @ServiceActivator(inputChannel = "mqttOutboundChannel")
-  public MessageHandler mqttOutbound() {
-    MqttPahoMessageHandler messageHandler =
-        new MqttPahoMessageHandler(clientId + "-outbound", mqttClientFactory());
-    messageHandler.setAsync(true);
-    messageHandler.setDefaultQos(qos);
-    messageHandler.setDefaultTopic("testTopic");
-    return messageHandler;
-  }
+    @Bean
+    @ServiceActivator(inputChannel = "mqttOutboundChannel")
+    public MessageHandler mqttOutbound() {
+        MqttPahoMessageHandler messageHandler = new MqttPahoMessageHandler(clientId + "-outbound", mqttClientFactory());
+        messageHandler.setAsync(true);
+        messageHandler.setDefaultQos(qos);
+        messageHandler.setDefaultTopic("testTopic");
+        return messageHandler;
+    }
 }
