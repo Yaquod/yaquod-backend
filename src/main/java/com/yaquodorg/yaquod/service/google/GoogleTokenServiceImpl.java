@@ -6,18 +6,18 @@ import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import io.swagger.v3.oas.annotations.Operation;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class GoogleTokenServiceImpl implements GoogleTokenService {
-    private final GoogleIdTokenVerifier verifier;
 
-    public GoogleTokenServiceImpl(GoogleIdTokenVerifier verifier) {
-        this.verifier = verifier;
-    }
+    private final GoogleIdTokenVerifier verifier;
 
     /**
      * Verifies the Google ID token received from Flutter Google Sign-In.
@@ -47,18 +47,22 @@ public class GoogleTokenServiceImpl implements GoogleTokenService {
         String familyName = (String) payload.get("family_name");
 
         String resolvedGivenName = getName(givenName, name, email);
+
         log.info("Google ID token verified successfully for email: {}", email);
         log.debug("Token payload - name: {}, givenName: {}, familyName: {}, emailVerified: {}", name, resolvedGivenName,
                 familyName, emailVerified);
+
         if (!emailVerified) {
             log.warn("Email not verified for Google user: {}", email);
             throw new IllegalArgumentException("Email is not verified by Google");
         }
+
         return new GoogleLoginDto(email, name, resolvedGivenName, familyName);
     }
 
     private static @NonNull String getName(String givenName, String name, String email) {
         String resolvedGivenName = givenName;
+
         if (resolvedGivenName == null || resolvedGivenName.isBlank()) {
             if (name != null && !name.isBlank()) {
                 String trimmedName = name.trim();

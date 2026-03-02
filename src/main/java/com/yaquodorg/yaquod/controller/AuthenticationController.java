@@ -133,6 +133,31 @@ public class AuthenticationController {
         }
     }
 
+    @Operation(summary = "Google OAuth login", description = "Authenticates a user using Google ID token from Flutter Google Sign-In. Creates a new user if one doesn't exist.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Google login successful, tokens returned"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid Google ID token"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error during token verification")})
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(@Valid @RequestBody GoogleIdTokenDto googleIdTokenDto) {
+        log.info("Google login request received");
+        try {
+            LoginResponse loginResponse = authenticationService.googleLogin(googleIdTokenDto);
+            log.info("Google login successful");
+            return ResponseEntity.ok(createSuccessResponse(loginResponse));
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid Google ID token: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(createFailureResponse("Invalid Google ID token"));
+        } catch (GeneralSecurityException | IOException e) {
+            log.error("Google login verification failed: {}", e.getMessage());
+            return ResponseEntity.status(INTERNAL_SERVER_ERROR)
+                    .body(createFailureResponse("Google login verification failed"));
+        } catch (Exception e) {
+            log.error("Unexpected error during Google login: {}", e.getMessage());
+            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(createFailureResponse("Internal Server Error"));
+        }
+    }
+
     @Operation(summary = "Vehicle login", description = "Authenticates a vehicle and returns access and refresh tokens")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Login successful, tokens returned"),
@@ -195,31 +220,6 @@ public class AuthenticationController {
         } catch (Exception e) {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR)
                     .body(createFailureResponse("Internal Server Error: " + e.getMessage()));
-        }
-    }
-
-    @Operation(summary = "Google OAuth login", description = "Authenticates a user using Google ID token from Flutter Google Sign-In. Creates a new user if one doesn't exist.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Google login successful, tokens returned"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid Google ID token"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error during token verification")})
-    @PostMapping("/google")
-    public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(@Valid @RequestBody GoogleIdTokenDto googleIdTokenDto) {
-        log.info("Google login request received");
-        try {
-            LoginResponse loginResponse = authenticationService.googleLogin(googleIdTokenDto);
-            log.info("Google login successful");
-            return ResponseEntity.ok(createSuccessResponse(loginResponse));
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid Google ID token: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(createFailureResponse("Invalid Google ID token"));
-        } catch (GeneralSecurityException | IOException e) {
-            log.error("Google login verification failed: {}", e.getMessage());
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR)
-                    .body(createFailureResponse("Google login verification failed"));
-        } catch (Exception e) {
-            log.error("Unexpected error during Google login: {}", e.getMessage());
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(createFailureResponse("Internal Server Error"));
         }
     }
 
