@@ -19,10 +19,10 @@ public class GoogleTokenService {
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String webClientId;
 
-    @Value("${google.android.client-id:#{null}}")
+    @Value("${google.android.client-id}")
     private String androidClientId;
 
-    @Value("${google.ios.client-id:#{null}}")
+    @Value("${google.ios.client-id}")
     private String iosClientId;
 
     /**
