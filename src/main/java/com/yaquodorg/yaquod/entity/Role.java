@@ -1,11 +1,11 @@
 package com.yaquodorg.yaquod.entity;
 
 public enum Role {
-    CLIENT,
-    ADMIN,
-    VEHICLE;
+  CLIENT,
+  ADMIN,
+  VEHICLE;
 
-    public String getAuthority() {
-        return "ROLE_" + this.name();
-    }
+  public String getAuthority() {
+    return "ROLE_" + this.name();
+  }
 }

@@ -1,18 +1,5 @@
 package com.yaquodorg.yaquod.service.auth;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.NoSuchElementException;
-import java.util.Random;
-
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import com.yaquodorg.yaquod.dtos.GoogleIdTokenRequest;
 import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
@@ -24,295 +11,321 @@ import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.response.LoginResponse;
-import com.yaquodorg.yaquod.service.google.GoogleTokenServiceImpl;
 import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
+import com.yaquodorg.yaquod.service.google.GoogleTokenServiceImpl;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.mail.MailSenderService;
 import com.yaquodorg.yaquod.service.user.UserService;
-
 import jakarta.transaction.Transactional;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.NoSuchElementException;
+import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
 
-    private final UserService userService;
-    private final JwtService jwtService;
-    private final MailSenderService mailSenderService;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final GoogleTokenServiceImpl googleTokenService;
-    private static final long ONE_DAY_MS = 86_400_000L;
+  private final UserService userService;
+  private final JwtService jwtService;
+  private final MailSenderService mailSenderService;
+  private final PasswordEncoder passwordEncoder;
+  private final AuthenticationManager authenticationManager;
+  private final GoogleTokenServiceImpl googleTokenService;
+  private static final long ONE_DAY_MS = 86_400_000L;
 
-    @Override
-    public LoginResponse login(LoginUserDto loginUserDto) {
-        log.info("Login attempt for email: {}", loginUserDto.getEmail());
-        User authenticatedUser = authenticate(loginUserDto);
-        userService.updateFcmToken(loginUserDto.getEmail(), loginUserDto.getFcmToken());
+  @Override
+  public LoginResponse login(LoginUserDto loginUserDto) {
+    log.info("Login attempt for email: {}", loginUserDto.getEmail());
+    User authenticatedUser = authenticate(loginUserDto);
+    userService.updateFcmToken(loginUserDto.getEmail(), loginUserDto.getFcmToken());
 
-        String accessToken = jwtService.generateAccessToken(authenticatedUser);
-        String refreshToken = jwtService.generateRefreshToken(authenticatedUser);
+    String accessToken = jwtService.generateAccessToken(authenticatedUser);
+    String refreshToken = jwtService.generateRefreshToken(authenticatedUser);
 
-        log.info("Login successful for email: {}", loginUserDto.getEmail());
-        return createLoginResponse(accessToken, refreshToken, authenticatedUser);
+    log.info("Login successful for email: {}", loginUserDto.getEmail());
+    return createLoginResponse(accessToken, refreshToken, authenticatedUser);
+  }
+
+  @Override
+  public VehicleLoginResponse vehicleLogin(VehicleLoginDto vehicleLoginDto) {
+    log.info("Login attempt for apiKey: {}", vehicleLoginDto.getApiKey());
+    Vehicle vehicle = authenticateVehicle(vehicleLoginDto);
+
+    String accessToken = jwtService.generateVehicleToken(vehicle);
+    Date accessTokenExpiration = jwtService.extractExpiration(accessToken);
+    String refreshToken = jwtService.generateVehicleRefreshToken(vehicle);
+    Date refreshTokenExpiration = jwtService.extractExpiration(refreshToken);
+
+    log.info("Login successful for apiKey: {}", vehicleLoginDto.getApiKey());
+    return VehicleLoginResponse.builder()
+        .accessToken(accessToken)
+        .refreshToken(refreshToken)
+        .accessTokenExpiresIn(accessTokenExpiration)
+        .refreshTokenExpiresIn(refreshTokenExpiration)
+        .vehicle(vehicle)
+        .build();
+  }
+
+  private User authenticate(LoginUserDto loginUserDto) {
+    log.debug("Authenticating user with email: {}", loginUserDto.getEmail());
+    // 1. calls the UserDetailsService.loadUserByUsername() to fetch the user from
+    // the database by email.
+    // 2. uses the BCryptPasswordEncoder to compare the raw password from the
+    // request against the stored hash.
+    // 3. It automatically checks isAccountNonExpired(), isAccountNonLocked(),
+    // isCredentialsNonExpired(), and isEnabled()
+    Authentication auth =
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                loginUserDto.getEmail(), loginUserDto.getPassword()));
+
+    log.debug("Authentication successful for email: {}", loginUserDto.getEmail());
+    return (User) auth.getPrincipal();
+  }
+
+  private Vehicle authenticateVehicle(VehicleLoginDto vehicleLoginDto) {
+    log.debug("Authenticating vehicle with apiKey: {}", vehicleLoginDto.getApiKey());
+    Authentication auth =
+        authenticationManager.authenticate(
+            new VehicleAuthenticationToken(
+                vehicleLoginDto.getApiKey(), vehicleLoginDto.getApiSecret()));
+
+    log.debug("Authentication successful for apiKey: {}", vehicleLoginDto.getApiKey());
+    return (Vehicle) auth.getDetails();
+  }
+
+  @Override
+  public User signup(RegisterUserDto registerUserDto, String role) {
+    log.info("Signup attempt for email: {} with role: {}", registerUserDto.getEmail(), role);
+    User user = createUserFromDto(registerUserDto);
+    if (role.equals("ADMIN")) {
+      user.setRole(Role.ADMIN);
+      log.debug("Setting role to ADMIN for email: {}", registerUserDto.getEmail());
     }
 
-    @Override
-    public VehicleLoginResponse vehicleLogin(VehicleLoginDto vehicleLoginDto) {
-        log.info("Login attempt for apiKey: {}", vehicleLoginDto.getApiKey());
-        Vehicle vehicle = authenticateVehicle(vehicleLoginDto);
+    String code = Integer.toString(user.getCode());
+    User createdUser = userService.saveUser(user);
+    log.debug("User saved, sending verification email to: {}", user.getEmail());
+    mailSenderService.sendEmail(user.getEmail(), "Verification Code", code);
 
-        String accessToken = jwtService.generateVehicleToken(vehicle);
-        Date accessTokenExpiration = jwtService.extractExpiration(accessToken);
-        String refreshToken = jwtService.generateVehicleRefreshToken(vehicle);
-        Date refreshTokenExpiration = jwtService.extractExpiration(refreshToken);
+    log.info("Signup successful for email: {}", registerUserDto.getEmail());
+    return createdUser;
+  }
 
-        log.info("Login successful for apiKey: {}", vehicleLoginDto.getApiKey());
-        return VehicleLoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .accessTokenExpiresIn(accessTokenExpiration)
-                .refreshTokenExpiresIn(refreshTokenExpiration)
-                .vehicle(vehicle)
-                .build();
+  private User createUserFromDto(RegisterUserDto registerUserDto) {
+    log.debug("Creating user from DTO for email: {}", registerUserDto.getEmail());
+    User user = new User();
+    Date now = new Date();
+    Date codeExpiryDate = new Date(now.getTime() + ONE_DAY_MS);
+
+    user.setEmail(registerUserDto.getEmail());
+    user.setPasswordHash(passwordEncoder.encode(registerUserDto.getPassword()));
+    user.setFirstName(registerUserDto.getFirstName());
+    user.setLastName(registerUserDto.getLastName());
+    user.setPhoneNumber(registerUserDto.getPhoneNumber());
+    user.setJoin_date(new Timestamp(now.getTime()));
+    user.setCode(generateRandomOtp());
+    user.setCodeExpiredAt(new Timestamp(codeExpiryDate.getTime()));
+    user.setEmailVerified(false);
+
+    log.debug("User entity created for email: {}", registerUserDto.getEmail());
+    return user;
+  }
+
+  private int generateRandomOtp() {
+    log.debug("Generating random OTP");
+    int otpLength = 6;
+
+    int min = (int) Math.pow(10, otpLength - 1);
+    int max = (int) Math.pow(10, otpLength) - 1;
+
+    Random random = new Random();
+    // return random.nextInt(max - min + 1) + min;
+    // for testing environment, OTP is always 111111
+    log.debug("OTP generated (test mode)");
+    return 111111;
+  }
+
+  @Override
+  public LoginResponse refreshToken(String authHeader) {
+    log.info("Refresh token request received");
+
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+      final String refreshToken = authHeader.substring(7);
+      if (jwtService.validateToken(refreshToken)) {
+        log.debug("Refresh token is valid, generating new tokens");
+        return handleValidToken(refreshToken);
+      }
+      log.warn("Refresh token validation failed");
     }
 
-    private User authenticate(LoginUserDto loginUserDto) {
-        log.debug("Authenticating user with email: {}", loginUserDto.getEmail());
-        // 1. calls the UserDetailsService.loadUserByUsername() to fetch the user from
-        // the database by email.
-        // 2. uses the BCryptPasswordEncoder to compare the raw password from the
-        // request against the stored hash.
-        // 3. It automatically checks isAccountNonExpired(), isAccountNonLocked(),
-        // isCredentialsNonExpired(), and isEnabled()
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginUserDto.getEmail(),
-                        loginUserDto.getPassword()));
+    log.warn("Invalid or missing refresh token");
+    throw new IllegalArgumentException("Invalid or missing refresh token");
+  }
 
-        log.debug("Authentication successful for email: {}", loginUserDto.getEmail());
-        return (User) auth.getPrincipal();
+  private LoginResponse handleValidToken(String refreshToken) {
+    final String email = jwtService.getEmailFromToken(refreshToken);
+    log.debug("Extracting email from refresh token: {}", email);
+    User user =
+        userService
+            .getUser(email)
+            .orElseThrow(
+                () -> {
+                  log.error("User not found for email: {}", email);
+                  return new NoSuchElementException("User not found");
+                });
+
+    String accessToken = jwtService.generateAccessToken(user);
+    log.debug("New access token generated for email: {}", email);
+
+    return createLoginResponse(accessToken, refreshToken, user);
+  }
+
+  private LoginResponse createLoginResponse(String accessToken, String refreshToken, User user) {
+    log.debug("Creating login response for user id: {}", user.getId());
+    LoginResponse loginResponse = new LoginResponse();
+    loginResponse.setAccessToken(accessToken);
+    loginResponse.setRefreshToken(refreshToken);
+    loginResponse.setAccessTokenExpiresIn(jwtService.extractExpiration(accessToken));
+    loginResponse.setRefreshTokenExpiresIn(jwtService.extractExpiration(refreshToken));
+    loginResponse.setUser(user);
+
+    return loginResponse;
+  }
+
+  @Override
+  @Transactional
+  public boolean verifyUser(VerifyCodeDto verifyCodeDto) {
+    String email = verifyCodeDto.getEmail();
+    int code = verifyCodeDto.getCode();
+    log.info("Verifying user with email: {}", email);
+
+    User user =
+        userService
+            .getUser(email)
+            .orElseThrow(
+                () -> {
+                  log.error("User not found for email: {}", email);
+                  return new NoSuchElementException("User not found");
+                });
+    int verificationCode = user.getCode();
+
+    if (code == verificationCode && isCodeValid(user.getCodeExpiredAt())) {
+      user.setEmailVerified(true);
+      log.info("User verified successfully for email: {}", email);
+      return true;
     }
 
-    private Vehicle authenticateVehicle(VehicleLoginDto vehicleLoginDto) {
-        log.debug("Authenticating vehicle with apiKey: {}", vehicleLoginDto.getApiKey());
-        Authentication auth = authenticationManager.authenticate(
-                new VehicleAuthenticationToken(
-                        vehicleLoginDto.getApiKey(),
-                        vehicleLoginDto.getApiSecret()));
+    log.warn("Verification failed for email: {} - invalid code or expired", email);
+    return false;
+  }
 
-        log.debug("Authentication successful for apiKey: {}", vehicleLoginDto.getApiKey());
-        return (Vehicle) auth.getDetails();
+  @Override
+  @Transactional
+  public void regenerateOtp(String email) {
+    log.info("Regenerating OTP for email: {}", email);
+    Date now = new Date();
+    Date expiryDate = new Date(now.getTime() + ONE_DAY_MS);
+    User user =
+        userService
+            .getUser(email)
+            .orElseThrow(
+                () -> {
+                  log.error("User not found for email: {}", email);
+                  return new NoSuchElementException("User not found");
+                });
+    int newOtp = generateRandomOtp();
+
+    user.setCode(newOtp);
+    user.setCodeExpiredAt(new Timestamp(expiryDate.getTime()));
+    user.setEmailVerified(false);
+
+    String code = Integer.toString(user.getCode());
+    mailSenderService.sendEmail(user.getEmail(), "Verification Code", code);
+    log.info("OTP regenerated and sent to email: {}", email);
+  }
+
+  @Override
+  @Transactional
+  public boolean resetPassword(ResetPasswordDto resetPasswordDto) {
+    String email = resetPasswordDto.getEmail();
+    String newPassword = resetPasswordDto.getPassword();
+    log.info("Reset password attempt for email: {}", email);
+
+    int code = resetPasswordDto.getCode();
+    User user =
+        userService
+            .getUser(email)
+            .orElseThrow(
+                () -> {
+                  log.error("User not found for email: {}", email);
+                  return new NoSuchElementException("User not found");
+                });
+    int verificationCode = user.getCode();
+
+    if (code == verificationCode && isCodeValid(user.getCodeExpiredAt())) {
+      user.setPasswordHash(passwordEncoder.encode(newPassword));
+      user.setEmailVerified(true);
+      log.info("Password reset successful for email: {}", email);
+      return true;
     }
 
-    @Override
-    public User signup(RegisterUserDto registerUserDto, String role) {
-        log.info("Signup attempt for email: {} with role: {}", registerUserDto.getEmail(), role);
-        User user = createUserFromDto(registerUserDto);
-        if (role.equals("ADMIN")) {
-            user.setRole(Role.ADMIN);
-            log.debug("Setting role to ADMIN for email: {}", registerUserDto.getEmail());
-        }
+    log.warn("Password reset failed for email: {} - invalid code or expired", email);
+    return false;
+  }
 
-        String code = Integer.toString(user.getCode());
-        User createdUser = userService.saveUser(user);
-        log.debug("User saved, sending verification email to: {}", user.getEmail());
-        mailSenderService.sendEmail(user.getEmail(), "Verification Code", code);
+  private boolean isCodeValid(Timestamp codeExpiredAt) {
+    log.debug("Checking if code is valid, expiration: {}", codeExpiredAt);
+    try {
+      Date codeExpirationDate = new Date(codeExpiredAt.getTime());
+      Date currentDate = new Date();
+      boolean isValid = !currentDate.after(codeExpirationDate);
+      log.debug("Code validity check result: {}", isValid);
+      return isValid;
+    } catch (Exception e) {
+      // Default to code expired if parsing fails
+      log.error("Error parsing code expiration date: {}", e.getMessage());
+      return false;
+    }
+  }
 
-        log.info("Signup successful for email: {}", registerUserDto.getEmail());
-        return createdUser;
+  @Override
+  @Transactional
+  public LoginResponse googleLogin(GoogleIdTokenRequest request)
+      throws GeneralSecurityException, IOException {
+    log.info("Google login attempt");
+
+    // Verify the Google ID token and extract user information
+    GoogleLoginDto googleUserInfo = googleTokenService.verifyIdToken(request.getIdToken());
+    log.info("Google token verified for email: {}", googleUserInfo.getEmail());
+
+    // Find existing user or create a new one
+    User user = userService.findOrCreateGoogleUser(googleUserInfo);
+    log.info("User retrieved/created for Google login: {}", user.getEmail());
+
+    // Update FCM token if provided
+    if (request.getFcmToken() != null && !request.getFcmToken().isEmpty()) {
+      userService.updateFcmToken(user.getEmail(), request.getFcmToken());
+      log.debug("FCM token updated for user: {}", user.getEmail());
     }
 
-    private User createUserFromDto(RegisterUserDto registerUserDto) {
-        log.debug("Creating user from DTO for email: {}", registerUserDto.getEmail());
-        User user = new User();
-        Date now = new Date();
-        Date codeExpiryDate = new Date(now.getTime() + ONE_DAY_MS);
+    // Generate JWT tokens
+    String accessToken = jwtService.generateAccessToken(user);
+    String refreshToken = jwtService.generateRefreshToken(user);
 
-        user.setEmail(registerUserDto.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(registerUserDto.getPassword()));
-        user.setFirstName(registerUserDto.getFirstName());
-        user.setLastName(registerUserDto.getLastName());
-        user.setPhoneNumber(registerUserDto.getPhoneNumber());
-        user.setJoin_date(new Timestamp(now.getTime()));
-        user.setCode(generateRandomOtp());
-        user.setCodeExpiredAt(new Timestamp(codeExpiryDate.getTime()));
-        user.setEmailVerified(false);
-
-        log.debug("User entity created for email: {}", registerUserDto.getEmail());
-        return user;
-    }
-
-    private int generateRandomOtp() {
-        log.debug("Generating random OTP");
-        int otpLength = 6;
-
-        int min = (int) Math.pow(10, otpLength - 1);
-        int max = (int) Math.pow(10, otpLength) - 1;
-
-        Random random = new Random();
-        // return random.nextInt(max - min + 1) + min;
-        // for testing environment, OTP is always 111111
-        log.debug("OTP generated (test mode)");
-        return 111111;
-    }
-
-    @Override
-    public LoginResponse refreshToken(String authHeader) {
-        log.info("Refresh token request received");
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            final String refreshToken = authHeader.substring(7);
-            if (jwtService.validateToken(refreshToken)) {
-                log.debug("Refresh token is valid, generating new tokens");
-                return handleValidToken(refreshToken);
-            }
-            log.warn("Refresh token validation failed");
-        }
-
-        log.warn("Invalid or missing refresh token");
-        throw new IllegalArgumentException("Invalid or missing refresh token");
-    }
-
-    private LoginResponse handleValidToken(String refreshToken) {
-        final String email = jwtService.getEmailFromToken(refreshToken);
-        log.debug("Extracting email from refresh token: {}", email);
-        User user = userService.getUser(email).orElseThrow(() -> {
-            log.error("User not found for email: {}", email);
-            return new NoSuchElementException("User not found");
-        });
-
-        String accessToken = jwtService.generateAccessToken(user);
-        log.debug("New access token generated for email: {}", email);
-
-        return createLoginResponse(accessToken, refreshToken, user);
-    }
-
-    private LoginResponse createLoginResponse(String accessToken, String refreshToken, User user) {
-        log.debug("Creating login response for user id: {}", user.getId());
-        LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setAccessToken(accessToken);
-        loginResponse.setRefreshToken(refreshToken);
-        loginResponse.setAccessTokenExpiresIn(jwtService.extractExpiration(accessToken));
-        loginResponse.setRefreshTokenExpiresIn(jwtService.extractExpiration(refreshToken));
-        loginResponse.setUser(user);
-
-        return loginResponse;
-    }
-
-    @Override
-    @Transactional
-    public boolean verifyUser(VerifyCodeDto verifyCodeDto) {
-        String email = verifyCodeDto.getEmail();
-        int code = verifyCodeDto.getCode();
-        log.info("Verifying user with email: {}", email);
-
-        User user = userService.getUser(email).orElseThrow(() -> {
-            log.error("User not found for email: {}", email);
-            return new NoSuchElementException("User not found");
-        });
-        int verificationCode = user.getCode();
-
-        if (code == verificationCode && isCodeValid(user.getCodeExpiredAt())) {
-            user.setEmailVerified(true);
-            log.info("User verified successfully for email: {}", email);
-            return true;
-        }
-
-        log.warn("Verification failed for email: {} - invalid code or expired", email);
-        return false;
-    }
-
-    @Override
-    @Transactional
-    public void regenerateOtp(String email) {
-        log.info("Regenerating OTP for email: {}", email);
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + ONE_DAY_MS);
-        User user = userService.getUser(email).orElseThrow(() -> {
-            log.error("User not found for email: {}", email);
-            return new NoSuchElementException("User not found");
-        });
-        int newOtp = generateRandomOtp();
-
-        user.setCode(newOtp);
-        user.setCodeExpiredAt(new Timestamp(expiryDate.getTime()));
-        user.setEmailVerified(false);
-
-        String code = Integer.toString(user.getCode());
-        mailSenderService.sendEmail(user.getEmail(), "Verification Code", code);
-        log.info("OTP regenerated and sent to email: {}", email);
-    }
-
-    @Override
-    @Transactional
-    public boolean resetPassword(ResetPasswordDto resetPasswordDto) {
-        String email = resetPasswordDto.getEmail();
-        String newPassword = resetPasswordDto.getPassword();
-        log.info("Reset password attempt for email: {}", email);
-
-        int code = resetPasswordDto.getCode();
-        User user = userService.getUser(email).orElseThrow(() -> {
-            log.error("User not found for email: {}", email);
-            return new NoSuchElementException("User not found");
-        });
-        int verificationCode = user.getCode();
-
-        if (code == verificationCode && isCodeValid(user.getCodeExpiredAt())) {
-            user.setPasswordHash(passwordEncoder.encode(newPassword));
-            user.setEmailVerified(true);
-            log.info("Password reset successful for email: {}", email);
-            return true;
-        }
-
-        log.warn("Password reset failed for email: {} - invalid code or expired", email);
-        return false;
-    }
-
-    private boolean isCodeValid(Timestamp codeExpiredAt) {
-        log.debug("Checking if code is valid, expiration: {}", codeExpiredAt);
-        try {
-            Date codeExpirationDate = new Date(codeExpiredAt.getTime());
-            Date currentDate = new Date();
-            boolean isValid = !currentDate.after(codeExpirationDate);
-            log.debug("Code validity check result: {}", isValid);
-            return isValid;
-        } catch (Exception e) {
-            // Default to code expired if parsing fails
-            log.error("Error parsing code expiration date: {}", e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    @Transactional
-    public LoginResponse googleLogin(GoogleIdTokenRequest request) throws GeneralSecurityException, IOException {
-        log.info("Google login attempt");
-
-        // Verify the Google ID token and extract user information
-        GoogleLoginDto googleUserInfo = googleTokenService.verifyIdToken(request.getIdToken());
-        log.info("Google token verified for email: {}", googleUserInfo.getEmail());
-
-        // Find existing user or create a new one
-        User user = userService.findOrCreateGoogleUser(googleUserInfo);
-        log.info("User retrieved/created for Google login: {}", user.getEmail());
-
-        // Update FCM token if provided
-        if (request.getFcmToken() != null && !request.getFcmToken().isEmpty()) {
-            userService.updateFcmToken(user.getEmail(), request.getFcmToken());
-            log.debug("FCM token updated for user: {}", user.getEmail());
-        }
-
-        // Generate JWT tokens
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
-
-        log.info("Google login successful for email: {}", user.getEmail());
-        return createLoginResponse(accessToken, refreshToken, user);
-    }
-
+    log.info("Google login successful for email: {}", user.getEmail());
+    return createLoginResponse(accessToken, refreshToken, user);
+  }
 }

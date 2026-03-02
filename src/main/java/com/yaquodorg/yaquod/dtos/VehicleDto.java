@@ -8,6 +8,6 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class VehicleDto {
-    // @ValidVIN
-    private String vinNumber;
+  // @ValidVIN
+  private String vinNumber;
 }

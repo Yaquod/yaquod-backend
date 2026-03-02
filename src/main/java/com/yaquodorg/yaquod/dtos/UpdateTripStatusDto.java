@@ -6,10 +6,10 @@ import lombok.Data;
 @Data
 @Builder
 public class UpdateTripStatusDto {
-    // @ValidVIN
-    private String vinNumber;
+  // @ValidVIN
+  private String vinNumber;
 
-    private long tripId;
+  private long tripId;
 
-    private String tripStatus;
+  private String tripStatus;
 }
