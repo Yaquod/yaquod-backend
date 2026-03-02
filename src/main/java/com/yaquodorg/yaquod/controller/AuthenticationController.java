@@ -218,13 +218,6 @@ public class AuthenticationController {
         }
     }
 
-    @Operation(summary = "Health check", description = "Simple endpoint to verify the authentication service is running")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Service is healthy")
-    @GetMapping("/test")
-    public String test() {
-        return "Authentication Service is up and running!";
-    }
-
     @Operation(summary = "Google OAuth login", description = "Authenticates a user using Google ID token from Flutter Google Sign-In. Creates a new user if one doesn't exist.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Google login successful, tokens returned"),
