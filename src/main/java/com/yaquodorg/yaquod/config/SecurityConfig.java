@@ -5,6 +5,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 import com.yaquodorg.yaquod.filter.AuthenticationEntryPointFilter;
 import com.yaquodorg.yaquod.filter.CustomAccessDeniedFilter;
 import com.yaquodorg.yaquod.filter.JwtAuthenticationFilter;
+import com.yaquodorg.yaquod.security.OAuth2LoginSuccessHandler;
 import com.yaquodorg.yaquod.security.VehicleAuthenticationProvider;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

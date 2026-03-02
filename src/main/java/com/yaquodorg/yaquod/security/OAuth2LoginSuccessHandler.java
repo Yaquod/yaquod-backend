@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.config;
+package com.yaquodorg.yaquod.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
