@@ -78,3 +78,10 @@ management:
 server:
   address: 0.0.0.0
   port: ${SERVER_PORT:8000}
+
+
+google:
+  android:
+    client-id: ${OAUTH2_GOOGLE_ANDROID_CLIENT_ID:client-id-for-android.apps.googleusercontent.com}
+  ios:
+    client-id: ${OAUTH2_GOOGLE_IOS_CLIENT_ID:client-id-for-ios.apps.googleusercontent.com}
