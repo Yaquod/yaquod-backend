@@ -1,6 +1,6 @@
 package com.yaquodorg.yaquod.service.auth;
 
-import com.yaquodorg.yaquod.dtos.GoogleIdTokenRequest;
+import com.yaquodorg.yaquod.dtos.GoogleIdTokenDto;
 import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
@@ -13,7 +13,7 @@ import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
-import com.yaquodorg.yaquod.service.google.GoogleTokenServiceImpl;
+import com.yaquodorg.yaquod.service.google.GoogleTokenService;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.mail.MailSenderService;
 import com.yaquodorg.yaquod.service.user.UserService;
@@ -42,7 +42,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MailSenderService mailSenderService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final GoogleTokenServiceImpl googleTokenService;
+    private final GoogleTokenService googleTokenService;
     private static final long ONE_DAY_MS = 86_400_000L;
 
     @Override
@@ -56,6 +56,33 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         log.info("Login successful for email: {}", loginUserDto.getEmail());
         return createLoginResponse(accessToken, refreshToken, authenticatedUser);
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse googleLogin(GoogleIdTokenDto googleIdTokenDto) throws GeneralSecurityException, IOException {
+        log.info("Google login attempt");
+
+        // Verify the Google ID token and extract user information
+        GoogleLoginDto googleUserInfo = googleTokenService.verifyIdToken(googleIdTokenDto.getIdToken());
+        log.info("Google token verified for email: {}", googleUserInfo.getEmail());
+
+        // Find existing user or create a new one
+        User user = userService.findOrCreateGoogleUser(googleUserInfo);
+        log.info("User retrieved/created for Google login: {}", user.getEmail());
+
+        // Update FCM token if provided
+        if (googleIdTokenDto.getFcmToken() != null && !googleIdTokenDto.getFcmToken().isEmpty()) {
+            userService.updateFcmToken(user.getEmail(), googleIdTokenDto.getFcmToken());
+            log.debug("FCM token updated for user: {}", user.getEmail());
+        }
+
+        // Generate JWT tokens
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        log.info("Google login successful for email: {}", user.getEmail());
+        return createLoginResponse(accessToken, refreshToken, user);
     }
 
     @Override
@@ -275,32 +302,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             log.error("Error parsing code expiration date: {}", e.getMessage());
             return false;
         }
-    }
-
-    @Override
-    @Transactional
-    public LoginResponse googleLogin(GoogleIdTokenRequest request) throws GeneralSecurityException, IOException {
-        log.info("Google login attempt");
-
-        // Verify the Google ID token and extract user information
-        GoogleLoginDto googleUserInfo = googleTokenService.verifyIdToken(request.getIdToken());
-        log.info("Google token verified for email: {}", googleUserInfo.getEmail());
-
-        // Find existing user or create a new one
-        User user = userService.findOrCreateGoogleUser(googleUserInfo);
-        log.info("User retrieved/created for Google login: {}", user.getEmail());
-
-        // Update FCM token if provided
-        if (request.getFcmToken() != null && !request.getFcmToken().isEmpty()) {
-            userService.updateFcmToken(user.getEmail(), request.getFcmToken());
-            log.debug("FCM token updated for user: {}", user.getEmail());
-        }
-
-        // Generate JWT tokens
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
-
-        log.info("Google login successful for email: {}", user.getEmail());
-        return createLoginResponse(accessToken, refreshToken, user);
     }
 }

@@ -7,7 +7,7 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
-import com.yaquodorg.yaquod.dtos.GoogleIdTokenRequest;
+import com.yaquodorg.yaquod.dtos.GoogleIdTokenDto;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegenerateCodeDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
@@ -204,10 +204,10 @@ public class AuthenticationController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid Google ID token"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error during token verification")})
     @PostMapping("/google")
-    public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(@Valid @RequestBody GoogleIdTokenRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(@Valid @RequestBody GoogleIdTokenDto googleIdTokenDto) {
         log.info("Google login request received");
         try {
-            LoginResponse loginResponse = authenticationService.googleLogin(request);
+            LoginResponse loginResponse = authenticationService.googleLogin(googleIdTokenDto);
             log.info("Google login successful");
             return ResponseEntity.ok(createSuccessResponse(loginResponse));
         } catch (IllegalArgumentException e) {

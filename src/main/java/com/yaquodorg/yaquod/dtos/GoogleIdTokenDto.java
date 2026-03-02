@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GoogleIdTokenRequest {
+public class GoogleIdTokenDto {
 
     @NotBlank(message = "ID token is required")
     private String idToken;
