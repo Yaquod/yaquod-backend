@@ -1,10 +1,4 @@
-package com.yaquodorg.yaquod.config;
-
-import java.io.IOException;
-
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.stereotype.Component;
+package com.yaquodorg.yaquod.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
@@ -13,11 +7,14 @@ import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.user.UserService;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -28,17 +25,20 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+    public void onAuthenticationSuccess(
+            HttpServletRequest request,
+            HttpServletResponse response,
             org.springframework.security.core.Authentication authentication)
             throws IOException, ServletException {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
-        GoogleLoginDto googleLoginDto = new GoogleLoginDto(
-                oAuth2User.getAttribute("email"),
-                oAuth2User.getAttribute("name"),
-                oAuth2User.getAttribute("given_name"),
-                oAuth2User.getAttribute("family_name"));
+        GoogleLoginDto googleLoginDto =
+                new GoogleLoginDto(
+                        oAuth2User.getAttribute("email"),
+                        oAuth2User.getAttribute("name"),
+                        oAuth2User.getAttribute("given_name"),
+                        oAuth2User.getAttribute("family_name"));
 
         User user = userService.findOrCreateGoogleUser(googleLoginDto);
 

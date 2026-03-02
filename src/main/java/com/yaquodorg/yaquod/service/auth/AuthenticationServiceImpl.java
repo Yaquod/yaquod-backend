@@ -1,16 +1,7 @@
 package com.yaquodorg.yaquod.service.auth;
 
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.NoSuchElementException;
-import java.util.Random;
-
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
+import com.yaquodorg.yaquod.dtos.GoogleIdTokenDto;
+import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
 import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
@@ -22,13 +13,24 @@ import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
+import com.yaquodorg.yaquod.service.google.GoogleTokenService;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.mail.MailSenderService;
 import com.yaquodorg.yaquod.service.user.UserService;
-
 import jakarta.transaction.Transactional;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.NoSuchElementException;
+import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +42,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MailSenderService mailSenderService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final GoogleTokenService googleTokenService;
     private static final long ONE_DAY_MS = 86_400_000L;
 
     @Override
@@ -53,6 +56,35 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         log.info("Login successful for email: {}", loginUserDto.getEmail());
         return createLoginResponse(accessToken, refreshToken, authenticatedUser);
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse googleLogin(GoogleIdTokenDto googleIdTokenDto)
+            throws GeneralSecurityException, IOException {
+        log.info("Google login attempt");
+
+        // Verify the Google ID token and extract user information
+        GoogleLoginDto googleUserInfo =
+                googleTokenService.verifyIdToken(googleIdTokenDto.getIdToken());
+        log.info("Google token verified for email: {}", googleUserInfo.getEmail());
+
+        // Find existing user or create a new one
+        User user = userService.findOrCreateGoogleUser(googleUserInfo);
+        log.info("User retrieved/created for Google login: {}", user.getEmail());
+
+        // Update FCM token if provided
+        if (googleIdTokenDto.getFcmToken() != null && !googleIdTokenDto.getFcmToken().isEmpty()) {
+            userService.updateFcmToken(user.getEmail(), googleIdTokenDto.getFcmToken());
+            log.debug("FCM token updated for user: {}", user.getEmail());
+        }
+
+        // Generate JWT tokens
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        log.info("Google login successful for email: {}", user.getEmail());
+        return createLoginResponse(accessToken, refreshToken, user);
     }
 
     @Override
@@ -83,10 +115,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // request against the stored hash.
         // 3. It automatically checks isAccountNonExpired(), isAccountNonLocked(),
         // isCredentialsNonExpired(), and isEnabled()
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginUserDto.getEmail(),
-                        loginUserDto.getPassword()));
+        Authentication auth =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                loginUserDto.getEmail(), loginUserDto.getPassword()));
 
         log.debug("Authentication successful for email: {}", loginUserDto.getEmail());
         return (User) auth.getPrincipal();
@@ -94,10 +126,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private Vehicle authenticateVehicle(VehicleLoginDto vehicleLoginDto) {
         log.debug("Authenticating vehicle with apiKey: {}", vehicleLoginDto.getApiKey());
-        Authentication auth = authenticationManager.authenticate(
-                new VehicleAuthenticationToken(
-                        vehicleLoginDto.getApiKey(),
-                        vehicleLoginDto.getApiSecret()));
+        Authentication auth =
+                authenticationManager.authenticate(
+                        new VehicleAuthenticationToken(
+                                vehicleLoginDto.getApiKey(), vehicleLoginDto.getApiSecret()));
 
         log.debug("Authentication successful for apiKey: {}", vehicleLoginDto.getApiKey());
         return (Vehicle) auth.getDetails();
@@ -175,10 +207,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private LoginResponse handleValidToken(String refreshToken) {
         final String email = jwtService.getEmailFromToken(refreshToken);
         log.debug("Extracting email from refresh token: {}", email);
-        User user = userService.getUser(email).orElseThrow(() -> {
-            log.error("User not found for email: {}", email);
-            return new NoSuchElementException("User not found");
-        });
+        User user =
+                userService
+                        .getUser(email)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("User not found for email: {}", email);
+                                    return new NoSuchElementException("User not found");
+                                });
 
         String accessToken = jwtService.generateAccessToken(user);
         log.debug("New access token generated for email: {}", email);
@@ -205,10 +241,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         int code = verifyCodeDto.getCode();
         log.info("Verifying user with email: {}", email);
 
-        User user = userService.getUser(email).orElseThrow(() -> {
-            log.error("User not found for email: {}", email);
-            return new NoSuchElementException("User not found");
-        });
+        User user =
+                userService
+                        .getUser(email)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("User not found for email: {}", email);
+                                    return new NoSuchElementException("User not found");
+                                });
         int verificationCode = user.getCode();
 
         if (code == verificationCode && isCodeValid(user.getCodeExpiredAt())) {
@@ -227,10 +267,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         log.info("Regenerating OTP for email: {}", email);
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + ONE_DAY_MS);
-        User user = userService.getUser(email).orElseThrow(() -> {
-            log.error("User not found for email: {}", email);
-            return new NoSuchElementException("User not found");
-        });
+        User user =
+                userService
+                        .getUser(email)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("User not found for email: {}", email);
+                                    return new NoSuchElementException("User not found");
+                                });
         int newOtp = generateRandomOtp();
 
         user.setCode(newOtp);
@@ -250,10 +294,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         log.info("Reset password attempt for email: {}", email);
 
         int code = resetPasswordDto.getCode();
-        User user = userService.getUser(email).orElseThrow(() -> {
-            log.error("User not found for email: {}", email);
-            return new NoSuchElementException("User not found");
-        });
+        User user =
+                userService
+                        .getUser(email)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("User not found for email: {}", email);
+                                    return new NoSuchElementException("User not found");
+                                });
         int verificationCode = user.getCode();
 
         if (code == verificationCode && isCodeValid(user.getCodeExpiredAt())) {
@@ -281,5 +329,4 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return false;
         }
     }
-
 }

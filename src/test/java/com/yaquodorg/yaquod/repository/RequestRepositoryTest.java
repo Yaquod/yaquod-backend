@@ -6,11 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.yaquodorg.yaquod.entity.Request;
+import com.yaquodorg.yaquod.entity.RequestStatus;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,17 +27,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.User;
-
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- * <p>
- * Unit tests for RequestRepository
- * Uses real database (H2 in-memory or Testcontainers)
- * Tests JPA queries and database interactions
+ *
+ * <p>Unit tests for RequestRepository Uses real database (H2 in-memory or Testcontainers) Tests JPA
+ * queries and database interactions
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -42,11 +39,9 @@ import com.yaquodorg.yaquod.entity.User;
 @DisplayName("RequestRepository Unit Tests")
 class RequestRepositoryTest {
 
-    @Autowired
-    private TestEntityManager entityManager;
+    @Autowired private TestEntityManager entityManager;
 
-    @Autowired
-    private RequestRepository requestRepository;
+    @Autowired private RequestRepository requestRepository;
 
     private GeometryFactory geometryFactory;
     private User testUser;
@@ -58,30 +53,32 @@ class RequestRepositoryTest {
 
         Date now = new Date(0);
 
-        testUser = User.builder()
-                .email("test@example.com")
-                .passwordHash("password123")
-                .firstName("John")
-                .lastName("Doe")
-                .phoneNumber("+1234567890")
-                .join_date(new Timestamp(now.getTime()))
-                .role(Role.ADMIN)
-                .code(111111)
-                .emailVerified(true)
-                .build();
+        testUser =
+                User.builder()
+                        .email("test@example.com")
+                        .passwordHash("password123")
+                        .firstName("John")
+                        .lastName("Doe")
+                        .phoneNumber("+1234567890")
+                        .join_date(new Timestamp(now.getTime()))
+                        .role(Role.ADMIN)
+                        .code(111111)
+                        .emailVerified(true)
+                        .build();
 
         entityManager.persist(testUser);
 
         Point startPoint = geometryFactory.createPoint(new Coordinate(31.0, 30.0));
         Point endPoint = geometryFactory.createPoint(new Coordinate(31.5, 30.5));
 
-        testRequest = Request.builder()
-                .user(testUser)
-                .startLocation(startPoint)
-                .destinationLocation(endPoint)
-                .status(RequestStatus.PENDING)
-                .createdAt(new Timestamp(System.currentTimeMillis()))
-                .build();
+        testRequest =
+                Request.builder()
+                        .user(testUser)
+                        .startLocation(startPoint)
+                        .destinationLocation(endPoint)
+                        .status(RequestStatus.PENDING)
+                        .createdAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
     }
 
     @Test
@@ -147,13 +144,15 @@ class RequestRepositoryTest {
         // Arrange
         entityManager.persist(testRequest);
 
-        Request request2 = Request.builder()
-                .user(testUser)
-                .startLocation(geometryFactory.createPoint(new Coordinate(32.0, 31.0)))
-                .destinationLocation(geometryFactory.createPoint(new Coordinate(32.5, 31.5)))
-                .status(RequestStatus.COMPLETED)
-                .createdAt(new Timestamp(System.currentTimeMillis()))
-                .build();
+        Request request2 =
+                Request.builder()
+                        .user(testUser)
+                        .startLocation(geometryFactory.createPoint(new Coordinate(32.0, 31.0)))
+                        .destinationLocation(
+                                geometryFactory.createPoint(new Coordinate(32.5, 31.5)))
+                        .status(RequestStatus.COMPLETED)
+                        .createdAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
         entityManager.persist(request2);
         entityManager.flush();
 

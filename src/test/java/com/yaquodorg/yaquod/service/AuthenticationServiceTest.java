@@ -12,11 +12,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
+import com.yaquodorg.yaquod.dtos.LoginUserDto;
+import com.yaquodorg.yaquod.dtos.RegisterUserDto;
+import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
+import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.response.LoginResponse;
+import com.yaquodorg.yaquod.service.auth.AuthenticationServiceImpl;
+import com.yaquodorg.yaquod.service.jwt.JwtService;
+import com.yaquodorg.yaquod.service.mail.MailSenderService;
+import com.yaquodorg.yaquod.service.user.UserService;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,46 +42,27 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
-import com.yaquodorg.yaquod.dtos.LoginUserDto;
-import com.yaquodorg.yaquod.dtos.RegisterUserDto;
-import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
-import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
-import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.response.LoginResponse;
-import com.yaquodorg.yaquod.service.auth.AuthenticationServiceImpl;
-import com.yaquodorg.yaquod.service.jwt.JwtService;
-import com.yaquodorg.yaquod.service.mail.MailSenderService;
-import com.yaquodorg.yaquod.service.user.UserService;
-
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- * <p>
- * Unit tests for AuthenticationService
- * Tests authentication, registration, verification, and password reset logic
+ *
+ * <p>Unit tests for AuthenticationService Tests authentication, registration, verification, and
+ * password reset logic
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthenticationService Unit Tests")
 class AuthenticationServiceTest {
 
-    @Mock
-    private UserService userService;
+    @Mock private UserService userService;
 
-    @Mock
-    private JwtService jwtService;
+    @Mock private JwtService jwtService;
 
-    @Mock
-    private MailSenderService mailSenderService;
+    @Mock private MailSenderService mailSenderService;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    @Mock private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private AuthenticationManager authenticationManager;
+    @Mock private AuthenticationManager authenticationManager;
 
-    @InjectMocks
-    private AuthenticationServiceImpl authenticationService;
+    @InjectMocks private AuthenticationServiceImpl authenticationService;
 
     private User user;
     private LoginUserDto loginUserDto;
@@ -115,9 +107,7 @@ class AuthenticationServiceTest {
         googleLoginDto.setFamilyName("User");
     }
 
-    /**
-     * LOGIN TESTS
-     */
+    /** LOGIN TESTS */
     @Test
     @DisplayName("Should login successfully with valid credentials")
     void shouldLoginSuccessfully() {
@@ -140,8 +130,10 @@ class AuthenticationServiceTest {
         assertThat(response.getUser()).isEqualTo(user);
 
         // Verify interactions
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userService, times(1)).updateFcmToken(loginUserDto.getEmail(), loginUserDto.getFcmToken());
+        verify(authenticationManager, times(1))
+                .authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(userService, times(1))
+                .updateFcmToken(loginUserDto.getEmail(), loginUserDto.getFcmToken());
         verify(jwtService, times(1)).generateAccessToken(user);
         verify(jwtService, times(1)).generateRefreshToken(user);
     }
@@ -158,13 +150,12 @@ class AuthenticationServiceTest {
                 .isInstanceOf(BadCredentialsException.class)
                 .hasMessageContaining("Bad credentials");
 
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(authenticationManager, times(1))
+                .authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(userService, never()).updateFcmToken(anyString(), anyString());
     }
 
-    /**
-     * SIGNUP TESTS
-     */
+    /** SIGNUP TESTS */
     @Test
     @DisplayName("Should signup CLIENT user successfully")
     void shouldSignupClientUser() {
@@ -195,10 +186,8 @@ class AuthenticationServiceTest {
         assertThat(capturedUser.isEmailVerified()).isFalse();
         assertThat(capturedUser.getCode()).isEqualTo(111111); // Test OTP
 
-        verify(mailSenderService, times(1)).sendEmail(
-                eq(registerUserDto.getEmail()),
-                eq("Verification Code"),
-                eq("111111"));
+        verify(mailSenderService, times(1))
+                .sendEmail(eq(registerUserDto.getEmail()), eq("Verification Code"), eq("111111"));
     }
 
     @Test
@@ -259,14 +248,11 @@ class AuthenticationServiceTest {
         Timestamp tomorrow = new Timestamp(System.currentTimeMillis() + 86400000);
 
         // Allow 5 second difference for test execution time
-        assertThat(codeExpiry.getTime()).isBetween(
-                tomorrow.getTime() - 5000,
-                tomorrow.getTime() + 5000);
+        assertThat(codeExpiry.getTime())
+                .isBetween(tomorrow.getTime() - 5000, tomorrow.getTime() + 5000);
     }
 
-    /**
-     * VERIFY CODE TESTS
-     */
+    /** VERIFY CODE TESTS */
     @Test
     @DisplayName("Should verify user successfully with valid code")
     void shouldVerifyUserWithValidCode() {
@@ -341,9 +327,7 @@ class AuthenticationServiceTest {
                 .hasMessageContaining("User not found");
     }
 
-    /**
-     * REGENERATE OTP TESTS
-     */
+    /** REGENERATE OTP TESTS */
     @Test
     @DisplayName("Should regenerate OTP successfully")
     void shouldRegenerateOtpSuccessfully() {
@@ -358,10 +342,8 @@ class AuthenticationServiceTest {
         assertThat(user.getCode()).isEqualTo(111111);
         assertThat(user.isEmailVerified()).isFalse();
 
-        verify(mailSenderService, times(1)).sendEmail(
-                eq(user.getEmail()),
-                eq("Verification Code"),
-                eq("111111"));
+        verify(mailSenderService, times(1))
+                .sendEmail(eq(user.getEmail()), eq("Verification Code"), eq("111111"));
     }
 
     @Test
@@ -378,9 +360,7 @@ class AuthenticationServiceTest {
         verify(mailSenderService, never()).sendEmail(anyString(), anyString(), anyString());
     }
 
-    /**
-     * RESET PASSWORD TESTS
-     */
+    /** RESET PASSWORD TESTS */
     @Test
     @DisplayName("Should reset password successfully with valid code")
     void shouldResetPasswordWithValidCode() {
@@ -441,9 +421,7 @@ class AuthenticationServiceTest {
         assertThat(result).isFalse();
     }
 
-    /**
-     * REFRESH TOKEN TESTS
-     */
+    /** REFRESH TOKEN TESTS */
     @Test
     @DisplayName("Should refresh token successfully with valid refresh token")
     void shouldRefreshTokenSuccessfully() {
@@ -451,7 +429,9 @@ class AuthenticationServiceTest {
         String authHeader = "Bearer valid-refresh-token";
         when(jwtService.validateToken("valid-refresh-token")).thenReturn(true);
         when(jwtService.getEmailFromToken("valid-refresh-token")).thenReturn(user.getEmail());
-        when(userService.getUser(user.getEmail())).thenReturn(Optional.of(user)).thenReturn(Optional.of(user))
+        when(userService.getUser(user.getEmail()))
+                .thenReturn(Optional.of(user))
+                .thenReturn(Optional.of(user))
                 .thenReturn(Optional.of(user));
         when(jwtService.generateAccessToken(user)).thenReturn("new-access-token");
         when(jwtService.extractExpiration(anyString())).thenReturn(new Date());

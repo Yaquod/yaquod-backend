@@ -2,11 +2,14 @@ package com.yaquodorg.yaquod.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,17 +19,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
-
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- * <p>
- * Unit tests for VehicleRepository
- * Uses real database (H2 in-memory or Testcontainers)
- * Tests JPA queries and database interactions
+ *
+ * <p>Unit tests for VehicleRepository Uses real database (H2 in-memory or Testcontainers) Tests JPA
+ * queries and database interactions
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -36,10 +33,8 @@ class VehicleRepositoryTest {
 
     private final String VinNumber1 = "1HGCM82633A004352";
     private final String VinNumber2 = "1M8GDM9AXKP042788";
-    @Autowired
-    private VehicleRepository vehicleRepository;
-    @Autowired
-    private TestEntityManager entityManager;
+    @Autowired private VehicleRepository vehicleRepository;
+    @Autowired private TestEntityManager entityManager;
     private User adminUser;
     private Vehicle vehicle1;
     private Vehicle vehicle2;
@@ -53,47 +48,50 @@ class VehicleRepositoryTest {
         now = new Date(0);
 
         // Setup admin user
-        adminUser = User.builder()
-                .email("admin@example.com")
-                .passwordHash("adminpassword")
-                .firstName("Admin")
-                .lastName("User")
-                .phoneNumber("+9876543210")
-                .join_date(new Timestamp(now.getTime()))
-                .role(Role.ADMIN)
-                .code(222222)
-                .emailVerified(true)
-                .build();
+        adminUser =
+                User.builder()
+                        .email("admin@example.com")
+                        .passwordHash("adminpassword")
+                        .firstName("Admin")
+                        .lastName("User")
+                        .phoneNumber("+9876543210")
+                        .join_date(new Timestamp(now.getTime()))
+                        .role(Role.ADMIN)
+                        .code(222222)
+                        .emailVerified(true)
+                        .build();
         entityManager.persist(adminUser);
 
         // Setup test data
-        vehicle1 = Vehicle.builder()
-                .vinNumber(VinNumber1)
-                .plateNo("ABC-123")
-                .model("Toyota Camry")
-                .seats(4)
-                .status(VehicleStatus.IDLE)
-                .lastUpdatedLong(40.7128)
-                .lastUpdatedLat(-74.0060)
-                .createdAt(new Timestamp(now.getTime()))
-                .createdByAdmin(adminUser)
-                .apiKey("VEH_test-api-key")
-                .apiSecretHash("test-secret-hash")
-                .build();
+        vehicle1 =
+                Vehicle.builder()
+                        .vinNumber(VinNumber1)
+                        .plateNo("ABC-123")
+                        .model("Toyota Camry")
+                        .seats(4)
+                        .status(VehicleStatus.IDLE)
+                        .lastUpdatedLong(40.7128)
+                        .lastUpdatedLat(-74.0060)
+                        .createdAt(new Timestamp(now.getTime()))
+                        .createdByAdmin(adminUser)
+                        .apiKey("VEH_test-api-key")
+                        .apiSecretHash("test-secret-hash")
+                        .build();
 
-        vehicle2 = Vehicle.builder()
-                .vinNumber(VinNumber2)
-                .plateNo("XYZ-789")
-                .model("Honda Accord")
-                .seats(5)
-                .status(VehicleStatus.IN_USE)
-                .lastUpdatedLong(34.0522)
-                .lastUpdatedLat(-118.2437)
-                .createdAt(new Timestamp(now.getTime()))
-                .createdByAdmin(adminUser)
-                .apiKey("VEH_different-api-key")
-                .apiSecretHash("test-secret-hash-2")
-                .build();
+        vehicle2 =
+                Vehicle.builder()
+                        .vinNumber(VinNumber2)
+                        .plateNo("XYZ-789")
+                        .model("Honda Accord")
+                        .seats(5)
+                        .status(VehicleStatus.IN_USE)
+                        .lastUpdatedLong(34.0522)
+                        .lastUpdatedLat(-118.2437)
+                        .createdAt(new Timestamp(now.getTime()))
+                        .createdByAdmin(adminUser)
+                        .apiKey("VEH_different-api-key")
+                        .apiSecretHash("test-secret-hash-2")
+                        .build();
     }
 
     @Test
@@ -147,7 +145,8 @@ class VehicleRepositoryTest {
 
         // Assert
         assertThat(vehicles).hasSize(2);
-        assertThat(vehicles).extracting(Vehicle::getPlateNo)
+        assertThat(vehicles)
+                .extracting(Vehicle::getPlateNo)
                 .containsExactlyInAnyOrder("ABC-123", "XYZ-789");
     }
 
@@ -160,8 +159,7 @@ class VehicleRepositoryTest {
         entityManager.flush();
 
         // Act
-        List<Vehicle> availableVehicles = vehicleRepository
-                .findByStatus(VehicleStatus.IDLE);
+        List<Vehicle> availableVehicles = vehicleRepository.findByStatus(VehicleStatus.IDLE);
 
         // Assert
         assertThat(availableVehicles).hasSize(1);

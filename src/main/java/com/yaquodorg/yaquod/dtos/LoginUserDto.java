@@ -8,7 +8,9 @@ import lombok.Data;
 public class LoginUserDto {
     @Email(message = "Email must be valid")
     private String email;
+
     @NotBlank(message = "Password cannot be blank")
     private String password;
+
     private String fcmToken = "..";
 }

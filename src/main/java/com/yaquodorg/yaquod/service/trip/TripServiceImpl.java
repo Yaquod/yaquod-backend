@@ -7,6 +7,9 @@ import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.repository.TripRepository;
 import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
@@ -14,10 +17,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -34,9 +33,15 @@ public class TripServiceImpl implements TripService {
 
     @Transactional
     @Override
-    public void createTrip(Request request, double startLong, double startLat, double endLong, double endLat) {
-        log.info("Creating trip for request id: {}, start: ({}, {}), end: ({}, {})",
-                request.getId(), startLong, startLat, endLong, endLat);
+    public void createTrip(
+            Request request, double startLong, double startLat, double endLong, double endLat) {
+        log.info(
+                "Creating trip for request id: {}, start: ({}, {}), end: ({}, {})",
+                request.getId(),
+                startLong,
+                startLat,
+                endLong,
+                endLat);
 
         // get request's user
         User user = request.getUser();
@@ -56,23 +61,26 @@ public class TripServiceImpl implements TripService {
         vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.PROCESSING);
 
         // build dto
-        InitTripDto initTripDto = InitTripDto.builder()
-                .vinNumber(vinNumber)
-                .requestId(request.getId())
-                .startLong(startLong)
-                .startLat(startLat)
-                .endLong(endLong)
-                .endLat(endLat)
-                .build();
+        InitTripDto initTripDto =
+                InitTripDto.builder()
+                        .vinNumber(vinNumber)
+                        .requestId(request.getId())
+                        .startLong(startLong)
+                        .startLat(startLat)
+                        .endLong(endLong)
+                        .endLat(endLat)
+                        .build();
 
         // save the trip to the database
-        Trip savedTrip = tripRepository.save(Trip.builder()
-                .request(request)
-                .vehicle(vehicle)
-                .user(user)
-                .status(TripStatus.INITIATED)
-                .startedAt(new Timestamp(new Date().getTime()))
-                .build());
+        Trip savedTrip =
+                tripRepository.save(
+                        Trip.builder()
+                                .request(request)
+                                .vehicle(vehicle)
+                                .user(user)
+                                .status(TripStatus.INITIATED)
+                                .startedAt(new Timestamp(new Date().getTime()))
+                                .build());
         log.info("Trip created successfully with id: {}", savedTrip.getId());
 
         // publish to broker
@@ -95,10 +103,13 @@ public class TripServiceImpl implements TripService {
     @Override
     public Trip getTripById(Long id) {
         log.debug("Fetching trip by id: {}", id);
-        return tripRepository.findById(id).orElseThrow(() -> {
-            log.error("Trip not found for id: {}", id);
-            return new RuntimeException("Trip not found for id: " + id);
-        });
+        return tripRepository
+                .findById(id)
+                .orElseThrow(
+                        () -> {
+                            log.error("Trip not found for id: {}", id);
+                            return new RuntimeException("Trip not found for id: " + id);
+                        });
     }
 
     @Override
@@ -106,10 +117,14 @@ public class TripServiceImpl implements TripService {
     public void updateTripStatus(Long id, TripStatus tripStatus) {
         log.info("Updating trip status for trip id: {} to {}", id, tripStatus);
         Date now = new Date();
-        Trip trip = tripRepository.findById(id).orElseThrow(() -> {
-            log.error("Trip not found for id: {}", id);
-            return new RuntimeException("Trip not found!");
-        });
+        Trip trip =
+                tripRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("Trip not found for id: {}", id);
+                                    return new RuntimeException("Trip not found!");
+                                });
         trip.setStatus(tripStatus);
         trip.setUpdatedAt(new Timestamp(now.getTime()));
         log.debug("Trip status updated successfully for trip id: {}", id);
@@ -147,7 +162,8 @@ public class TripServiceImpl implements TripService {
     @Override
     public List<Trip> getUserLastNTrips(int n, Long userId) {
         log.debug("Fetching last {} trips for user id: {}", n, userId);
-        List<Trip> trips = tripRepository.findByUserIdOrderByStartedAtDesc(userId, PageRequest.of(0, n));
+        List<Trip> trips =
+                tripRepository.findByUserIdOrderByStartedAtDesc(userId, PageRequest.of(0, n));
         log.debug("Found {} trips for user id: {}", trips.size(), userId);
         return trips;
     }
@@ -155,10 +171,15 @@ public class TripServiceImpl implements TripService {
     @Override
     public List<Trip> getTripsByVinNumber(String vinNumber) {
         log.debug("Fetching trips for vehicle VIN: {}", vinNumber);
-        Vehicle vehicle = vehicleService.getVehicleByVinNumber(vinNumber).orElseThrow(() -> {
-            log.error("Vehicle not found for VIN: {}", vinNumber);
-            return new RuntimeException("Vehicle not found for vin number: " + vinNumber);
-        });
+        Vehicle vehicle =
+                vehicleService
+                        .getVehicleByVinNumber(vinNumber)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("Vehicle not found for VIN: {}", vinNumber);
+                                    return new RuntimeException(
+                                            "Vehicle not found for vin number: " + vinNumber);
+                                });
 
         List<Trip> trips = tripRepository.findByVehicleVinNumber(vehicle.getVinNumber());
         log.debug("Found {} trips for vehicle VIN: {}", trips.size(), vinNumber);
@@ -173,8 +194,12 @@ public class TripServiceImpl implements TripService {
         Long tripId = trip.getId();
         String vinNumber = trip.getVehicle().getVinNumber();
         Point destinationLocation = trip.getRequest().getDestinationLocation();
-        log.debug("Trip id: {}, VIN: {}, destination: ({}, {})",
-                tripId, vinNumber, destinationLocation.getX(), destinationLocation.getY());
+        log.debug(
+                "Trip id: {}, VIN: {}, destination: ({}, {})",
+                tripId,
+                vinNumber,
+                destinationLocation.getX(),
+                destinationLocation.getY());
 
         // TODO: I think we should validate the current states of both the trip and the
         // vehicle before ordering the vehicle to move and update their statuses
@@ -199,9 +224,7 @@ public class TripServiceImpl implements TripService {
         String vinNumber = trip.getVehicle().getVinNumber();
         log.debug("Trip id: {}, VIN: {}", tripId, vinNumber);
 
-        VehicleDto vehicleDto = VehicleDto.builder()
-                .vinNumber(vinNumber)
-                .build();
+        VehicleDto vehicleDto = VehicleDto.builder().vinNumber(vinNumber).build();
 
         eventPublisher.publishEvent(vehicleDto);
         log.debug("Published VehicleDto event for trip id: {}", tripId);
@@ -233,7 +256,8 @@ public class TripServiceImpl implements TripService {
         return trip;
     }
 
-    private MoveVehicleDto buildMoveVehicleDto(String vinNumber, Long tripId, Point destinationLocation) {
+    private MoveVehicleDto buildMoveVehicleDto(
+            String vinNumber, Long tripId, Point destinationLocation) {
         double destinationLat = destinationLocation.getY();
         double destinationLong = destinationLocation.getX();
 

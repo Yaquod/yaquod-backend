@@ -1,5 +1,11 @@
 package com.yaquodorg.yaquod.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
@@ -8,6 +14,10 @@ import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.repository.VehicleRepository;
 import com.yaquodorg.yaquod.response.CreateVehicleResponse;
 import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,21 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
-/**
- * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- *
- */
+/** NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("VehicleService Unit Tests")
 class VehicleServiceTest {
@@ -39,12 +35,9 @@ class VehicleServiceTest {
     private final String VinNumber1 = "1HGCM82633A004352";
     private final String VinNumber2 = "1M8GDM9AXKP042788";
     private final String TestVin = "2GCEK19T7Y1156789";
-    @Mock
-    private VehicleRepository vehicleRepository;
-    @Mock
-    private PasswordEncoder passwordEncoder;
-    @InjectMocks
-    private VehicleServiceImpl vehicleService;
+    @Mock private VehicleRepository vehicleRepository;
+    @Mock private PasswordEncoder passwordEncoder;
+    @InjectMocks private VehicleServiceImpl vehicleService;
     private CreateVehicleDto createVehicleDto;
     private Vehicle vehicle;
     private User adminUser;
@@ -52,36 +45,39 @@ class VehicleServiceTest {
     @BeforeEach
     void setUp() {
         // Setup admin user
-        adminUser = User.builder()
-                .id(1L)
-                .email("admin@example.com")
-                .firstName("Admin")
-                .lastName("User")
-                .role(Role.ADMIN)
-                .build();
+        adminUser =
+                User.builder()
+                        .id(1L)
+                        .email("admin@example.com")
+                        .firstName("Admin")
+                        .lastName("User")
+                        .role(Role.ADMIN)
+                        .build();
 
-        createVehicleDto = CreateVehicleDto.builder()
-                .vinNumber(VinNumber1)
-                .plateNo("abc123")
-                .color("RED")
-                .carCompany("Dodge")
-                .model("Charger")
-                .seats(2)
-                .build();
+        createVehicleDto =
+                CreateVehicleDto.builder()
+                        .vinNumber(VinNumber1)
+                        .plateNo("abc123")
+                        .color("RED")
+                        .carCompany("Dodge")
+                        .model("Charger")
+                        .seats(2)
+                        .build();
 
-        vehicle = Vehicle.builder()
-                .id(1L)
-                .vinNumber(VinNumber2)
-                .plateNo("abc123")
-                .color("RED")
-                .carCompany("Dodge")
-                .model("Charger")
-                .seats(2)
-                .status(VehicleStatus.IDLE)
-                .lastUpdatedLocation(null)
-                .lastUpdatedLong(0.0d)
-                .lastUpdatedLat(0.0d)
-                .build();
+        vehicle =
+                Vehicle.builder()
+                        .id(1L)
+                        .vinNumber(VinNumber2)
+                        .plateNo("abc123")
+                        .color("RED")
+                        .carCompany("Dodge")
+                        .model("Charger")
+                        .seats(2)
+                        .status(VehicleStatus.IDLE)
+                        .lastUpdatedLocation(null)
+                        .lastUpdatedLong(0.0d)
+                        .lastUpdatedLat(0.0d)
+                        .build();
     }
 
     @Test
@@ -124,8 +120,7 @@ class VehicleServiceTest {
         // Assert
         assertThat(result).isNotEmpty();
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(Vehicle::getPlateNo)
-                .containsExactly("abc123", "XYZ-789");
+        assertThat(result).extracting(Vehicle::getPlateNo).containsExactly("abc123", "XYZ-789");
 
         verify(vehicleRepository, times(1)).findAll();
     }
@@ -290,17 +285,17 @@ class VehicleServiceTest {
         double latitude = 30.0;
         int k = 3;
 
-        Vehicle vehicle2 = Vehicle.builder()
-                .id(2L)
-                .vinNumber("VIN789")
-                .plateNo("XYZ-789")
-                .model("Honda Accord")
-                .status(VehicleStatus.IDLE)
-                .build();
+        Vehicle vehicle2 =
+                Vehicle.builder()
+                        .id(2L)
+                        .vinNumber("VIN789")
+                        .plateNo("XYZ-789")
+                        .model("Honda Accord")
+                        .status(VehicleStatus.IDLE)
+                        .build();
 
         List<Vehicle> nearestVehicles = Arrays.asList(vehicle, vehicle2);
-        when(vehicleRepository.findKNearestVehicles(any(), eq(k)))
-                .thenReturn(nearestVehicles);
+        when(vehicleRepository.findKNearestVehicles(any(), eq(k))).thenReturn(nearestVehicles);
 
         // Act
         List<Vehicle> result = vehicleService.findKNearestVehicles(longitude, latitude, k);
@@ -308,8 +303,7 @@ class VehicleServiceTest {
         // Assert
         assertThat(result).isNotEmpty();
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(Vehicle::getVinNumber)
-                .containsExactly(VinNumber2, "VIN789");
+        assertThat(result).extracting(Vehicle::getVinNumber).containsExactly(VinNumber2, "VIN789");
 
         verify(vehicleRepository, times(1)).findKNearestVehicles(any(), eq(k));
     }
@@ -322,8 +316,7 @@ class VehicleServiceTest {
         double latitude = 30.0;
         int k = 5;
 
-        when(vehicleRepository.findKNearestVehicles(any(), eq(k)))
-                .thenReturn(List.of());
+        when(vehicleRepository.findKNearestVehicles(any(), eq(k))).thenReturn(List.of());
 
         // Act
         List<Vehicle> result = vehicleService.findKNearestVehicles(longitude, latitude, k);
@@ -348,8 +341,9 @@ class VehicleServiceTest {
                 .thenReturn(nearbyVehicles);
 
         // Act
-        List<Vehicle> result = vehicleService.findKNearestVehiclesWithinDistance(
-                longitude, latitude, maxDistance, k);
+        List<Vehicle> result =
+                vehicleService.findKNearestVehiclesWithinDistance(
+                        longitude, latitude, maxDistance, k);
 
         // Assert
         assertThat(result).isNotEmpty();
@@ -373,8 +367,9 @@ class VehicleServiceTest {
                 .thenReturn(List.of());
 
         // Act
-        List<Vehicle> result = vehicleService.findKNearestVehiclesWithinDistance(
-                longitude, latitude, maxDistance, k);
+        List<Vehicle> result =
+                vehicleService.findKNearestVehiclesWithinDistance(
+                        longitude, latitude, maxDistance, k);
 
         // Assert
         assertThat(result).isEmpty();
@@ -391,8 +386,7 @@ class VehicleServiceTest {
         double latitude = 30.6789;
         int k = 1;
 
-        when(vehicleRepository.findKNearestVehicles(any(), eq(k)))
-                .thenReturn(List.of(vehicle));
+        when(vehicleRepository.findKNearestVehicles(any(), eq(k))).thenReturn(List.of(vehicle));
 
         // Act
         vehicleService.findKNearestVehicles(longitude, latitude, k);
@@ -409,8 +403,7 @@ class VehicleServiceTest {
         double latitude = 30.0;
 
         // Test with k=1
-        when(vehicleRepository.findKNearestVehicles(any(), eq(1)))
-                .thenReturn(List.of(vehicle));
+        when(vehicleRepository.findKNearestVehicles(any(), eq(1))).thenReturn(List.of(vehicle));
 
         // Act
         List<Vehicle> result1 = vehicleService.findKNearestVehicles(longitude, latitude, 1);
@@ -420,8 +413,7 @@ class VehicleServiceTest {
 
         // Test with k=10
         List<Vehicle> multipleVehicles = Collections.singletonList(vehicle);
-        when(vehicleRepository.findKNearestVehicles(any(), eq(10)))
-                .thenReturn(multipleVehicles);
+        when(vehicleRepository.findKNearestVehicles(any(), eq(10))).thenReturn(multipleVehicles);
 
         // Act
         List<Vehicle> result10 = vehicleService.findKNearestVehicles(longitude, latitude, 10);

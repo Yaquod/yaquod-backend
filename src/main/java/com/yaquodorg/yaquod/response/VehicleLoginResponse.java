@@ -1,9 +1,7 @@
 package com.yaquodorg.yaquod.response;
 
-import java.util.Date;
-
 import com.yaquodorg.yaquod.entity.Vehicle;
-
+import java.util.Date;
 import lombok.Builder;
 import lombok.Data;
 

@@ -1,11 +1,20 @@
 package com.yaquodorg.yaquod.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import com.yaquodorg.yaquod.dtos.InitTripDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.repository.TripRepository;
 import com.yaquodorg.yaquod.service.trip.TripServiceImpl;
 import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,38 +27,20 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-/**
- * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- *
- */
+/** NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TripService Unit Tests")
 class TripServiceImplTest {
 
-    @Mock
-    private TripRepository tripRepository;
+    @Mock private TripRepository tripRepository;
 
-    @Mock
-    private VehicleService vehicleService;
+    @Mock private VehicleService vehicleService;
 
-    @Mock
-    private UserService userService;
+    @Mock private UserService userService;
 
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
-    @InjectMocks
-    private TripServiceImpl tripService;
+    @InjectMocks private TripServiceImpl tripService;
 
     private User testUser;
     private Vehicle testVehicle;
@@ -58,30 +49,22 @@ class TripServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        testUser = User.builder()
-                .id(1L)
-                .email("test@example.com")
-                .build();
+        testUser = User.builder().id(1L).email("test@example.com").build();
 
-        testVehicle = Vehicle.builder()
-                .id(1L)
-                .vinNumber("VIN123456")
-                .status(VehicleStatus.IDLE)
-                .build();
+        testVehicle =
+                Vehicle.builder().id(1L).vinNumber("VIN123456").status(VehicleStatus.IDLE).build();
 
-        testRequest = Request.builder()
-                .id(1L)
-                .user(testUser)
-                .build();
+        testRequest = Request.builder().id(1L).user(testUser).build();
 
-        testTrip = Trip.builder()
-                .id(1L)
-                .request(testRequest)
-                .vehicle(testVehicle)
-                .user(testUser)
-                .status(TripStatus.INITIATED)
-                .startedAt(new Timestamp(System.currentTimeMillis()))
-                .build();
+        testTrip =
+                Trip.builder()
+                        .id(1L)
+                        .request(testRequest)
+                        .vehicle(testVehicle)
+                        .user(testUser)
+                        .status(TripStatus.INITIATED)
+                        .startedAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
     }
 
     @Test
@@ -102,7 +85,8 @@ class TripServiceImplTest {
 
         // Assert
         verify(vehicleService).findKNearestVehicles(startLong, startLat, 1);
-        verify(vehicleService).updateVehicleStatus(testVehicle.getVinNumber(), VehicleStatus.PROCESSING);
+        verify(vehicleService)
+                .updateVehicleStatus(testVehicle.getVinNumber(), VehicleStatus.PROCESSING);
         verify(tripRepository).save(any(Trip.class));
         verify(eventPublisher).publishEvent(any(InitTripDto.class));
     }
@@ -118,7 +102,8 @@ class TripServiceImplTest {
 
         when(vehicleService.findKNearestVehicles(anyDouble(), anyDouble(), anyInt()))
                 .thenReturn(Collections.singletonList(testVehicle));
-        when(tripRepository.save(any(Trip.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(tripRepository.save(any(Trip.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         ArgumentCaptor<Trip> tripCaptor = ArgumentCaptor.forClass(Trip.class);
 
@@ -174,8 +159,10 @@ class TripServiceImplTest {
                 .thenReturn(Collections.emptyList());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tripService.createTrip(testRequest, 31.0, 30.0, 31.5, 30.5));
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> tripService.createTrip(testRequest, 31.0, 30.0, 31.5, 30.5));
 
         assertEquals("No vehicles available for the requested location", exception.getMessage());
         verify(vehicleService, never()).updateVehicleStatus(anyString(), any());
@@ -195,7 +182,8 @@ class TripServiceImplTest {
         tripService.createTrip(testRequest, 31.0, 30.0, 31.5, 30.5);
 
         // Assert
-        verify(vehicleService).updateVehicleStatus(testVehicle.getVinNumber(), VehicleStatus.PROCESSING);
+        verify(vehicleService)
+                .updateVehicleStatus(testVehicle.getVinNumber(), VehicleStatus.PROCESSING);
     }
 
     @Test
@@ -220,8 +208,8 @@ class TripServiceImplTest {
         when(tripRepository.findByRequestId(999L)).thenReturn(null);
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tripService.getTripByRequestId(999L));
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, () -> tripService.getTripByRequestId(999L));
 
         assertEquals("Trip not found for requestId: 999", exception.getMessage());
     }
@@ -248,8 +236,8 @@ class TripServiceImplTest {
         when(tripRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tripService.getTripById(999L));
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, () -> tripService.getTripById(999L));
 
         assertEquals("Trip not found for id: 999", exception.getMessage());
     }
@@ -309,8 +297,8 @@ class TripServiceImplTest {
         when(userService.getUserById(999L)).thenReturn(null);
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tripService.getTripsByUserId(999L));
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, () -> tripService.getTripsByUserId(999L));
 
         assertEquals("User not found for id: 999", exception.getMessage());
         verify(tripRepository, never()).findByUserId(anyLong());
@@ -361,8 +349,9 @@ class TripServiceImplTest {
         when(vehicleService.getVehicleByVinNumber(vinNumber)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tripService.getTripsByVinNumber(vinNumber));
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> tripService.getTripsByVinNumber(vinNumber));
 
         assertEquals("Vehicle not found for vin number: " + vinNumber, exception.getMessage());
         verify(tripRepository, never()).findByVehicleVinNumber(anyString());

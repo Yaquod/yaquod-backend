@@ -9,5 +9,4 @@ public class YaquodApplication {
     public static void main(String[] args) {
         SpringApplication.run(YaquodApplication.class, args);
     }
-
 }

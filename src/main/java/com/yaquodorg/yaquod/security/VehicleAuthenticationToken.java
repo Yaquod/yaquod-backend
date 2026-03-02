@@ -1,13 +1,11 @@
 package com.yaquodorg.yaquod.security;
 
+import io.jsonwebtoken.Claims;
 import java.util.Collection;
 import java.util.List;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
-import io.jsonwebtoken.Claims;
 
 public class VehicleAuthenticationToken implements Authentication {
 
@@ -20,8 +18,8 @@ public class VehicleAuthenticationToken implements Authentication {
     private Object details;
 
     /**
-     * Constructor for authentication ( before login )
-     * Used when vehicle is trying to authenticate with apiKey + apiSecret
+     * Constructor for authentication ( before login ) Used when vehicle is trying to authenticate
+     * with apiKey + apiSecret
      */
     public VehicleAuthenticationToken(String apiKey, String apiSecret) {
         this.vehicleId = null;
@@ -33,8 +31,8 @@ public class VehicleAuthenticationToken implements Authentication {
     }
 
     /**
-     * Constructor for authenticated token ( after successful login )
-     * Used after vehicle has been authenticated
+     * Constructor for authenticated token ( after successful login ) Used after vehicle has been
+     * authenticated
      */
     public VehicleAuthenticationToken(Long vehicleId, String apiKey, Long adminId, Claims claims) {
         this.vehicleId = vehicleId;

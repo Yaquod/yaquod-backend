@@ -7,10 +7,7 @@ public class VinValidator implements ConstraintValidator<ValidVIN, String> {
 
     private static final String VIN_REGEX = "^[A-HJ-NPR-Z0-9]{17}$";
 
-    private static final int[] VIN_WEIGHTS = {
-            8, 7, 6, 5, 4, 3, 2, 10,
-            0, 9, 8, 7, 6, 5, 4, 3, 2
-    };
+    private static final int[] VIN_WEIGHTS = {8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2};
 
     private static final String VIN_CHARS = "0123456789.ABCDEFGH..JKLMN.P.R..STUVWXYZ";
 

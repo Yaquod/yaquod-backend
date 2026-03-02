@@ -1,24 +1,20 @@
 package com.yaquodorg.yaquod.service.jwt;
 
-import java.util.Date;
-import java.util.UUID;
-import java.util.function.Function;
-
-import javax.crypto.SecretKey;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.Vehicle;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.util.Date;
+import java.util.UUID;
+import java.util.function.Function;
+import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -152,11 +148,6 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public Claims extractAllClaims(String token) {
-        return Jwts
-                .parserBuilder()
-                .setSigningKey(getKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        return Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token).getBody();
     }
 }
