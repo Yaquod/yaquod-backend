@@ -253,4 +253,11 @@ public class AuthenticationController {
                     .body(createFailureResponse("Unexpected error: " + e.getMessage()));
         }
     }
+
+    @Operation(summary = "Health check", description = "Simple endpoint to verify the authentication service is running")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Service is healthy")
+    @GetMapping("/test")
+    public String test() {
+        return "Authentication Service is up and running!";
+    }
 }
