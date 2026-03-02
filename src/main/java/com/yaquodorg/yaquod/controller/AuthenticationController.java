@@ -235,15 +235,15 @@ public class AuthenticationController {
         } catch (IllegalArgumentException e) {
             log.warn("Invalid Google ID token: {}", e.getMessage());
             return ResponseEntity.badRequest()
-                    .body(createFailureResponse("Invalid Google ID token: " + e.getMessage()));
+                    .body(createFailureResponse("Invalid Google ID token"));
         } catch (GeneralSecurityException | IOException e) {
             log.error("Google login verification failed: {}", e.getMessage());
             return ResponseEntity.status(INTERNAL_SERVER_ERROR)
-                    .body(createFailureResponse("Google login verification failed: " + e.getMessage()));
+                    .body(createFailureResponse("Google login verification failed"));
         } catch (Exception e) {
             log.error("Unexpected error during Google login: {}", e.getMessage());
             return ResponseEntity.status(INTERNAL_SERVER_ERROR)
-                    .body(createFailureResponse("Unexpected error: " + e.getMessage()));
+                    .body(createFailureResponse("Internal Server Error"));
         }
     }
 
