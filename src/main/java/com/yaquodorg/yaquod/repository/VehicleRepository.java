@@ -43,4 +43,6 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     List<Vehicle> findByStatus(VehicleStatus status);
 
     Optional<Vehicle> findByPlateNo(String plateNo);
+
+    Optional<Vehicle> findByApiKey(String apiKey);
 }

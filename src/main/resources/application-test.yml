@@ -19,6 +19,8 @@ spring:
         secret-key: a4b5cf541797e6f5fc8e0942fedb4b938aaa25fedb26f9e5be5efe99c38f9447
         access-token-expiration: 604800000
         refresh-token-expiration: 2592000000
+        vehicle-token-expiration: 604800000
+        vehicle-refresh-token-expiration: 2592000000
   mail:
     host: smtp.gmail.com
     port: 587

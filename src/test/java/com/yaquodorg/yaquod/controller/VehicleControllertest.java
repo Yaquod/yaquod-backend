@@ -3,8 +3,11 @@ package com.yaquodorg.yaquod.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
 import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.response.CreateVehicleResponse;
 import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,12 +60,22 @@ class VehicleControllerTest {
     private ObjectMapper objectMapper;
     private CreateVehicleDto createVehicleDto;
     private Vehicle vehicle;
+    private User adminUser;
 
     @BeforeEach
     void setUp() {
         // Setup MockMvc
         mockMvc = MockMvcBuilders.standaloneSetup(vehicleController).build();
         objectMapper = new ObjectMapper();
+
+        // Setup admin user
+        adminUser = User.builder()
+                .id(1L)
+                .email("admin@example.com")
+                .firstName("Admin")
+                .lastName("User")
+                .role(Role.ADMIN)
+                .build();
 
         // Setup test data
         createVehicleDto = CreateVehicleDto.builder()
@@ -92,24 +105,32 @@ class VehicleControllerTest {
     @DisplayName("POST /api/vehicles - Should create vehicle successfully")
     void shouldCreateVehicle() throws Exception {
         // Arrange
-        when(vehicleService.createVehicle(any(CreateVehicleDto.class))).thenReturn(vehicle);
+        CreateVehicleResponse response = CreateVehicleResponse.builder()
+                .vehicle(vehicle)
+                .apiKey("VEH_test-api-key")
+                .apiSecret("test-secret")
+                .build();
+
+        when(vehicleService.createVehicle(any(CreateVehicleDto.class), any(User.class)))
+                .thenReturn(response);
 
         // Act & Assert
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.vinNumber").value(VinNumber1))
-                .andExpect(jsonPath("$.data.plateNo").value("ABC-123"))
-                .andExpect(jsonPath("$.data.model").value("Camry"))
-                .andExpect(jsonPath("$.data.status").value("IDLE"));
+                .andExpect(jsonPath("$.data.vehicle.id").value(1))
+                .andExpect(jsonPath("$.data.vehicle.vinNumber").value(VinNumber1))
+                .andExpect(jsonPath("$.data.vehicle.plateNo").value("ABC-123"))
+                .andExpect(jsonPath("$.data.vehicle.model").value("Camry"))
+                .andExpect(jsonPath("$.data.vehicle.status").value("IDLE"));
 
         // Verify service was called with correct DTO
         ArgumentCaptor<CreateVehicleDto> dtoCaptor = ArgumentCaptor.forClass(CreateVehicleDto.class);
-        verify(vehicleService, times(1)).createVehicle(dtoCaptor.capture());
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(vehicleService, times(1)).createVehicle(dtoCaptor.capture(), userCaptor.capture());
 
         CreateVehicleDto capturedDto = dtoCaptor.getValue();
         assertThat(capturedDto.getPlateNo()).isEqualTo("ABC-123");
@@ -120,20 +141,20 @@ class VehicleControllerTest {
     @DisplayName("POST /api/vehicles - Should return 400 when service throws exception")
     void shouldReturn400WhenCreateVehicleFails() throws Exception {
         // Arrange
-        when(vehicleService.createVehicle(any(CreateVehicleDto.class)))
+        when(vehicleService.createVehicle(any(CreateVehicleDto.class), any(User.class)))
                 .thenThrow(new RuntimeException("Duplicate plate number"));
 
         // Act & Assert
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value(containsString("Failed to create vehicle")))
                 .andExpect(jsonPath("$.message").value(containsString("Duplicate plate number")));
 
-        verify(vehicleService, times(1)).createVehicle(any(CreateVehicleDto.class));
+        verify(vehicleService, times(1)).createVehicle(any(CreateVehicleDto.class), any(User.class));
     }
 
     @Test
@@ -141,8 +162,8 @@ class VehicleControllerTest {
     void shouldHandleNullDtoOnCreate() throws Exception {
         // Act & Assert
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -284,8 +305,8 @@ class VehicleControllerTest {
 
         // Act & Assert
         mockMvc.perform(patch("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -305,8 +326,8 @@ class VehicleControllerTest {
 
         // Act & Assert
         mockMvc.perform(patch("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -556,17 +577,17 @@ class VehicleControllerTest {
     @DisplayName("Should not call service when vehicle service throws NullPointerException")
     void shouldHandleNullPointerException() throws Exception {
         // Arrange
-        when(vehicleService.createVehicle(any(CreateVehicleDto.class)))
+        when(vehicleService.createVehicle(any(CreateVehicleDto.class), any(User.class)))
                 .thenThrow(new NullPointerException("Unexpected null value"));
 
         // Act & Assert
         mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
 
-        verify(vehicleService, times(1)).createVehicle(any(CreateVehicleDto.class));
+        verify(vehicleService, times(1)).createVehicle(any(CreateVehicleDto.class), any(User.class));
     }
 }
