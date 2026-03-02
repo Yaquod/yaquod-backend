@@ -43,22 +43,18 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
  *
- * <p>
- * Unit tests for TripController Tests controller logic with mocked services
- * Does NOT test security
+ * <p>Unit tests for TripController Tests controller logic with mocked services Does NOT test
+ * security
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TripController Unit Tests")
 class TripControllerTest {
 
-    @Mock
-    private RequestService requestService;
+    @Mock private RequestService requestService;
 
-    @Mock
-    private TripService tripService;
+    @Mock private TripService tripService;
 
-    @InjectMocks
-    private TripController tripController;
+    @InjectMocks private TripController tripController;
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
@@ -78,13 +74,31 @@ class TripControllerTest {
 
         testVehicle = Vehicle.builder().id(1L).vinNumber("VIN123456").build();
 
-        testRequest = Request.builder().id(1L).user(testUser).status(RequestStatus.PENDING)
-                .createdAt(new Timestamp(System.currentTimeMillis())).build();
+        testRequest =
+                Request.builder()
+                        .id(1L)
+                        .user(testUser)
+                        .status(RequestStatus.PENDING)
+                        .createdAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
 
-        testTrip = Trip.builder().id(1L).request(testRequest).vehicle(testVehicle).user(testUser)
-                .status(TripStatus.INITIATED).startedAt(new Timestamp(System.currentTimeMillis())).build();
+        testTrip =
+                Trip.builder()
+                        .id(1L)
+                        .request(testRequest)
+                        .vehicle(testVehicle)
+                        .user(testUser)
+                        .status(TripStatus.INITIATED)
+                        .startedAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
 
-        tripRequestDto = TripRequestDto.builder().startLong(31.0).startLat(30.0).endLong(31.5).endLat(30.5).build();
+        tripRequestDto =
+                TripRequestDto.builder()
+                        .startLong(31.0)
+                        .startLat(30.0)
+                        .endLong(31.5)
+                        .endLat(30.5)
+                        .build();
     }
 
     @Test
@@ -92,13 +106,18 @@ class TripControllerTest {
     @WithMockUser
     void shouldCreateRequest() throws Exception {
         // Arrange
-        when(requestService.createRequest(any(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
+        when(requestService.createRequest(
+                        any(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
                 .thenReturn(testRequest);
 
         // Act & Assert
-        mockMvc.perform(post("/api/trips/request").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tripRequestDto))).andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true)).andExpect(jsonPath("$.data.id").value(1))
+        mockMvc.perform(
+                        post("/api/trips/request")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(tripRequestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))
                 .andExpect(jsonPath("$.data.status").value("PENDING"));
 
         verify(requestService).createRequest(any(), eq(31.0), eq(30.0), eq(31.5), eq(30.5));
@@ -109,14 +128,20 @@ class TripControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenCreateRequestFails() throws Exception {
         // Arrange
-        when(requestService.createRequest(any(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
+        when(requestService.createRequest(
+                        any(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
                 .thenThrow(new RuntimeException("Service error"));
 
         // Act & Assert
-        mockMvc.perform(post("/api/trips/request").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tripRequestDto))).andExpect(status().isBadRequest())
+        mockMvc.perform(
+                        post("/api/trips/request")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(tripRequestDto)))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to create trip request: Service error"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to create trip request: Service error"));
     }
 
     @Test
@@ -127,8 +152,10 @@ class TripControllerTest {
         when(requestService.getRequest(1L)).thenReturn(testRequest);
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/request/status/1")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true)).andExpect(jsonPath("$.data.id").value(1))
+        mockMvc.perform(get("/api/trips/request/status/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))
                 .andExpect(jsonPath("$.data.status").value("PENDING"));
 
         verify(requestService).getRequest(1L);
@@ -142,9 +169,12 @@ class TripControllerTest {
         when(requestService.getRequest(999L)).thenThrow(new RuntimeException("Request not found!"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/request/status/999")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/api/trips/request/status/999"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to check Request status: Request not found!"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to check Request status: Request not found!"));
     }
 
     @Test
@@ -155,8 +185,10 @@ class TripControllerTest {
         when(tripService.getTripByRequestId(1L)).thenReturn(testTrip);
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/by-request/1")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true)).andExpect(jsonPath("$.data.id").value(1))
+        mockMvc.perform(get("/api/trips/by-request/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))
                 .andExpect(jsonPath("$.data.status").value("INITIATED"));
 
         verify(tripService).getTripByRequestId(1L);
@@ -167,12 +199,18 @@ class TripControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenTripNotFoundByRequestId() throws Exception {
         // Arrange
-        when(tripService.getTripByRequestId(999L)).thenThrow(new RuntimeException("Trip not found for requestId: 999"));
+        when(tripService.getTripByRequestId(999L))
+                .thenThrow(new RuntimeException("Trip not found for requestId: 999"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/by-request/999")).andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false)).andExpect(jsonPath("$.message")
-                        .value("Failed to get Trip by requestId: Trip not found for requestId: 999"));
+        mockMvc.perform(get("/api/trips/by-request/999"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Failed to get Trip by requestId: Trip not found for"
+                                                + " requestId: 999"));
     }
 
     @Test
@@ -183,8 +221,11 @@ class TripControllerTest {
         when(tripService.getTripById(1L)).thenReturn(testTrip);
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/1")).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1)).andExpect(jsonPath("$.data.status").value("INITIATED"));
+        mockMvc.perform(get("/api/trips/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.status").value("INITIATED"));
 
         verify(tripService).getTripById(1L);
     }
@@ -194,12 +235,16 @@ class TripControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenTripNotFoundById() throws Exception {
         // Arrange
-        when(tripService.getTripById(999L)).thenThrow(new RuntimeException("Trip not found for id: 999"));
+        when(tripService.getTripById(999L))
+                .thenThrow(new RuntimeException("Trip not found for id: 999"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/999")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/api/trips/999"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to get Trip by id: Trip not found for id: 999"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to get Trip by id: Trip not found for id: 999"));
     }
 
     @Test
@@ -210,7 +255,9 @@ class TripControllerTest {
         doNothing().when(tripService).deleteTripById(1L);
 
         // Act & Assert
-        mockMvc.perform(delete("/api/trips/1")).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
+        mockMvc.perform(delete("/api/trips/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.message").value("Trip deleted successfully"));
 
         verify(tripService).deleteTripById(1L);
@@ -224,9 +271,11 @@ class TripControllerTest {
         doThrow(new RuntimeException("Delete failed")).when(tripService).deleteTripById(1L);
 
         // Act & Assert
-        mockMvc.perform(delete("/api/trips/1")).andExpect(status().isBadRequest())
+        mockMvc.perform(delete("/api/trips/1"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to delete Trip by id: Delete failed"));
+                .andExpect(
+                        jsonPath("$.message").value("Failed to delete Trip by id: Delete failed"));
     }
 
     @Test
@@ -239,9 +288,13 @@ class TripControllerTest {
         when(tripService.getAllTrips()).thenReturn(trips);
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips")).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray()).andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].id").value(1)).andExpect(jsonPath("$.data[1].id").value(2));
+        mockMvc.perform(get("/api/trips"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].id").value(1))
+                .andExpect(jsonPath("$.data[1].id").value(2));
 
         verify(tripService).getAllTrips();
     }
@@ -254,8 +307,11 @@ class TripControllerTest {
         when(tripService.getAllTrips()).thenReturn(Collections.emptyList());
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips")).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray()).andExpect(jsonPath("$.data.length()").value(0));
+        mockMvc.perform(get("/api/trips"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(0));
     }
 
     @Test
@@ -266,7 +322,8 @@ class TripControllerTest {
         when(tripService.getAllTrips()).thenThrow(new RuntimeException("Database error"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/api/trips"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Failed to get all Trips: Database error"));
     }
@@ -280,8 +337,11 @@ class TripControllerTest {
         when(tripService.getTripsByUserId(any())).thenReturn(userTrips);
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/user")).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray()).andExpect(jsonPath("$.data.length()").value(1))
+        mockMvc.perform(get("/api/trips/user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].id").value(1));
 
         verify(tripService).getTripsByUserId(any());
@@ -295,9 +355,12 @@ class TripControllerTest {
         when(tripService.getTripsByUserId(any())).thenThrow(new RuntimeException("User not found"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/user")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/api/trips/user"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to get Trips by userId: User not found"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to get Trips by userId: User not found"));
     }
 
     @Test
@@ -309,8 +372,10 @@ class TripControllerTest {
         when(tripService.getUserLastNTrips(eq(5), any())).thenReturn(lastTrips);
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/last/5")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true)).andExpect(jsonPath("$.data").isArray())
+        mockMvc.perform(get("/api/trips/last/5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(1));
 
         verify(tripService).getUserLastNTrips(eq(5), any());
@@ -321,10 +386,12 @@ class TripControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenGetLastNTripsFails() throws Exception {
         // Arrange
-        when(tripService.getUserLastNTrips(anyInt(), any())).thenThrow(new RuntimeException("Query error"));
+        when(tripService.getUserLastNTrips(anyInt(), any()))
+                .thenThrow(new RuntimeException("Query error"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/last/5")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/api/trips/last/5"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Failed to get last N Trips: Query error"));
     }
@@ -338,9 +405,12 @@ class TripControllerTest {
         when(tripService.getTripsByVinNumber("VIN123456")).thenReturn(vehicleTrips);
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/vehicle/VIN123456")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true)).andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(1)).andExpect(jsonPath("$.data[0].id").value(1));
+        mockMvc.perform(get("/api/trips/vehicle/VIN123456"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].id").value(1));
 
         verify(tripService).getTripsByVinNumber("VIN123456");
     }
@@ -350,11 +420,15 @@ class TripControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenGetTripsByVinNumberFails() throws Exception {
         // Arrange
-        when(tripService.getTripsByVinNumber("INVALID_VIN")).thenThrow(new RuntimeException("Vehicle not found"));
+        when(tripService.getTripsByVinNumber("INVALID_VIN"))
+                .thenThrow(new RuntimeException("Vehicle not found"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/vehicle/INVALID_VIN")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/api/trips/vehicle/INVALID_VIN"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to get Trips by VIN number: Vehicle not found"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to get Trips by VIN number: Vehicle not found"));
     }
 }

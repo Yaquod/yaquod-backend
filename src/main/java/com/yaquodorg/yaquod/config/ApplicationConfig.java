@@ -39,8 +39,10 @@ public class ApplicationConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userService.getUser(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return username ->
+                userService
+                        .getUser(username)
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     @Bean
@@ -50,7 +52,8 @@ public class ApplicationConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService());
+        DaoAuthenticationProvider authProvider =
+                new DaoAuthenticationProvider(userDetailsService());
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
@@ -65,11 +68,13 @@ public class ApplicationConfig {
             if (FirebaseApp.getApps().isEmpty()) {
                 log.info("No FirebaseApp found, creating a new one");
 
-                InputStream serviceAccount = new ClassPathResource("firebase-service-account.json").getInputStream();
+                InputStream serviceAccount =
+                        new ClassPathResource("firebase-service-account.json").getInputStream();
 
                 GoogleCredentials googleCredentials = GoogleCredentials.fromStream(serviceAccount);
 
-                FirebaseOptions firebaseOptions = FirebaseOptions.builder().setCredentials(googleCredentials).build();
+                FirebaseOptions firebaseOptions =
+                        FirebaseOptions.builder().setCredentials(googleCredentials).build();
 
                 app = FirebaseApp.initializeApp(firebaseOptions, "yaquod");
 
@@ -88,8 +93,8 @@ public class ApplicationConfig {
     }
 
     /**
-     * Builds the GoogleIdTokenVerifier with all possible client IDs (Web, Android,
-     * iOS) to support tokens from different platforms.
+     * Builds the GoogleIdTokenVerifier with all possible client IDs (Web, Android, iOS) to support
+     * tokens from different platforms.
      */
     @Bean
     public GoogleIdTokenVerifier buildVerifier() {
@@ -111,7 +116,9 @@ public class ApplicationConfig {
 
         log.debug("Verifier configured with {} client ID(s)", clientIds.size());
 
-        return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                .setAudience(clientIds).build();
+        return new GoogleIdTokenVerifier.Builder(
+                        new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(clientIds)
+                .build();
     }
 }

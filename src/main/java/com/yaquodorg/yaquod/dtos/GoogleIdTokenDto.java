@@ -6,8 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO for Google OAuth login request from mobile apps (Flutter). Contains the
- * Google ID token received from Google Sign-In.
+ * DTO for Google OAuth login request from mobile apps (Flutter). Contains the Google ID token
+ * received from Google Sign-In.
  */
 @Data
 @AllArgsConstructor

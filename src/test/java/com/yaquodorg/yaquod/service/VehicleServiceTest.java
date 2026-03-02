@@ -35,12 +35,9 @@ class VehicleServiceTest {
     private final String VinNumber1 = "1HGCM82633A004352";
     private final String VinNumber2 = "1M8GDM9AXKP042788";
     private final String TestVin = "2GCEK19T7Y1156789";
-    @Mock
-    private VehicleRepository vehicleRepository;
-    @Mock
-    private PasswordEncoder passwordEncoder;
-    @InjectMocks
-    private VehicleServiceImpl vehicleService;
+    @Mock private VehicleRepository vehicleRepository;
+    @Mock private PasswordEncoder passwordEncoder;
+    @InjectMocks private VehicleServiceImpl vehicleService;
     private CreateVehicleDto createVehicleDto;
     private Vehicle vehicle;
     private User adminUser;
@@ -48,15 +45,39 @@ class VehicleServiceTest {
     @BeforeEach
     void setUp() {
         // Setup admin user
-        adminUser = User.builder().id(1L).email("admin@example.com").firstName("Admin").lastName("User")
-                .role(Role.ADMIN).build();
+        adminUser =
+                User.builder()
+                        .id(1L)
+                        .email("admin@example.com")
+                        .firstName("Admin")
+                        .lastName("User")
+                        .role(Role.ADMIN)
+                        .build();
 
-        createVehicleDto = CreateVehicleDto.builder().vinNumber(VinNumber1).plateNo("abc123").color("RED")
-                .carCompany("Dodge").model("Charger").seats(2).build();
+        createVehicleDto =
+                CreateVehicleDto.builder()
+                        .vinNumber(VinNumber1)
+                        .plateNo("abc123")
+                        .color("RED")
+                        .carCompany("Dodge")
+                        .model("Charger")
+                        .seats(2)
+                        .build();
 
-        vehicle = Vehicle.builder().id(1L).vinNumber(VinNumber2).plateNo("abc123").color("RED").carCompany("Dodge")
-                .model("Charger").seats(2).status(VehicleStatus.IDLE).lastUpdatedLocation(null).lastUpdatedLong(0.0d)
-                .lastUpdatedLat(0.0d).build();
+        vehicle =
+                Vehicle.builder()
+                        .id(1L)
+                        .vinNumber(VinNumber2)
+                        .plateNo("abc123")
+                        .color("RED")
+                        .carCompany("Dodge")
+                        .model("Charger")
+                        .seats(2)
+                        .status(VehicleStatus.IDLE)
+                        .lastUpdatedLocation(null)
+                        .lastUpdatedLong(0.0d)
+                        .lastUpdatedLat(0.0d)
+                        .build();
     }
 
     @Test
@@ -128,7 +149,8 @@ class VehicleServiceTest {
         when(vehicleRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> vehicleService.getVehicle(999L)).isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> vehicleService.getVehicle(999L))
+                .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Vehicle not found!");
 
         verify(vehicleRepository, times(1)).findById(999L);
@@ -203,7 +225,8 @@ class VehicleServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> vehicleService.updateVehicleLocation(vin, 40.7128, -74.0060))
-                .isInstanceOf(RuntimeException.class).hasMessageContaining("Vehicle not found with VIN: " + vin);
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Vehicle not found with VIN: " + vin);
 
         verify(vehicleRepository, times(1)).findByVinNumber(vin);
         verify(vehicleRepository, never()).save(any(Vehicle.class));
@@ -262,8 +285,14 @@ class VehicleServiceTest {
         double latitude = 30.0;
         int k = 3;
 
-        Vehicle vehicle2 = Vehicle.builder().id(2L).vinNumber("VIN789").plateNo("XYZ-789").model("Honda Accord")
-                .status(VehicleStatus.IDLE).build();
+        Vehicle vehicle2 =
+                Vehicle.builder()
+                        .id(2L)
+                        .vinNumber("VIN789")
+                        .plateNo("XYZ-789")
+                        .model("Honda Accord")
+                        .status(VehicleStatus.IDLE)
+                        .build();
 
         List<Vehicle> nearestVehicles = Arrays.asList(vehicle, vehicle2);
         when(vehicleRepository.findKNearestVehicles(any(), eq(k))).thenReturn(nearestVehicles);
@@ -312,14 +341,17 @@ class VehicleServiceTest {
                 .thenReturn(nearbyVehicles);
 
         // Act
-        List<Vehicle> result = vehicleService.findKNearestVehiclesWithinDistance(longitude, latitude, maxDistance, k);
+        List<Vehicle> result =
+                vehicleService.findKNearestVehiclesWithinDistance(
+                        longitude, latitude, maxDistance, k);
 
         // Assert
         assertThat(result).isNotEmpty();
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getVinNumber()).isEqualTo(VinNumber2);
 
-        verify(vehicleRepository, times(1)).findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k));
+        verify(vehicleRepository, times(1))
+                .findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k));
     }
 
     @Test
@@ -331,15 +363,19 @@ class VehicleServiceTest {
         double maxDistance = 100.0; // 100 meters
         int k = 5;
 
-        when(vehicleRepository.findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k))).thenReturn(List.of());
+        when(vehicleRepository.findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k)))
+                .thenReturn(List.of());
 
         // Act
-        List<Vehicle> result = vehicleService.findKNearestVehiclesWithinDistance(longitude, latitude, maxDistance, k);
+        List<Vehicle> result =
+                vehicleService.findKNearestVehiclesWithinDistance(
+                        longitude, latitude, maxDistance, k);
 
         // Assert
         assertThat(result).isEmpty();
 
-        verify(vehicleRepository, times(1)).findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k));
+        verify(vehicleRepository, times(1))
+                .findKNearestVehiclesWithinDistance(any(), eq(maxDistance), eq(k));
     }
 
     @Test

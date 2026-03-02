@@ -24,30 +24,43 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ApiResponse<MessageResponse>> handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<MessageResponse>> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(err -> errors.put(err.getField(), err.getDefaultMessage()));
+        ex.getBindingResult()
+                .getFieldErrors()
+                .forEach(err -> errors.put(err.getField(), err.getDefaultMessage()));
         String errorMessage = "Validation failed: " + errors;
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createFailureResponse(errorMessage));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(createFailureResponse(errorMessage));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ApiResponse<MessageResponse>> handleConstraintViolations(ConstraintViolationException ex) {
+    public ResponseEntity<ApiResponse<MessageResponse>> handleConstraintViolations(
+            ConstraintViolationException ex) {
         Map<String, String> errors = new HashMap<>();
-        ex.getConstraintViolations().forEach(cv -> {
-            String path = cv.getPropertyPath() != null ? cv.getPropertyPath().toString() : "";
-            errors.put(path, cv.getMessage());
-        });
+        ex.getConstraintViolations()
+                .forEach(
+                        cv -> {
+                            String path =
+                                    cv.getPropertyPath() != null
+                                            ? cv.getPropertyPath().toString()
+                                            : "";
+                            errors.put(path, cv.getMessage());
+                        });
         String errorMessage = "Constraint violations: " + errors;
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createFailureResponse(errorMessage));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(createFailureResponse(errorMessage));
     }
 
     @ExceptionHandler(MissingRequestHeaderException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ApiResponse<MessageResponse>> handleMissingRequestHeader(MissingRequestHeaderException ex) {
+    public ResponseEntity<ApiResponse<MessageResponse>> handleMissingRequestHeader(
+            MissingRequestHeaderException ex) {
         String errorMessage = "Required request header '" + ex.getHeaderName() + "' is missing";
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createFailureResponse(errorMessage));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(createFailureResponse(errorMessage));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -55,30 +68,41 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<MessageResponse>> handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex) {
         String errorMessage = "Required request body is missing: " + ex.getMessage();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createFailureResponse(errorMessage));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(createFailureResponse(errorMessage));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ApiResponse<MessageResponse>> handleMethodArgumentTypeMismatch(
             MethodArgumentTypeMismatchException ex) {
-        String requiredTypeName = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown type";
-        String errorMessage = "Method argument type mismatch: " + ex.getName() + " should be of type "
-                + requiredTypeName;
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createFailureResponse(errorMessage));
+        String requiredTypeName =
+                ex.getRequiredType() != null
+                        ? ex.getRequiredType().getSimpleName()
+                        : "unknown type";
+        String errorMessage =
+                "Method argument type mismatch: "
+                        + ex.getName()
+                        + " should be of type "
+                        + requiredTypeName;
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(createFailureResponse(errorMessage));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
     public ResponseEntity<ApiResponse<MessageResponse>> handleHttpRequestMethodNotSupported(
             HttpRequestMethodNotSupportedException ex) {
-        String errorMessage = "HTTP request method '" + ex.getMethod() + "' is not supported for this endpoint";
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(createFailureResponse(errorMessage));
+        String errorMessage =
+                "HTTP request method '" + ex.getMethod() + "' is not supported for this endpoint";
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(createFailureResponse(errorMessage));
     }
 
     @ExceptionHandler(MultipartException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ApiResponse<MessageResponse>> handleMultipartException(MultipartException ex) {
+    public ResponseEntity<ApiResponse<MessageResponse>> handleMultipartException(
+            MultipartException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(createFailureResponse("Multipart request error: " + ex.getMessage()));
     }

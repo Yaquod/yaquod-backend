@@ -23,9 +23,11 @@ public class FirebaseMessagingServiceImpl implements FirebaseMessagingService {
         }
 
         try {
-            Notification notification = Notification.builder().setTitle(title).setBody(body).build();
+            Notification notification =
+                    Notification.builder().setTitle(title).setBody(body).build();
 
-            Message message = Message.builder().setToken(token).setNotification(notification).build();
+            Message message =
+                    Message.builder().setToken(token).setNotification(notification).build();
 
             String response = firebaseMessaging.send(message);
             log.info("Successfully sent notification: {} and token: {}", response, token);

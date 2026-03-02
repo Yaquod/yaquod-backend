@@ -32,8 +32,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
 
@@ -59,10 +62,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException e) {
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expired: " + e.getMessage());
+            sendErrorResponse(
+                    response,
+                    HttpServletResponse.SC_UNAUTHORIZED,
+                    "Token expired: " + e.getMessage());
             log.error("Token Expired: {}", e.getMessage());
         } catch (Exception e) {
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
+            sendErrorResponse(
+                    response,
+                    HttpServletResponse.SC_UNAUTHORIZED,
                     "JWT authentication failed: " + e.getMessage());
             log.error("JwtAuthenticationFilterError: {}", e.getMessage());
         }
@@ -73,8 +81,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null,
-                    userDetails.getAuthorities());
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
 
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
@@ -89,14 +98,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Long vehicleId = claims.get("vehicleId", Long.class);
             Long adminId = claims.get("adminId", Long.class);
 
-            VehicleAuthenticationToken authToken = new VehicleAuthenticationToken(vehicleId, apiKey, adminId, claims);
+            VehicleAuthenticationToken authToken =
+                    new VehicleAuthenticationToken(vehicleId, apiKey, adminId, claims);
 
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
     }
 
-    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+    private void sendErrorResponse(HttpServletResponse response, int status, String message)
+            throws IOException {
         response.setStatus(status);
         response.setContentType("application/json");
 

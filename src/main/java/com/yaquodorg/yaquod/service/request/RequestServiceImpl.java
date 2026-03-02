@@ -42,16 +42,28 @@ public class RequestServiceImpl implements RequestService {
 
     @Transactional
     @Override
-    public Request createRequest(Long userId, double startLong, double startLat, double endLong, double endLat) {
-        log.info("Creating request for user id: {}, start: ({}, {}), end: ({}, {})", userId, startLong, startLat,
-                endLong, endLat);
+    public Request createRequest(
+            Long userId, double startLong, double startLat, double endLong, double endLat) {
+        log.info(
+                "Creating request for user id: {}, start: ({}, {}), end: ({}, {})",
+                userId,
+                startLong,
+                startLat,
+                endLong,
+                endLat);
         User user = userService.getUserById(userId);
 
         Point startPoint = geometryFactory.createPoint(new Coordinate(startLong, startLat));
         Point endPoint = geometryFactory.createPoint(new Coordinate(endLong, endLat));
 
-        Request request = Request.builder().user(user).startLocation(startPoint).destinationLocation(endPoint)
-                .status(RequestStatus.PENDING).createdAt(new Timestamp(new Date().getTime())).build();
+        Request request =
+                Request.builder()
+                        .user(user)
+                        .startLocation(startPoint)
+                        .destinationLocation(endPoint)
+                        .status(RequestStatus.PENDING)
+                        .createdAt(new Timestamp(new Date().getTime()))
+                        .build();
 
         Request savedRequest = requestRepository.save(request);
         log.info("Request created successfully with id: {}", savedRequest.getId());
@@ -82,21 +94,36 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public Request getRequest(Long requestId) {
         log.debug("Fetching request by id: {}", requestId);
-        return requestRepository.findById(requestId).orElseThrow(() -> {
-            log.error("Request not found for id: {}", requestId);
-            return new RuntimeException("Request not found!");
-        });
+        return requestRepository
+                .findById(requestId)
+                .orElseThrow(
+                        () -> {
+                            log.error("Request not found for id: {}", requestId);
+                            return new RuntimeException("Request not found!");
+                        });
     }
 
     @Transactional
     @Override
-    public void updateRequest(Long requestId, RequestStatus requestStatus, double estimatedTime, double estimatedFare) {
-        log.info("Updating request id: {} with status: {}, estimatedTime: {}, estimatedFare: {}", requestId,
-                requestStatus, estimatedTime, estimatedFare);
-        Request request = requestRepository.findById(requestId).orElseThrow(() -> {
-            log.error("Request not found for id: {}", requestId);
-            return new RuntimeException("Request not found!");
-        });
+    public void updateRequest(
+            Long requestId,
+            RequestStatus requestStatus,
+            double estimatedTime,
+            double estimatedFare) {
+        log.info(
+                "Updating request id: {} with status: {}, estimatedTime: {}, estimatedFare: {}",
+                requestId,
+                requestStatus,
+                estimatedTime,
+                estimatedFare);
+        Request request =
+                requestRepository
+                        .findById(requestId)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("Request not found for id: {}", requestId);
+                                    return new RuntimeException("Request not found!");
+                                });
 
         request.setStatus(requestStatus);
         request.setEstimatedTime(estimatedTime);
@@ -108,10 +135,14 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public void updateRequestStatus(Long requestId, RequestStatus requestStatus) {
         log.info("Updating request status for id: {} to {}", requestId, requestStatus);
-        Request request = requestRepository.findById(requestId).orElseThrow(() -> {
-            log.error("Request not found for id: {}", requestId);
-            return new RuntimeException("Request not found!");
-        });
+        Request request =
+                requestRepository
+                        .findById(requestId)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("Request not found for id: {}", requestId);
+                                    return new RuntimeException("Request not found!");
+                                });
 
         request.setStatus(requestStatus);
         log.debug("Request status updated successfully for id: {}", requestId);
@@ -149,15 +180,24 @@ public class RequestServiceImpl implements RequestService {
         String vinNumber = vehicle.getVinNumber();
 
         if (request.getStatus() != RequestStatus.COMPLETED) {
-            log.warn("Request id: {} is not in COMPLETED state, current status: {}", id, request.getStatus());
+            log.warn(
+                    "Request id: {} is not in COMPLETED state, current status: {}",
+                    id,
+                    request.getStatus());
             throw new IllegalStateException("Request is not in COMPLETED state");
         }
         if (trip.getStatus() != TripStatus.INITIATED) {
-            log.warn("Trip id: {} is not in INITIATED state, current status: {}", tripId, trip.getStatus());
+            log.warn(
+                    "Trip id: {} is not in INITIATED state, current status: {}",
+                    tripId,
+                    trip.getStatus());
             throw new IllegalStateException("Trip is not in INITIATED state");
         }
         if (vehicle.getStatus() != VehicleStatus.ON_HOLD) {
-            log.warn("Vehicle VIN: {} is not in ON_HOLD state, current status: {}", vinNumber, vehicle.getStatus());
+            log.warn(
+                    "Vehicle VIN: {} is not in ON_HOLD state, current status: {}",
+                    vinNumber,
+                    vehicle.getStatus());
             throw new IllegalStateException("Vehicle is not in ON_HOLD state");
         }
 
@@ -198,20 +238,30 @@ public class RequestServiceImpl implements RequestService {
         Point startLocation = request.getStartLocation();
 
         if (request.getStatus() != RequestStatus.COMPLETED) {
-            log.warn("Request id: {} is not in COMPLETED state, current status: {}", id, request.getStatus());
+            log.warn(
+                    "Request id: {} is not in COMPLETED state, current status: {}",
+                    id,
+                    request.getStatus());
             throw new IllegalStateException("Request is not in COMPLETED state");
         }
         if (trip.getStatus() != TripStatus.INITIATED) {
-            log.warn("Trip id: {} is not in INITIATED state, current status: {}", tripId, trip.getStatus());
+            log.warn(
+                    "Trip id: {} is not in INITIATED state, current status: {}",
+                    tripId,
+                    trip.getStatus());
             throw new IllegalStateException("Trip is not in INITIATED state");
         }
         if (vehicle.getStatus() != VehicleStatus.ON_HOLD) {
-            log.warn("Vehicle VIN: {} is not in ON_HOLD state, current status: {}", vinNumber, vehicle.getStatus());
+            log.warn(
+                    "Vehicle VIN: {} is not in ON_HOLD state, current status: {}",
+                    vinNumber,
+                    vehicle.getStatus());
             throw new IllegalStateException("Vehicle is not in ON_HOLD state");
         }
 
         // publish to broker
-        MoveVehicleDto moveVehicleDto = generateVehicleMovementDto(startLocation, tripId, vinNumber);
+        MoveVehicleDto moveVehicleDto =
+                generateVehicleMovementDto(startLocation, tripId, vinNumber);
         eventPublisher.publishEvent(moveVehicleDto);
         log.debug("Published MoveVehicleDto event for trip id: {}", tripId);
 
@@ -228,12 +278,17 @@ public class RequestServiceImpl implements RequestService {
         return request;
     }
 
-    private MoveVehicleDto generateVehicleMovementDto(Point startLocation, Long tripId, String vinNumber) {
+    private MoveVehicleDto generateVehicleMovementDto(
+            Point startLocation, Long tripId, String vinNumber) {
         log.debug("Generating MoveVehicleDto for trip id: {}, VIN: {}", tripId, vinNumber);
         double startLat = startLocation.getY();
         double startLong = startLocation.getX();
 
-        return MoveVehicleDto.builder().vinNumber(vinNumber).tripId(tripId).latitude(startLat).longitude(startLong)
+        return MoveVehicleDto.builder()
+                .vinNumber(vinNumber)
+                .tripId(tripId)
+                .latitude(startLat)
+                .longitude(startLong)
                 .build();
     }
 }

@@ -6,7 +6,6 @@ import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import io.swagger.v3.oas.annotations.Operation;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -22,14 +21,13 @@ public class GoogleTokenServiceImpl implements GoogleTokenService {
     /**
      * Verifies the Google ID token received from Flutter Google Sign-In.
      *
-     * @param idTokenString
-     *            The ID token string received from the mobile app
+     * @param idTokenString The ID token string received from the mobile app
      * @return GoogleLoginDto containing user information if token is valid
-     * @throws IllegalArgumentException
-     *             if the token is invalid or expired
+     * @throws IllegalArgumentException if the token is invalid or expired
      */
     @Operation
-    public GoogleLoginDto verifyIdToken(String idTokenString) throws GeneralSecurityException, IOException {
+    public GoogleLoginDto verifyIdToken(String idTokenString)
+            throws GeneralSecurityException, IOException {
         log.info("Verifying Google ID token");
         GoogleIdToken idToken = verifier.verify(idTokenString);
 
@@ -49,8 +47,12 @@ public class GoogleTokenServiceImpl implements GoogleTokenService {
         String resolvedGivenName = getName(givenName, name, email);
 
         log.info("Google ID token verified successfully for email: {}", email);
-        log.debug("Token payload - name: {}, givenName: {}, familyName: {}, emailVerified: {}", name, resolvedGivenName,
-                familyName, emailVerified);
+        log.debug(
+                "Token payload - name: {}, givenName: {}, familyName: {}, emailVerified: {}",
+                name,
+                resolvedGivenName,
+                familyName,
+                emailVerified);
 
         if (!emailVerified) {
             log.warn("Email not verified for Google user: {}", email);
@@ -67,7 +69,8 @@ public class GoogleTokenServiceImpl implements GoogleTokenService {
             if (name != null && !name.isBlank()) {
                 String trimmedName = name.trim();
                 int spaceIndex = trimmedName.indexOf(' ');
-                resolvedGivenName = (spaceIndex > 0) ? trimmedName.substring(0, spaceIndex) : trimmedName;
+                resolvedGivenName =
+                        (spaceIndex > 0) ? trimmedName.substring(0, spaceIndex) : trimmedName;
             } else if (email != null && !email.isBlank()) {
                 String localPart = email;
                 int atIndex = email.indexOf('@');

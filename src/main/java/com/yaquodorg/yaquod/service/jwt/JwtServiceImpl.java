@@ -42,8 +42,13 @@ public class JwtServiceImpl implements JwtService {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + accessTokenExpiration);
 
-        return Jwts.builder().setSubject(userDetails.getUsername()).setIssuedAt(now).setExpiration(expiryDate)
-                .claim("roles", userDetails.getAuthorities()).setId(UUID.randomUUID().toString()).signWith(getKey())
+        return Jwts.builder()
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .claim("roles", userDetails.getAuthorities())
+                .setId(UUID.randomUUID().toString())
+                .signWith(getKey())
                 .compact();
     }
 
@@ -52,8 +57,12 @@ public class JwtServiceImpl implements JwtService {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + refreshTokenExpiration);
 
-        return Jwts.builder().setSubject(userDetails.getUsername()).setIssuedAt(now).setExpiration(expiryDate)
-                .signWith(getKey()).compact();
+        return Jwts.builder()
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getKey())
+                .compact();
     }
 
     @Override
@@ -61,9 +70,16 @@ public class JwtServiceImpl implements JwtService {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + vehicleTokenExpiration);
 
-        return Jwts.builder().setSubject(vehicle.getApiKey()).setIssuedAt(now).claim("roles", Role.VEHICLE)
-                .claim("vehicleId", vehicle.getId()).claim("adminId", vehicle.getCreatedByAdmin().getId())
-                .setId(UUID.randomUUID().toString()).setExpiration(expiryDate).signWith(getKey()).compact();
+        return Jwts.builder()
+                .setSubject(vehicle.getApiKey())
+                .setIssuedAt(now)
+                .claim("roles", Role.VEHICLE)
+                .claim("vehicleId", vehicle.getId())
+                .claim("adminId", vehicle.getCreatedByAdmin().getId())
+                .setId(UUID.randomUUID().toString())
+                .setExpiration(expiryDate)
+                .signWith(getKey())
+                .compact();
     }
 
     @Override
@@ -71,8 +87,12 @@ public class JwtServiceImpl implements JwtService {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + vehicleRefreshTokenExpiration);
 
-        return Jwts.builder().setSubject(vehicle.getApiKey()).setIssuedAt(now).setExpiration(expiryDate)
-                .signWith(getKey()).compact();
+        return Jwts.builder()
+                .setSubject(vehicle.getApiKey())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getKey())
+                .compact();
     }
 
     @Override
@@ -88,7 +108,12 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public String getEmailFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token).getBody().getSubject();
+        return Jwts.parserBuilder()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     @Override

@@ -22,14 +22,11 @@ public class Trip {
     @Enumerated(EnumType.STRING)
     private TripStatus status;
 
-    @Column
-    private Timestamp startedAt;
+    @Column private Timestamp startedAt;
 
-    @Column
-    private Timestamp endedAt;
+    @Column private Timestamp endedAt;
 
-    @Column
-    private Timestamp updatedAt;
+    @Column private Timestamp updatedAt;
 
     @JsonIgnore
     @OneToOne

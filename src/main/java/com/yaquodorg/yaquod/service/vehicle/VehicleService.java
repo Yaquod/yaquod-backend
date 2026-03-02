@@ -29,6 +29,6 @@ public interface VehicleService {
 
     List<Vehicle> findKNearestVehicles(double longitude, double latitude, int k);
 
-    List<Vehicle> findKNearestVehiclesWithinDistance(double longitude, double latitude, double maxDistanceMeters,
-            int k);
+    List<Vehicle> findKNearestVehiclesWithinDistance(
+            double longitude, double latitude, double maxDistanceMeters, int k);
 }

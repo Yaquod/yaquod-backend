@@ -6,7 +6,8 @@ import com.yaquodorg.yaquod.entity.TripStatus;
 import java.util.List;
 
 public interface TripService {
-    void createTrip(Request request, double startLong, double startLat, double endLong, double endLat);
+    void createTrip(
+            Request request, double startLong, double startLat, double endLong, double endLat);
 
     Trip getTripByRequestId(Long requestId);
 

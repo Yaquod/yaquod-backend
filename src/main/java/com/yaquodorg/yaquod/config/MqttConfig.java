@@ -42,7 +42,7 @@ public class MqttConfig {
 
         log.info("Connecting to MQTT Broker at: {}", resolvedUrl);
 
-        options.setServerURIs(new String[]{resolvedUrl});
+        options.setServerURIs(new String[] {resolvedUrl});
         options.setConnectionTimeout(connectionTimeout);
         options.setKeepAliveInterval(keepAliveInterval);
         options.setCleanSession(true);
@@ -64,8 +64,9 @@ public class MqttConfig {
 
     @Bean
     public MessageProducer inbound() {
-        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(clientId + "-inbound",
-                mqttClientFactory(), topics);
+        MqttPahoMessageDrivenChannelAdapter adapter =
+                new MqttPahoMessageDrivenChannelAdapter(
+                        clientId + "-inbound", mqttClientFactory(), topics);
 
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
@@ -77,7 +78,8 @@ public class MqttConfig {
     @Bean
     @ServiceActivator(inputChannel = "mqttOutboundChannel")
     public MessageHandler mqttOutbound() {
-        MqttPahoMessageHandler messageHandler = new MqttPahoMessageHandler(clientId + "-outbound", mqttClientFactory());
+        MqttPahoMessageHandler messageHandler =
+                new MqttPahoMessageHandler(clientId + "-outbound", mqttClientFactory());
         messageHandler.setAsync(true);
         messageHandler.setDefaultQos(qos);
         messageHandler.setDefaultTopic("testTopic");

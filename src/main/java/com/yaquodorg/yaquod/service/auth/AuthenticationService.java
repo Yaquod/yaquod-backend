@@ -15,7 +15,8 @@ import java.security.GeneralSecurityException;
 public interface AuthenticationService {
     LoginResponse login(LoginUserDto loginUserDto);
 
-    LoginResponse googleLogin(GoogleIdTokenDto request) throws GeneralSecurityException, IOException;
+    LoginResponse googleLogin(GoogleIdTokenDto request)
+            throws GeneralSecurityException, IOException;
 
     VehicleLoginResponse vehicleLogin(VehicleLoginDto vehicleLoginDto);
 

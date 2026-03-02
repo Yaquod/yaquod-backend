@@ -33,11 +33,9 @@ public class Request {
     @Column(nullable = false)
     private Timestamp createdAt;
 
-    @Column
-    private double estimatedTime;
+    @Column private double estimatedTime;
 
-    @Column
-    private double estimatedFare;
+    @Column private double estimatedFare;
 
     @JsonIgnore
     @ManyToOne

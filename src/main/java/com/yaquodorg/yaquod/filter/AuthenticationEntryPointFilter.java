@@ -20,8 +20,11 @@ public class AuthenticationEntryPointFilter implements AuthenticationEntryPoint 
     private final ObjectMapper objectMapper;
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response,
-            AuthenticationException authException) throws IOException, ServletException {
+    public void commence(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException authException)
+            throws IOException, ServletException {
 
         log.warn("Unauthorized access attempt to: {}", request.getRequestURI());
 
@@ -29,8 +32,9 @@ public class AuthenticationEntryPointFilter implements AuthenticationEntryPoint 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        ApiResponse<Object> apiResponse = ApiResponse
-                .createFailureResponse("Authentication required. Please provide valid credentials.");
+        ApiResponse<Object> apiResponse =
+                ApiResponse.createFailureResponse(
+                        "Authentication required. Please provide valid credentials.");
 
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
         response.getWriter().flush();

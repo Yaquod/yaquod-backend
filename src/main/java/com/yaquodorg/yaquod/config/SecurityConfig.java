@@ -37,11 +37,14 @@ public class SecurityConfig {
     private final VehicleAuthenticationProvider vehicleAuthenticationProvider;
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration,
-            VehicleAuthenticationProvider vehicleAuthenticationProvider) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authenticationConfiguration,
+            VehicleAuthenticationProvider vehicleAuthenticationProvider)
+            throws Exception {
 
         // Get the default authentication manager
-        AuthenticationManager defaultManager = authenticationConfiguration.getAuthenticationManager();
+        AuthenticationManager defaultManager =
+                authenticationConfiguration.getAuthenticationManager();
 
         // Create a provider manager with both user and vehicle providers
         return new ProviderManager(List.of(vehicleAuthenticationProvider), defaultManager);
@@ -49,16 +52,29 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(req -> req.requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs*/**").permitAll()
-                        .requestMatchers("/api/admins/**").hasRole("ADMIN").requestMatchers("/api/clients/**")
-                        .hasRole("CLIENT").anyRequest().authenticated())
+        http.csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(
+                        req ->
+                                req.requestMatchers("/api/auth/**")
+                                        .permitAll()
+                                        .requestMatchers("/swagger-ui/**", "/v3/api-docs*/**")
+                                        .permitAll()
+                                        .requestMatchers("/api/admins/**")
+                                        .hasRole("ADMIN")
+                                        .requestMatchers("/api/clients/**")
+                                        .hasRole("CLIENT")
+                                        .anyRequest()
+                                        .authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(exception -> exception.accessDeniedHandler(accessDeniedFilter)
-                        .authenticationEntryPoint(authenticationEntryPoint))
+                .addFilterBefore(
+                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(
+                        exception ->
+                                exception
+                                        .accessDeniedHandler(accessDeniedFilter)
+                                        .authenticationEntryPoint(authenticationEntryPoint))
                 .oauth2Login(oauth -> oauth.successHandler(oAuth2LoginSuccessHandler));
 
         return http.build();

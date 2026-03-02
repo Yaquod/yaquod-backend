@@ -34,17 +34,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @DisplayName("RequestService Unit Tests")
 class RequestServiceTest {
 
-    @Mock
-    private RequestRepository requestRepository;
+    @Mock private RequestRepository requestRepository;
 
-    @Mock
-    private UserService userService;
+    @Mock private UserService userService;
 
-    @Mock
-    private TripService tripService;
+    @Mock private TripService tripService;
 
-    @InjectMocks
-    private RequestServiceImpl requestService;
+    @InjectMocks private RequestServiceImpl requestService;
 
     private GeometryFactory geometryFactory;
     private User testUser;
@@ -61,8 +57,15 @@ class RequestServiceTest {
         startPoint = geometryFactory.createPoint(new Coordinate(31.0, 30.0));
         endPoint = geometryFactory.createPoint(new Coordinate(31.5, 30.5));
 
-        testRequest = Request.builder().id(1L).user(testUser).startLocation(startPoint).destinationLocation(endPoint)
-                .status(RequestStatus.PENDING).createdAt(new Timestamp(System.currentTimeMillis())).build();
+        testRequest =
+                Request.builder()
+                        .id(1L)
+                        .user(testUser)
+                        .startLocation(startPoint)
+                        .destinationLocation(endPoint)
+                        .status(RequestStatus.PENDING)
+                        .createdAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
     }
 
     @Test
@@ -87,7 +90,8 @@ class RequestServiceTest {
 
         verify(userService).getUserById(1L);
         verify(requestRepository).save(any(Request.class));
-        verify(tripService).createTrip(eq(testRequest), eq(startLong), eq(startLat), eq(endLong), eq(endLat));
+        verify(tripService)
+                .createTrip(eq(testRequest), eq(startLong), eq(startLat), eq(endLong), eq(endLat));
     }
 
     @Test
@@ -100,7 +104,8 @@ class RequestServiceTest {
         double endLat = 30.5;
 
         when(userService.getUserById(1L)).thenReturn(testUser);
-        when(requestRepository.save(any(Request.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(requestRepository.save(any(Request.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
 
@@ -124,10 +129,13 @@ class RequestServiceTest {
         when(userService.getUserById(999L)).thenThrow(new RuntimeException("User not found"));
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> requestService.createRequest(999L, 31.0, 30.0, 31.5, 30.5));
+        assertThrows(
+                RuntimeException.class,
+                () -> requestService.createRequest(999L, 31.0, 30.0, 31.5, 30.5));
 
         verify(requestRepository, never()).save(any(Request.class));
-        verify(tripService, never()).createTrip(any(), anyDouble(), anyDouble(), anyDouble(), anyDouble());
+        verify(tripService, never())
+                .createTrip(any(), anyDouble(), anyDouble(), anyDouble(), anyDouble());
     }
 
     @Test
@@ -210,7 +218,8 @@ class RequestServiceTest {
         when(requestRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> requestService.getRequest(999L));
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, () -> requestService.getRequest(999L));
 
         // Assert
         assertEquals("Request not found!", exception.getMessage());
@@ -243,8 +252,12 @@ class RequestServiceTest {
         when(requestRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> requestService.updateRequest(999L, RequestStatus.COMPLETED, 15.5, 50.0));
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                requestService.updateRequest(
+                                        999L, RequestStatus.COMPLETED, 15.5, 50.0));
 
         // Assert
         assertEquals("Request not found!", exception.getMessage());

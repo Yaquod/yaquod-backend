@@ -30,9 +30,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Integration tests for User and Authentication endpoints Tests full Spring
- * context including security, JWT, and database Uses real database (H2 or
- * Testcontainers)
+ * Integration tests for User and Authentication endpoints Tests full Spring context including
+ * security, JWT, and database Uses real database (H2 or Testcontainers)
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -41,20 +40,15 @@ import org.springframework.transaction.annotation.Transactional;
 @DisplayName("User & Authentication Controller Integration Tests")
 class UserControllerIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserRepository userRepository;
+    @Autowired private UserRepository userRepository;
 
-    @Autowired
-    private JwtService jwtService;
+    @Autowired private JwtService jwtService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     private RegisterUserDto registerUserDto;
     private User testUser;
@@ -91,12 +85,17 @@ class UserControllerIntegrationTest {
     @Test
     @DisplayName("POST /api/auth/admin/signup - Should register admin successfully")
     void shouldRegisterAdminSuccessfully() throws Exception {
-        mockMvc.perform(post("/api/auth/admin/signup").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerUserDto))).andDo(print())
-                .andExpect(status().isCreated()).andExpect(jsonPath("$.success").value(true))
+        mockMvc.perform(
+                        post("/api/auth/admin/signup")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(registerUserDto)))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.email").value("test@example.com"))
                 .andExpect(jsonPath("$.data.firstName").value("John"))
-                .andExpect(jsonPath("$.data.lastName").value("Doe")).andExpect(jsonPath("$.data.role").value("ADMIN"))
+                .andExpect(jsonPath("$.data.lastName").value("Doe"))
+                .andExpect(jsonPath("$.data.role").value("ADMIN"))
                 .andExpect(jsonPath("$.data.emailVerified").value(false));
 
         // Verify user was actually saved to database
@@ -111,19 +110,29 @@ class UserControllerIntegrationTest {
         // Use existing user's email
         registerUserDto.setEmail("existing@example.com");
 
-        mockMvc.perform(post("/api/auth/admin/signup").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerUserDto))).andDo(print())
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Failed to register admin user")));
+        mockMvc.perform(
+                        post("/api/auth/admin/signup")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(registerUserDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(containsString("Failed to register admin user")));
     }
 
     // CLIENT SIGNUP TESTS
     @Test
     @DisplayName("POST /api/auth/client/signup - Should register client successfully")
     void shouldRegisterClientSuccessfully() throws Exception {
-        mockMvc.perform(post("/api/auth/client/signup").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerUserDto))).andDo(print())
-                .andExpect(status().isCreated()).andExpect(jsonPath("$.success").value(true))
+        mockMvc.perform(
+                        post("/api/auth/client/signup")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(registerUserDto)))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.email").value("test@example.com"))
                 .andExpect(jsonPath("$.data.role").value("CLIENT"));
 
@@ -137,9 +146,13 @@ class UserControllerIntegrationTest {
     void shouldReturn400WithDuplicateEmailOnClientSignup() throws Exception {
         registerUserDto.setEmail("existing@example.com");
 
-        mockMvc.perform(post("/api/auth/client/signup").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerUserDto))).andDo(print())
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.success").value(false));
+        mockMvc.perform(
+                        post("/api/auth/client/signup")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(registerUserDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     // LOGIN TESTS
@@ -151,9 +164,14 @@ class UserControllerIntegrationTest {
         loginDto.setPassword("password123");
         loginDto.setFcmToken("fcm-token-123");
 
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginDto))).andDo(print()).andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true)).andExpect(jsonPath("$.data.accessToken").exists())
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").exists())
                 .andExpect(jsonPath("$.data.refreshToken").exists())
                 .andExpect(jsonPath("$.data.user.email").value("existing@example.com"))
                 .andExpect(jsonPath("$.data.user.firstName").value("Existing"));
@@ -171,8 +189,12 @@ class UserControllerIntegrationTest {
         loginDto.setPassword("wrongpassword");
         loginDto.setFcmToken("fcm-token");
 
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginDto))).andDo(print()).andExpect(status().isBadRequest())
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value(containsString("Failed to login")));
     }
@@ -185,8 +207,12 @@ class UserControllerIntegrationTest {
         loginDto.setPassword("password123");
         loginDto.setFcmToken("fcm-token");
 
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginDto))).andDo(print()).andExpect(status().isBadRequest())
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
@@ -208,15 +234,21 @@ class UserControllerIntegrationTest {
         unverifiedUser.setEmailVerified(false);
         userRepository.save(unverifiedUser);
 
-        String verifyJson = """
+        String verifyJson =
+                """
                 {
                     "email": "unverified@example.com",
                     "code": 111111
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON).content(verifyJson))
-                .andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
+        mockMvc.perform(
+                        post("/api/auth/verify-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(verifyJson))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.message").value("Account Verified Successfully!"));
 
         // Verify user is now verified in database
@@ -227,15 +259,21 @@ class UserControllerIntegrationTest {
     @Test
     @DisplayName("POST /api/auth/verify-code - Should return 400 with wrong code")
     void shouldReturn400WithWrongVerificationCode() throws Exception {
-        String verifyJson = """
+        String verifyJson =
+                """
                 {
                     "email": "existing@example.com",
                     "code": 999999
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON).content(verifyJson))
-                .andDo(print()).andExpect(status().isBadRequest()).andExpect(jsonPath("$.success").value(false))
+        mockMvc.perform(
+                        post("/api/auth/verify-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(verifyJson))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value(containsString("Verification Failed")));
     }
 
@@ -256,22 +294,29 @@ class UserControllerIntegrationTest {
         expiredUser.setEmailVerified(false);
         userRepository.save(expiredUser);
 
-        String verifyJson = """
+        String verifyJson =
+                """
                 {
                     "email": "expired@example.com",
                     "code": 111111
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON).content(verifyJson))
-                .andDo(print()).andExpect(status().isBadRequest()).andExpect(jsonPath("$.success").value(false));
+        mockMvc.perform(
+                        post("/api/auth/verify-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(verifyJson))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     // REGENERATE CODE TESTS
     @Test
     @DisplayName("POST /api/auth/regenerate-code - Should regenerate OTP successfully")
     void shouldRegenerateOtpSuccessfully() throws Exception {
-        String regenerateJson = """
+        String regenerateJson =
+                """
                 {
                     "email": "existing@example.com"
                 }
@@ -280,9 +325,15 @@ class UserControllerIntegrationTest {
         Timestamp oldExpiry = testUser.getCodeExpiredAt();
 
         mockMvc.perform(
-                post("/api/auth/regenerate-code").contentType(MediaType.APPLICATION_JSON).content(regenerateJson))
-                .andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value(containsString("OTP regenerated successfully")));
+                        post("/api/auth/regenerate-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(regenerateJson))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(
+                        jsonPath("$.data.message")
+                                .value(containsString("OTP regenerated successfully")));
 
         // Verify code and expiry were updated
         User updatedUser = userRepository.findByEmail("existing@example.com").orElseThrow();
@@ -294,15 +345,20 @@ class UserControllerIntegrationTest {
     @Test
     @DisplayName("POST /api/auth/regenerate-code - Should return 400 with non-existent email")
     void shouldReturn400WhenRegeneratingForNonExistentUser() throws Exception {
-        String regenerateJson = """
+        String regenerateJson =
+                """
                 {
                     "email": "nonexistent@example.com"
                 }
                 """;
 
         mockMvc.perform(
-                post("/api/auth/regenerate-code").contentType(MediaType.APPLICATION_JSON).content(regenerateJson))
-                .andDo(print()).andExpect(status().isBadRequest()).andExpect(jsonPath("$.success").value(false))
+                        post("/api/auth/regenerate-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(regenerateJson))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("User not found"));
     }
 
@@ -313,8 +369,12 @@ class UserControllerIntegrationTest {
         // Generate refresh token
         String refreshToken = jwtService.generateRefreshToken(testUser);
 
-        mockMvc.perform(get("/api/auth/token-refresh").header("Authorization", "Bearer " + refreshToken)).andDo(print())
-                .andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
+        mockMvc.perform(
+                        get("/api/auth/token-refresh")
+                                .header("Authorization", "Bearer " + refreshToken))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.accessToken").exists())
                 .andExpect(jsonPath("$.data.refreshToken").value(refreshToken))
                 .andExpect(jsonPath("$.data.user.email").value("existing@example.com"));
@@ -323,15 +383,20 @@ class UserControllerIntegrationTest {
     @Test
     @DisplayName("GET /api/auth/token-refresh - Should return 401 with invalid token")
     void shouldReturn400WithInvalidRefreshToken() throws Exception {
-        mockMvc.perform(get("/api/auth/token-refresh").header("Authorization", "Bearer invalid-token")).andDo(print())
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.success").value(false));
+        mockMvc.perform(
+                        get("/api/auth/token-refresh")
+                                .header("Authorization", "Bearer invalid-token"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     // RESET PASSWORD TESTS
     @Test
     @DisplayName("POST /api/auth/reset-password - Should reset password successfully")
     void shouldResetPasswordSuccessfully() throws Exception {
-        String resetJson = """
+        String resetJson =
+                """
                 {
                     "email": "existing@example.com",
                     "password": "newPassword456",
@@ -339,8 +404,13 @@ class UserControllerIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/reset-password").contentType(MediaType.APPLICATION_JSON).content(resetJson))
-                .andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
+        mockMvc.perform(
+                        post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(resetJson))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.message").value("Password Reset Successfully!"));
 
         // Verify password was changed and user can login with new password
@@ -349,14 +419,18 @@ class UserControllerIntegrationTest {
         loginDto.setPassword("newPassword456");
         loginDto.setFcmToken("token");
 
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginDto))).andExpect(status().isOk());
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginDto)))
+                .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("POST /api/auth/reset-password - Should return 403 with wrong code")
     void shouldReturn403WithWrongCodeOnReset() throws Exception {
-        String resetJson = """
+        String resetJson =
+                """
                 {
                     "email": "existing@example.com",
                     "password": "newPassword456",
@@ -364,8 +438,13 @@ class UserControllerIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/reset-password").contentType(MediaType.APPLICATION_JSON).content(resetJson))
-                .andDo(print()).andExpect(status().isForbidden()).andExpect(jsonPath("$.success").value(false))
+        mockMvc.perform(
+                        post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(resetJson))
+                .andDo(print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value(containsString("Reset Failed")));
     }
 
@@ -381,18 +460,25 @@ class UserControllerIntegrationTest {
         signupDto.setLastName("User");
         signupDto.setPhoneNumber("5555555555");
 
-        mockMvc.perform(post("/api/auth/client/signup").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(signupDto))).andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/auth/client/signup")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(signupDto)))
+                .andExpect(status().isCreated());
 
         // 2. Verify email
-        String verifyJson = """
+        String verifyJson =
+                """
                 {
                     "email": "newuser@example.com",
                     "code": 111111
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON).content(verifyJson))
+        mockMvc.perform(
+                        post("/api/auth/verify-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(verifyJson))
                 .andExpect(status().isOk());
 
         // 3. Login
@@ -401,9 +487,15 @@ class UserControllerIntegrationTest {
         loginDto.setPassword("password123");
         loginDto.setFcmToken("fcm-token");
 
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginDto))).andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.accessToken").exists()).andReturn().getResponse().getContentAsString();
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         // Verify user is fully set up in database
         User finalUser = userRepository.findByEmail("newuser@example.com").orElseThrow();
@@ -416,18 +508,22 @@ class UserControllerIntegrationTest {
     @DisplayName("Should complete password reset flow: regenerate OTP -> reset password -> login")
     void shouldCompletePasswordResetFlow() throws Exception {
         // 1. Regenerate OTP
-        String regenerateJson = """
+        String regenerateJson =
+                """
                 {
                     "email": "existing@example.com"
                 }
                 """;
 
         mockMvc.perform(
-                post("/api/auth/regenerate-code").contentType(MediaType.APPLICATION_JSON).content(regenerateJson))
+                        post("/api/auth/regenerate-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(regenerateJson))
                 .andExpect(status().isOk());
 
         // 2. Reset password with OTP
-        String resetJson = """
+        String resetJson =
+                """
                 {
                     "email": "existing@example.com",
                     "password": "newSecurePassword789",
@@ -435,7 +531,10 @@ class UserControllerIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/reset-password").contentType(MediaType.APPLICATION_JSON).content(resetJson))
+        mockMvc.perform(
+                        post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(resetJson))
                 .andExpect(status().isOk());
 
         // 3. Login with new password
@@ -444,8 +543,11 @@ class UserControllerIntegrationTest {
         loginDto.setPassword("newSecurePassword789");
         loginDto.setFcmToken("token");
 
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginDto))).andExpect(status().isOk())
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginDto)))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.user.email").value("existing@example.com"));
     }
 
@@ -461,8 +563,11 @@ class UserControllerIntegrationTest {
             dto.setLastName("Test");
             dto.setPhoneNumber("123456789" + i);
 
-            mockMvc.perform(post("/api/auth/client/signup").contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(dto))).andExpect(status().isCreated());
+            mockMvc.perform(
+                            post("/api/auth/client/signup")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(dto)))
+                    .andExpect(status().isCreated());
         }
 
         // Verify all users were created (+ 1 for testUser in setUp)
@@ -474,23 +579,32 @@ class UserControllerIntegrationTest {
     @DisplayName("Should handle malformed JSON in signup")
     void shouldHandleMalformedJsonInSignup() throws Exception {
         mockMvc.perform(
-                post("/api/auth/client/signup").contentType(MediaType.APPLICATION_JSON).content("{invalid json"))
-                .andDo(print()).andExpect(status().isBadRequest());
+                        post("/api/auth/client/signup")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{invalid json"))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     @DisplayName("Should handle missing content type")
     void shouldHandleMissingContentType() throws Exception {
-        mockMvc.perform(post("/api/auth/client/signup").content(objectMapper.writeValueAsString(registerUserDto)))
-                .andDo(print()).andExpect(status().isUnsupportedMediaType());
+        mockMvc.perform(
+                        post("/api/auth/client/signup")
+                                .content(objectMapper.writeValueAsString(registerUserDto)))
+                .andDo(print())
+                .andExpect(status().isUnsupportedMediaType());
     }
 
     @Test
     @DisplayName("Should persist user data across requests")
     void shouldPersistUserDataAcrossRequests() throws Exception {
         // Create user
-        mockMvc.perform(post("/api/auth/client/signup").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerUserDto))).andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/auth/client/signup")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(registerUserDto)))
+                .andExpect(status().isCreated());
 
         // Verify exists in second request
         assertThat(userRepository.findByEmail("test@example.com")).isPresent();
@@ -507,14 +621,20 @@ class UserControllerIntegrationTest {
         loginDto.setPassword("password123");
         loginDto.setFcmToken("token");
 
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginDto))).andDo(print()).andExpect(status().isBadRequest());
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(loginDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     @DisplayName("GET /api/auth/test - Should return service status")
     void shouldReturnAuthServiceStatus() throws Exception {
-        mockMvc.perform(get("/api/auth/test")).andDo(print()).andExpect(status().isOk())
+        mockMvc.perform(get("/api/auth/test"))
+                .andDo(print())
+                .andExpect(status().isOk())
                 .andExpect(content().string("Authentication Service is up and running!"));
     }
 }

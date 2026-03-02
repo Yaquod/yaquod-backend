@@ -13,8 +13,7 @@ public class VinValidator implements ConstraintValidator<ValidVIN, String> {
 
     @Override
     public boolean isValid(String vin, ConstraintValidatorContext ctx) {
-        if (vin == null || !vin.matches(VIN_REGEX))
-            return false;
+        if (vin == null || !vin.matches(VIN_REGEX)) return false;
         return checkChecksum(vin);
     }
 

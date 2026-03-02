@@ -25,14 +25,20 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-            org.springframework.security.core.Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            org.springframework.security.core.Authentication authentication)
+            throws IOException, ServletException {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
-        GoogleLoginDto googleLoginDto = new GoogleLoginDto(oAuth2User.getAttribute("email"),
-                oAuth2User.getAttribute("name"), oAuth2User.getAttribute("given_name"),
-                oAuth2User.getAttribute("family_name"));
+        GoogleLoginDto googleLoginDto =
+                new GoogleLoginDto(
+                        oAuth2User.getAttribute("email"),
+                        oAuth2User.getAttribute("name"),
+                        oAuth2User.getAttribute("given_name"),
+                        oAuth2User.getAttribute("family_name"));
 
         User user = userService.findOrCreateGoogleUser(googleLoginDto);
 

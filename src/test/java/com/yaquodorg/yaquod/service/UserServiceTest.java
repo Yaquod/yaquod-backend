@@ -34,14 +34,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @DisplayName("UserService Unit Tests")
 class UserServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private JwtService jwtService;
+    @Mock private JwtService jwtService;
 
-    @InjectMocks
-    private UserServiceImpl userService;
+    @InjectMocks private UserServiceImpl userService;
 
     private User user;
     private String authHeader;
@@ -94,7 +91,8 @@ class UserServiceTest {
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.saveUser(user)).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> userService.saveUser(user))
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Email Already Exists!");
 
         verify(userRepository, times(1)).findByEmail(user.getEmail());
@@ -128,7 +126,8 @@ class UserServiceTest {
         User existingUser = new User();
         existingUser.setEmail(googleLoginDto.getEmail());
 
-        when(userRepository.findByEmail(googleLoginDto.getEmail())).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByEmail(googleLoginDto.getEmail()))
+                .thenReturn(Optional.of(existingUser));
 
         // Act
         User result = userService.findOrCreateGoogleUser(googleLoginDto);
@@ -271,7 +270,8 @@ class UserServiceTest {
         when(jwtService.validateToken("invalid-token")).thenReturn(false);
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.getUserByJwt("Bearer invalid-token")).isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> userService.getUserByJwt("Bearer invalid-token"))
+                .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Token is not valid");
 
         verify(jwtService, times(1)).validateToken("invalid-token");
@@ -282,7 +282,8 @@ class UserServiceTest {
     @DisplayName("Should throw exception with null auth header")
     void shouldThrowExceptionWithNullAuthHeader() {
         // Act & Assert
-        assertThatThrownBy(() -> userService.getUserByJwt(null)).isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> userService.getUserByJwt(null))
+                .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Token is invalid");
 
         verify(jwtService, never()).validateToken(anyString());
@@ -292,7 +293,8 @@ class UserServiceTest {
     @DisplayName("Should throw exception with malformed auth header")
     void shouldThrowExceptionWithMalformedAuthHeader() {
         // Act & Assert
-        assertThatThrownBy(() -> userService.getUserByJwt("InvalidFormat")).isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> userService.getUserByJwt("InvalidFormat"))
+                .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Token is invalid");
 
         verify(jwtService, never()).validateToken(anyString());
@@ -307,7 +309,8 @@ class UserServiceTest {
         when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.getUserByJwt(authHeader)).isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> userService.getUserByJwt(authHeader))
+                .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("User not found");
     }
 
@@ -335,7 +338,8 @@ class UserServiceTest {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.getUserById(999L)).isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> userService.getUserById(999L))
+                .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("User not found");
 
         verify(userRepository, times(1)).findById(999L);
@@ -358,7 +362,9 @@ class UserServiceTest {
 
         // Assert
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(User::getEmail).containsExactly("test@example.com", "user2@example.com");
+        assertThat(result)
+                .extracting(User::getEmail)
+                .containsExactly("test@example.com", "user2@example.com");
 
         verify(userRepository, times(1)).findAll();
     }
@@ -415,7 +421,8 @@ class UserServiceTest {
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.updateUser(authHeader, updateDto)).isInstanceOf(ParseException.class);
+        assertThatThrownBy(() -> userService.updateUser(authHeader, updateDto))
+                .isInstanceOf(ParseException.class);
     }
 
     @Test
@@ -505,7 +512,8 @@ class UserServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> userService.updateFcmToken("nonexistent@example.com", "token"))
-                .isInstanceOf(RuntimeException.class).hasMessageContaining("user not found");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("user not found");
 
         verify(userRepository, times(1)).findByEmail("nonexistent@example.com");
     }

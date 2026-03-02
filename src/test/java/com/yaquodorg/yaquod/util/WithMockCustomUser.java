@@ -7,7 +7,9 @@ import org.springframework.security.test.context.support.TestExecutionEvent;
 import org.springframework.security.test.context.support.WithSecurityContext;
 
 @Retention(RetentionPolicy.RUNTIME)
-@WithSecurityContext(factory = CustomSecurityContextFactory.class, setupBefore = TestExecutionEvent.TEST_EXECUTION)
+@WithSecurityContext(
+        factory = CustomSecurityContextFactory.class,
+        setupBefore = TestExecutionEvent.TEST_EXECUTION)
 public @interface WithMockCustomUser {
     String email() default "test@example.com";
 

@@ -45,31 +45,24 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
  *
- * <p>
- * Unit tests for AuthenticationService Tests authentication, registration,
- * verification, and password reset logic
+ * <p>Unit tests for AuthenticationService Tests authentication, registration, verification, and
+ * password reset logic
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthenticationService Unit Tests")
 class AuthenticationServiceTest {
 
-    @Mock
-    private UserService userService;
+    @Mock private UserService userService;
 
-    @Mock
-    private JwtService jwtService;
+    @Mock private JwtService jwtService;
 
-    @Mock
-    private MailSenderService mailSenderService;
+    @Mock private MailSenderService mailSenderService;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    @Mock private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private AuthenticationManager authenticationManager;
+    @Mock private AuthenticationManager authenticationManager;
 
-    @InjectMocks
-    private AuthenticationServiceImpl authenticationService;
+    @InjectMocks private AuthenticationServiceImpl authenticationService;
 
     private User user;
     private LoginUserDto loginUserDto;
@@ -137,8 +130,10 @@ class AuthenticationServiceTest {
         assertThat(response.getUser()).isEqualTo(user);
 
         // Verify interactions
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userService, times(1)).updateFcmToken(loginUserDto.getEmail(), loginUserDto.getFcmToken());
+        verify(authenticationManager, times(1))
+                .authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(userService, times(1))
+                .updateFcmToken(loginUserDto.getEmail(), loginUserDto.getFcmToken());
         verify(jwtService, times(1)).generateAccessToken(user);
         verify(jwtService, times(1)).generateRefreshToken(user);
     }
@@ -151,10 +146,12 @@ class AuthenticationServiceTest {
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
         // Act & Assert
-        assertThatThrownBy(() -> authenticationService.login(loginUserDto)).isInstanceOf(BadCredentialsException.class)
+        assertThatThrownBy(() -> authenticationService.login(loginUserDto))
+                .isInstanceOf(BadCredentialsException.class)
                 .hasMessageContaining("Bad credentials");
 
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(authenticationManager, times(1))
+                .authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(userService, never()).updateFcmToken(anyString(), anyString());
     }
 
@@ -189,8 +186,8 @@ class AuthenticationServiceTest {
         assertThat(capturedUser.isEmailVerified()).isFalse();
         assertThat(capturedUser.getCode()).isEqualTo(111111); // Test OTP
 
-        verify(mailSenderService, times(1)).sendEmail(eq(registerUserDto.getEmail()), eq("Verification Code"),
-                eq("111111"));
+        verify(mailSenderService, times(1))
+                .sendEmail(eq(registerUserDto.getEmail()), eq("Verification Code"), eq("111111"));
     }
 
     @Test
@@ -251,7 +248,8 @@ class AuthenticationServiceTest {
         Timestamp tomorrow = new Timestamp(System.currentTimeMillis() + 86400000);
 
         // Allow 5 second difference for test execution time
-        assertThat(codeExpiry.getTime()).isBetween(tomorrow.getTime() - 5000, tomorrow.getTime() + 5000);
+        assertThat(codeExpiry.getTime())
+                .isBetween(tomorrow.getTime() - 5000, tomorrow.getTime() + 5000);
     }
 
     /** VERIFY CODE TESTS */
@@ -325,7 +323,8 @@ class AuthenticationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> authenticationService.verifyUser(verifyCodeDto))
-                .isInstanceOf(NoSuchElementException.class).hasMessageContaining("User not found");
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessageContaining("User not found");
     }
 
     /** REGENERATE OTP TESTS */
@@ -343,7 +342,8 @@ class AuthenticationServiceTest {
         assertThat(user.getCode()).isEqualTo(111111);
         assertThat(user.isEmailVerified()).isFalse();
 
-        verify(mailSenderService, times(1)).sendEmail(eq(user.getEmail()), eq("Verification Code"), eq("111111"));
+        verify(mailSenderService, times(1))
+                .sendEmail(eq(user.getEmail()), eq("Verification Code"), eq("111111"));
     }
 
     @Test
@@ -354,7 +354,8 @@ class AuthenticationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> authenticationService.regenerateOtp("nonexistent@example.com"))
-                .isInstanceOf(NoSuchElementException.class).hasMessageContaining("User not found");
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessageContaining("User not found");
 
         verify(mailSenderService, never()).sendEmail(anyString(), anyString(), anyString());
     }
@@ -428,7 +429,9 @@ class AuthenticationServiceTest {
         String authHeader = "Bearer valid-refresh-token";
         when(jwtService.validateToken("valid-refresh-token")).thenReturn(true);
         when(jwtService.getEmailFromToken("valid-refresh-token")).thenReturn(user.getEmail());
-        when(userService.getUser(user.getEmail())).thenReturn(Optional.of(user)).thenReturn(Optional.of(user))
+        when(userService.getUser(user.getEmail()))
+                .thenReturn(Optional.of(user))
+                .thenReturn(Optional.of(user))
                 .thenReturn(Optional.of(user));
         when(jwtService.generateAccessToken(user)).thenReturn("new-access-token");
         when(jwtService.extractExpiration(anyString())).thenReturn(new Date());
@@ -447,18 +450,21 @@ class AuthenticationServiceTest {
         when(jwtService.validateToken("invalid-token")).thenReturn(false);
 
         assertThatThrownBy(() -> authenticationService.refreshToken("Bearer invalid-token"))
-                .isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid or missing refresh token");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid or missing refresh token");
     }
 
     @Test
     void shouldThrowWithInvalidTokenFormat() {
         assertThatThrownBy(() -> authenticationService.refreshToken("InvalidFormat"))
-                .isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid or missing refresh token");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid or missing refresh token");
     }
 
     @Test
     void shouldThrowWithNullAuthHeader() {
-        assertThatThrownBy(() -> authenticationService.refreshToken(null)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> authenticationService.refreshToken(null))
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Invalid or missing refresh token");
     }
 }

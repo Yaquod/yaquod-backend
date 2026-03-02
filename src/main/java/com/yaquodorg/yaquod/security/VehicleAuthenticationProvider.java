@@ -19,15 +19,19 @@ public class VehicleAuthenticationProvider implements AuthenticationProvider {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+    public Authentication authenticate(Authentication authentication)
+            throws AuthenticationException {
         VehicleAuthenticationToken token = (VehicleAuthenticationToken) authentication;
 
         String apiKey = token.getApiKey();
         String apiSecret = (String) token.getCredentials();
 
         // Find vehicle by API key
-        Vehicle vehicle = vehicleRepository.findByApiKey(apiKey)
-                .orElseThrow(() -> new BadCredentialsException("Invalid vehicle credentials"));
+        Vehicle vehicle =
+                vehicleRepository
+                        .findByApiKey(apiKey)
+                        .orElseThrow(
+                                () -> new BadCredentialsException("Invalid vehicle credentials"));
 
         // Verify the API secret
         if (!passwordEncoder.matches(apiSecret, vehicle.getApiSecretHash())) {
@@ -39,10 +43,13 @@ public class VehicleAuthenticationProvider implements AuthenticationProvider {
         vehicleRepository.save(vehicle);
 
         // Create authenticated token with vehicle details
-        VehicleAuthenticationToken authenticatedToken = new VehicleAuthenticationToken(vehicle.getId(),
-                vehicle.getApiKey(), vehicle.getCreatedByAdmin().getId(),
-                // No claims needed here, will be in JWT
-                null);
+        VehicleAuthenticationToken authenticatedToken =
+                new VehicleAuthenticationToken(
+                        vehicle.getId(),
+                        vehicle.getApiKey(),
+                        vehicle.getCreatedByAdmin().getId(),
+                        // No claims needed here, will be in JWT
+                        null);
 
         // Store vehicle in details for easy retrieval
         authenticatedToken.setDetails(vehicle);

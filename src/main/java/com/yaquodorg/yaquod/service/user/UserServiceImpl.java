@@ -43,19 +43,25 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findOrCreateGoogleUser(GoogleLoginDto dto) {
         log.info("Finding or creating Google user with email: {}", dto.getEmail());
-        return getUser(dto.getEmail()).orElseGet(() -> {
-            log.info("Creating new Google user with email: {}", dto.getEmail());
-            User newUser = new User();
-            newUser.setEmail(dto.getEmail());
-            newUser.setFirstName(dto.getGivenName() != null ? dto.getGivenName() : dto.getName());
-            newUser.setLastName(dto.getFamilyName() != null ? dto.getFamilyName() : "");
-            newUser.setRole(Role.CLIENT);
-            newUser.setPasswordHash("N/A");
-            newUser.setPhoneNumber("N/A");
-            newUser.setJoin_date(new Timestamp(new java.util.Date().getTime()));
-            newUser.setEmailVerified(true);
-            return saveUser(newUser);
-        });
+        return getUser(dto.getEmail())
+                .orElseGet(
+                        () -> {
+                            log.info("Creating new Google user with email: {}", dto.getEmail());
+                            User newUser = new User();
+                            newUser.setEmail(dto.getEmail());
+                            newUser.setFirstName(
+                                    dto.getGivenName() != null
+                                            ? dto.getGivenName()
+                                            : dto.getName());
+                            newUser.setLastName(
+                                    dto.getFamilyName() != null ? dto.getFamilyName() : "");
+                            newUser.setRole(Role.CLIENT);
+                            newUser.setPasswordHash("N/A");
+                            newUser.setPhoneNumber("N/A");
+                            newUser.setJoin_date(new Timestamp(new java.util.Date().getTime()));
+                            newUser.setEmailVerified(true);
+                            return saveUser(newUser);
+                        });
     }
 
     @Override
@@ -72,10 +78,13 @@ public class UserServiceImpl implements UserService {
             if (jwtService.validateToken(token)) {
                 String email = jwtService.getEmailFromToken(token);
                 log.debug("Token validated, fetching user with email: {}", email);
-                return userRepository.findByEmail(email).orElseThrow(() -> {
-                    log.error("User not found for email: {}", email);
-                    return new RuntimeException("User not found");
-                });
+                return userRepository
+                        .findByEmail(email)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("User not found for email: {}", email);
+                                    return new RuntimeException("User not found");
+                                });
             }
             log.warn("Token validation failed");
             throw new RuntimeException("Token is not valid");
@@ -87,10 +96,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserById(Long id) {
         log.debug("Fetching user by id: {}", id);
-        return userRepository.findById(id).orElseThrow(() -> {
-            log.error("User not found with id: {}", id);
-            return new RuntimeException("User not found");
-        });
+        return userRepository
+                .findById(id)
+                .orElseThrow(
+                        () -> {
+                            log.error("User not found with id: {}", id);
+                            return new RuntimeException("User not found");
+                        });
     }
 
     @Override
@@ -123,7 +135,9 @@ public class UserServiceImpl implements UserService {
         User user = getUserByJwt(authHeader);
 
         user.setImageUrl(url);
-        log.info("User photo updated successfully for user id: {} on thread: {}", user.getId(),
+        log.info(
+                "User photo updated successfully for user id: {} on thread: {}",
+                user.getId(),
                 Thread.currentThread().getName());
     }
 
@@ -131,10 +145,14 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void updateFcmToken(String email, String fcmToken) {
         log.info("Updating FCM token for user with email: {}", email);
-        User user = userRepository.findByEmail(email).orElseThrow(() -> {
-            log.error("User not found with email: {}", email);
-            return new RuntimeException("user not found");
-        });
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElseThrow(
+                                () -> {
+                                    log.error("User not found with email: {}", email);
+                                    return new RuntimeException("user not found");
+                                });
         user.setFirebaseToken(fcmToken);
         log.info("FCM token updated successfully for user id: {}", user.getId());
     }
