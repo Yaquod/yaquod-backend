@@ -23,15 +23,15 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class MqttService {
 
-    private static final String TOPIC_UPDATE_LOCATION = "topic/update_location";
-    private static final String TOPIC_UPDATE_STATUS = "topic/update_status";
+    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/vehicle/update_location/order";
+    private static final String TOPIC_UPDATE_LOCATION = "topic/vehicle/update/location";
+    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/vehicle/update_status/order";
+    private static final String TOPIC_UPDATE_STATUS = "topic/vehicle/update/status";
     private static final String TOPIC_INIT_TRIP = "topic/trip/init";
     private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
     private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private static final String TOPIC_TRIP_ARRIVE = "topic/trip/arrive";
     private static final String TOPIC_TRIP_STATUS = "topic/trip/status";
-    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/update_location/order";
-    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/update_status/order";
 
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;

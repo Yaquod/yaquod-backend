@@ -410,7 +410,7 @@ class VehicleControllerTest {
         verify(mqttService, times(1)).publish(topicCaptor.capture(), dtoCaptor.capture());
 
         // Verify correct topic
-        assertThat(topicCaptor.getValue()).isEqualTo("topic/update_location/order");
+        assertThat(topicCaptor.getValue()).isEqualTo("topic/vehicle/update/location/order");
 
         // Verify correct payload
         VehicleDto capturedDto = dtoCaptor.getValue();
@@ -482,7 +482,7 @@ class VehicleControllerTest {
         verify(mqttService, times(1)).publish(topicCaptor.capture(), dtoCaptor.capture());
 
         // Verify correct topic
-        assertThat(topicCaptor.getValue()).isEqualTo("topic/update_status/order");
+        assertThat(topicCaptor.getValue()).isEqualTo("topic/vehicle/update/status/order");
 
         // Verify correct payload
         VehicleDto capturedDto = dtoCaptor.getValue();
@@ -570,7 +570,7 @@ class VehicleControllerTest {
         // Assert - Verify location topic
         ArgumentCaptor<String> topicCaptor1 = ArgumentCaptor.forClass(String.class);
         verify(mqttService, times(1)).publish(topicCaptor1.capture(), any());
-        assertThat(topicCaptor1.getValue()).isEqualTo("topic/update_location/order");
+        assertThat(topicCaptor1.getValue()).isEqualTo("topic/vehicle/update/location/order");
 
         // Reset mock
         reset(mqttService);
@@ -583,7 +583,7 @@ class VehicleControllerTest {
         // Assert - Verify status topic
         ArgumentCaptor<String> topicCaptor2 = ArgumentCaptor.forClass(String.class);
         verify(mqttService, times(1)).publish(topicCaptor2.capture(), any());
-        assertThat(topicCaptor2.getValue()).isEqualTo("topic/update_status/order");
+        assertThat(topicCaptor2.getValue()).isEqualTo("topic/vehicle/update/status/order");
     }
 
     @Test

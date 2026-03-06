@@ -40,8 +40,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Vehicles", description = "Vehicle management APIs")
 public class VehicleController {
 
-    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/update_location/order";
-    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/update_status/order";
+    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/vehicle/update/location/order";
+    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/vehicle/update/status/order";
     private final VehicleService vehicleService;
     private final MqttService mqttService;
 
