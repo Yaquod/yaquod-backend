@@ -56,7 +56,7 @@ class MqttServiceTest {
     @DisplayName("Should handle location update message successfully")
     void shouldHandleLocationUpdateMessage() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         String payload =
                 """
                 {
@@ -91,7 +91,7 @@ class MqttServiceTest {
     @DisplayName("Should handle status update message successfully")
     void shouldHandleStatusUpdateMessage() throws Exception {
         // Arrange
-        String topic = "topic/update_status";
+        String topic = "topic/vehicle/update/status";
         String payload =
                 """
                 {
@@ -150,7 +150,7 @@ class MqttServiceTest {
     @DisplayName("Should handle JSON parsing error for location update")
     void shouldHandleJsonParsingErrorForLocationUpdate() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         String invalidPayload = "invalid json";
 
         headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
@@ -172,7 +172,7 @@ class MqttServiceTest {
     @DisplayName("Should handle JSON parsing error for status update")
     void shouldHandleJsonParsingErrorForStatusUpdate() throws Exception {
         // Arrange
-        String topic = "topic/update_status";
+        String topic = "topic/vehicle/update/status";
         String invalidPayload = "invalid json";
 
         headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
@@ -274,7 +274,7 @@ class MqttServiceTest {
     @DisplayName("Should handle empty payload")
     void shouldHandleEmptyPayload() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         String emptyPayload = "";
 
         headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
@@ -295,7 +295,7 @@ class MqttServiceTest {
     @DisplayName("Should handle multiple location updates in sequence")
     void shouldHandleMultipleLocationUpdatesInSequence() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         UpdateVehicleLocationDto dto1 = new UpdateVehicleLocationDto();
         dto1.setVinNumber("WAUZZZ8K9DA123456"); // VIN001 =WAUZZZ8K9DA123456
         dto1.setLongitude(10.0);
@@ -325,7 +325,7 @@ class MqttServiceTest {
     @DisplayName("Should handle negative coordinates")
     void shouldHandleNegativeCoordinates() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         String payload =
                 """
                 {
@@ -365,7 +365,7 @@ class MqttServiceTest {
 
         for (VehicleStatus status : statuses) {
             // Arrange
-            String topic = "topic/update_status";
+            String topic = "topic/vehicle/update/status";
             UpdateVehicleStatusDto dto = new UpdateVehicleStatusDto();
             dto.setVinNumber("1HGCM82633A004352"); // Using same VIN for simplicity
             dto.setStatus(status);
@@ -387,7 +387,7 @@ class MqttServiceTest {
     @DisplayName("Should not call vehicle service when JSON parsing fails")
     void shouldNotCallVehicleServiceWhenJsonParsingFails() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
         when(message.getHeaders()).thenReturn(new MessageHeaders(headers));
         when(message.getPayload()).thenReturn("bad json");

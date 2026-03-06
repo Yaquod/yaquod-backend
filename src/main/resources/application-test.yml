@@ -51,10 +51,10 @@ mqtt:
   username: ${MQTT_USERNAME:}
   password: ${MQTT_PASSWORD:}
   topics:
-    - topic/update_location/order
-    - topic/update_location
-    - topic/update_status/order
-    - topic/update_status
+    - topic/vehicle/update/location/order
+    - topic/vehicle/update/location
+    - topic/vehicle/update/status/order
+    - topic/vehicle/update/status
     - topic/trip/eta
     - topic/trip/arrive
     - topic/trip/status
