@@ -1,16 +1,30 @@
 package com.yaquodorg.yaquod.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.Table;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Getter
 @Setter
@@ -44,8 +58,7 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column
-    private Date dob;
+    @Column private Date dob;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -57,29 +70,35 @@ public class User implements UserDetails {
     // TODO: model last_updated_location
     // TODO: model last_updated_location_at
 
-    @JsonIgnore
-    @Column
-    private int code;
+    @JsonIgnore @Column private int code;
+
+    @JsonIgnore @Column private Timestamp codeExpiredAt;
+
+    @Column private boolean emailVerified;
+
+    @Column private String firebaseToken;
 
     @JsonIgnore
-    @Column
-    private Timestamp codeExpiredAt;
-
-    @Column
-    private boolean isEmailVerified;
-
-    @Column
-    private String firebaseToken;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     @OrderBy("id ASC")
     private List<Trip> trips = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     @OrderBy("id ASC")
     private List<Request> requests = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Vehicle> managedVehicles = new ArrayList<>();
 
     @Override
     public String getUsername() {
@@ -103,7 +122,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return isEmailVerified();
     }
 
     @Override

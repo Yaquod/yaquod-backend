@@ -1,10 +1,33 @@
 package com.yaquodorg.yaquod.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.TripRequestDto;
-import com.yaquodorg.yaquod.entity.*;
+import com.yaquodorg.yaquod.entity.Request;
+import com.yaquodorg.yaquod.entity.RequestStatus;
+import com.yaquodorg.yaquod.entity.Trip;
+import com.yaquodorg.yaquod.entity.TripStatus;
+import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,36 +40,21 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- * <p>
- * Unit tests for TripController
- * Tests controller logic with mocked services
- * Does NOT test security
+ *
+ * <p>Unit tests for TripController Tests controller logic with mocked services Does NOT test
+ * security
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TripController Unit Tests")
 class TripControllerTest {
 
-    @Mock
-    private RequestService requestService;
+    @Mock private RequestService requestService;
 
-    @Mock
-    private TripService tripService;
+    @Mock private TripService tripService;
 
-    @InjectMocks
-    private TripController tripController;
+    @InjectMocks private TripController tripController;
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
@@ -62,38 +70,35 @@ class TripControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(tripController).build();
         objectMapper = new ObjectMapper();
 
-        testUser = User.builder()
-                .id(1L)
-                .email("test@example.com")
-                .build();
+        testUser = User.builder().id(1L).email("test@example.com").build();
 
-        testVehicle = Vehicle.builder()
-                .id(1L)
-                .vinNumber("VIN123456")
-                .build();
+        testVehicle = Vehicle.builder().id(1L).vinNumber("VIN123456").build();
 
-        testRequest = Request.builder()
-                .id(1L)
-                .user(testUser)
-                .status(RequestStatus.PENDING)
-                .createdAt(new Timestamp(System.currentTimeMillis()))
-                .build();
+        testRequest =
+                Request.builder()
+                        .id(1L)
+                        .user(testUser)
+                        .status(RequestStatus.PENDING)
+                        .createdAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
 
-        testTrip = Trip.builder()
-                .id(1L)
-                .request(testRequest)
-                .vehicle(testVehicle)
-                .user(testUser)
-                .status(TripStatus.INITIATED)
-                .startedAt(new Timestamp(System.currentTimeMillis()))
-                .build();
+        testTrip =
+                Trip.builder()
+                        .id(1L)
+                        .request(testRequest)
+                        .vehicle(testVehicle)
+                        .user(testUser)
+                        .status(TripStatus.INITIATED)
+                        .startedAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
 
-        tripRequestDto = TripRequestDto.builder()
-                .startLong(31.0)
-                .startLat(30.0)
-                .endLong(31.5)
-                .endLat(30.5)
-                .build();
+        tripRequestDto =
+                TripRequestDto.builder()
+                        .startLong(31.0)
+                        .startLat(30.0)
+                        .endLong(31.5)
+                        .endLat(30.5)
+                        .build();
     }
 
     @Test
@@ -101,13 +106,15 @@ class TripControllerTest {
     @WithMockUser
     void shouldCreateRequest() throws Exception {
         // Arrange
-        when(requestService.createRequest(any(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
+        when(requestService.createRequest(
+                        any(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
                 .thenReturn(testRequest);
 
         // Act & Assert
-        mockMvc.perform(post("/api/trips/request")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(tripRequestDto)))
+        mockMvc.perform(
+                        post("/api/trips/request")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(tripRequestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(1))
@@ -121,16 +128,20 @@ class TripControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenCreateRequestFails() throws Exception {
         // Arrange
-        when(requestService.createRequest(any(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
+        when(requestService.createRequest(
+                        any(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
                 .thenThrow(new RuntimeException("Service error"));
 
         // Act & Assert
-        mockMvc.perform(post("/api/trips/request")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(tripRequestDto)))
+        mockMvc.perform(
+                        post("/api/trips/request")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(tripRequestDto)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to create trip request: Service error"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to create trip request: Service error"));
     }
 
     @Test
@@ -155,14 +166,15 @@ class TripControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenRequestNotFound() throws Exception {
         // Arrange
-        when(requestService.getRequest(999L))
-                .thenThrow(new RuntimeException("Request not found!"));
+        when(requestService.getRequest(999L)).thenThrow(new RuntimeException("Request not found!"));
 
         // Act & Assert
         mockMvc.perform(get("/api/trips/request/status/999"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to check Request status: Request not found!"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to check Request status: Request not found!"));
     }
 
     @Test
@@ -194,8 +206,11 @@ class TripControllerTest {
         mockMvc.perform(get("/api/trips/by-request/999"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message")
-                        .value("Failed to get Trip by requestId: Trip not found for requestId: 999"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Failed to get Trip by requestId: Trip not found for"
+                                                + " requestId: 999"));
     }
 
     @Test
@@ -227,7 +242,9 @@ class TripControllerTest {
         mockMvc.perform(get("/api/trips/999"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to get Trip by id: Trip not found for id: 999"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to get Trip by id: Trip not found for id: 999"));
     }
 
     @Test
@@ -246,31 +263,19 @@ class TripControllerTest {
         verify(tripService).deleteTripById(1L);
     }
 
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("shouldReturnForbiddenWhenDeletingWithoutAdminRole")
-    // @WithMockUser(roles = "USER")
-    // void shouldReturnForbiddenWhenDeletingWithoutAdminRole() throws Exception {
-    // // Act & Assert
-    // mockMvc.perform(delete("/api/trips/1"))
-    // .andExpect(status().isForbidden());
-    //
-    // verify(tripService, never()).deleteTripById(anyLong());
-    // }
-
     @Test
     @DisplayName("shouldReturnBadRequestWhenDeleteFails")
     @WithMockUser(roles = "ADMIN")
     void shouldReturnBadRequestWhenDeleteFails() throws Exception {
         // Arrange
-        doThrow(new RuntimeException("Delete failed"))
-                .when(tripService).deleteTripById(1L);
+        doThrow(new RuntimeException("Delete failed")).when(tripService).deleteTripById(1L);
 
         // Act & Assert
         mockMvc.perform(delete("/api/trips/1"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to delete Trip by id: Delete failed"));
+                .andExpect(
+                        jsonPath("$.message").value("Failed to delete Trip by id: Delete failed"));
     }
 
     @Test
@@ -314,8 +319,7 @@ class TripControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenGetAllTripsFails() throws Exception {
         // Arrange
-        when(tripService.getAllTrips())
-                .thenThrow(new RuntimeException("Database error"));
+        when(tripService.getAllTrips()).thenThrow(new RuntimeException("Database error"));
 
         // Act & Assert
         mockMvc.perform(get("/api/trips"))
@@ -348,14 +352,15 @@ class TripControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenGetTripsByUserIdFails() throws Exception {
         // Arrange
-        when(tripService.getTripsByUserId(any()))
-                .thenThrow(new RuntimeException("User not found"));
+        when(tripService.getTripsByUserId(any())).thenThrow(new RuntimeException("User not found"));
 
         // Act & Assert
         mockMvc.perform(get("/api/trips/user"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to get Trips by userId: User not found"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to get Trips by userId: User not found"));
     }
 
     @Test
@@ -422,17 +427,8 @@ class TripControllerTest {
         mockMvc.perform(get("/api/trips/vehicle/INVALID_VIN"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to get Trips by VIN number: Vehicle not found"));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Failed to get Trips by VIN number: Vehicle not found"));
     }
-
-    // TODO: Should be uncommented after handled correctly in the refactoring phase
-    // @Test
-    // @DisplayName("shouldRequireAuthentication")
-    // void shouldRequireAuthentication() throws Exception {
-    // // Act & Assert
-    // mockMvc.perform(post("/api/trips/request")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(tripRequestDto)))
-    // .andExpect(status().isUnauthorized());
-    // }
 }

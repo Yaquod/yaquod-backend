@@ -1,7 +1,13 @@
 package com.yaquodorg.yaquod.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,19 +17,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- * <p>
- * Unit tests for UserRepository
- * Uses real database (H2 in-memory or Testcontainers)
- * Tests JPA queries and database interactions
+ *
+ * <p>Unit tests for UserRepository Uses real database (H2 in-memory or Testcontainers) Tests JPA
+ * queries and database interactions
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -31,11 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("UserRepository Unit Tests")
 class UserRepositoryTest {
 
-    @Autowired
-    private UserRepository userRepository;
+    @Autowired private UserRepository userRepository;
 
-    @Autowired
-    private TestEntityManager entityManager;
+    @Autowired private TestEntityManager entityManager;
 
     private User user1;
     private User user2;
@@ -48,31 +44,33 @@ class UserRepositoryTest {
         Date now = new Date(0);
 
         // Setup test data
-        user1 = User.builder()
-                .email("user1@gmail.com")
-                .phoneNumber("+201010149602")
-                .passwordHash("user1passwordhash")
-                .join_date(new Timestamp(now.getTime()))
-                .firstName("user")
-                .lastName("1")
-                .imageUrl("")
-                .role(Role.ADMIN)
-                .code(111111)
-                .isEmailVerified(true)
-                .build();
+        user1 =
+                User.builder()
+                        .email("user1@gmail.com")
+                        .phoneNumber("+201010149602")
+                        .passwordHash("user1passwordhash")
+                        .join_date(new Timestamp(now.getTime()))
+                        .firstName("user")
+                        .lastName("1")
+                        .imageUrl("")
+                        .role(Role.ADMIN)
+                        .code(111111)
+                        .emailVerified(true)
+                        .build();
 
-        user2 = User.builder()
-                .email("user2@gmail.com")
-                .phoneNumber("+201110149602")
-                .passwordHash("user2passwordhash")
-                .join_date(new Timestamp(now.getTime()))
-                .firstName("user")
-                .lastName("2")
-                .imageUrl("")
-                .role(Role.CLIENT)
-                .code(111111)
-                .isEmailVerified(true)
-                .build();
+        user2 =
+                User.builder()
+                        .email("user2@gmail.com")
+                        .phoneNumber("+201110149602")
+                        .passwordHash("user2passwordhash")
+                        .join_date(new Timestamp(now.getTime()))
+                        .firstName("user")
+                        .lastName("2")
+                        .imageUrl("")
+                        .role(Role.CLIENT)
+                        .code(111111)
+                        .emailVerified(true)
+                        .build();
     }
 
     @Test
@@ -126,7 +124,8 @@ class UserRepositoryTest {
 
         // Assert
         assertThat(users).hasSize(2);
-        assertThat(users).extracting(User::getPhoneNumber)
+        assertThat(users)
+                .extracting(User::getPhoneNumber)
                 .containsExactlyInAnyOrder("+201010149602", "+201110149602");
     }
 

@@ -19,6 +19,8 @@ spring:
         secret-key: a4b5cf541797e6f5fc8e0942fedb4b938aaa25fedb26f9e5be5efe99c38f9447
         access-token-expiration: 604800000
         refresh-token-expiration: 2592000000
+        vehicle-token-expiration: 604800000
+        vehicle-refresh-token-expiration: 2592000000
   mail:
     host: smtp.gmail.com
     port: 587
@@ -49,10 +51,10 @@ mqtt:
   username: ${MQTT_USERNAME:}
   password: ${MQTT_PASSWORD:}
   topics:
-    - topic/update_location/order
-    - topic/update_location
-    - topic/update_status/order
-    - topic/update_status
+    - topic/vehicle/update/location/order
+    - topic/vehicle/update/location
+    - topic/vehicle/update/status/order
+    - topic/vehicle/update/status
     - topic/trip/eta
     - topic/trip/arrive
     - topic/trip/status
@@ -63,3 +65,9 @@ mqtt:
 server:
   address: 0.0.0.0
   port: ${SERVER_PORT:8000}
+
+google:
+  android:
+    client-id: google-client-id-for-android.apps.googleusercontent.com
+  ios:
+    client-id: google-client-id-for-ios.apps.googleusercontent.com

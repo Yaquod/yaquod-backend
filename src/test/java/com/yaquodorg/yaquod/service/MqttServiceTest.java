@@ -1,5 +1,10 @@
 package com.yaquodorg.yaquod.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +15,8 @@ import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.service.mqtt.MqttGateway;
 import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,34 +29,21 @@ import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- * <p>
- * Unit tests for MqttService
+ *
+ * <p>Unit tests for MqttService
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MqttService Unit Tests")
 class MqttServiceTest {
 
     private final String VinNumber1 = "1HGCM82633A004352";
-    @Mock
-    private MqttGateway mqttGateway;
-    @Mock
-    private ObjectMapper objectMapper;
-    @Mock
-    private VehicleService vehicleService;
-    @Mock
-    private Message<String> message;
-    @InjectMocks
-    private MqttService mqttService;
+    @Mock private MqttGateway mqttGateway;
+    @Mock private ObjectMapper objectMapper;
+    @Mock private VehicleService vehicleService;
+    @Mock private Message<String> message;
+    @InjectMocks private MqttService mqttService;
     private Map<String, Object> headers;
 
     @BeforeEach
@@ -57,15 +51,14 @@ class MqttServiceTest {
         headers = new HashMap<>();
     }
 
-    /**
-     * HANDLE INCOMING MESSAGE TESTS
-     */
+    /** HANDLE INCOMING MESSAGE TESTS */
     @Test
     @DisplayName("Should handle location update message successfully")
     void shouldHandleLocationUpdateMessage() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
-        String payload = """
+        String topic = "topic/vehicle/update/location";
+        String payload =
+                """
                 {
                     "vinNumber": "1HGCM82633A004352",
                     "longitude": 40.7128,
@@ -82,7 +75,9 @@ class MqttServiceTest {
         when(message.getHeaders()).thenReturn(new MessageHeaders(headers));
         when(message.getPayload()).thenReturn(payload);
         when(objectMapper.readValue(payload, UpdateVehicleLocationDto.class)).thenReturn(dto);
-        doNothing().when(vehicleService).updateVehicleLocation(anyString(), anyDouble(), anyDouble());
+        doNothing()
+                .when(vehicleService)
+                .updateVehicleLocation(anyString(), anyDouble(), anyDouble());
 
         // Act
         mqttService.handleIncomingMessage(message);
@@ -96,8 +91,9 @@ class MqttServiceTest {
     @DisplayName("Should handle status update message successfully")
     void shouldHandleStatusUpdateMessage() throws Exception {
         // Arrange
-        String topic = "topic/update_status";
-        String payload = """
+        String topic = "topic/vehicle/update/status";
+        String payload =
+                """
                 {
                     "vinNumber": "1M8GDM9AXKP042788",
                     "status": "IN_USE"
@@ -145,7 +141,8 @@ class MqttServiceTest {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        verify(vehicleService, never()).updateVehicleLocation(anyString(), anyDouble(), anyDouble());
+        verify(vehicleService, never())
+                .updateVehicleLocation(anyString(), anyDouble(), anyDouble());
         verify(vehicleService, never()).updateVehicleStatus(anyString(), any(VehicleStatus.class));
     }
 
@@ -153,37 +150,36 @@ class MqttServiceTest {
     @DisplayName("Should handle JSON parsing error for location update")
     void shouldHandleJsonParsingErrorForLocationUpdate() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         String invalidPayload = "invalid json";
 
         headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
         when(message.getHeaders()).thenReturn(new MessageHeaders(headers));
         when(message.getPayload()).thenReturn(invalidPayload);
         when(objectMapper.readValue(invalidPayload, UpdateVehicleLocationDto.class))
-                .thenThrow(new JsonProcessingException("Invalid JSON") {
-                });
+                .thenThrow(new JsonProcessingException("Invalid JSON") {});
 
         // Act
         mqttService.handleIncomingMessage(message);
 
         // Assert
         verify(objectMapper).readValue(invalidPayload, UpdateVehicleLocationDto.class);
-        verify(vehicleService, never()).updateVehicleLocation(anyString(), anyDouble(), anyDouble());
+        verify(vehicleService, never())
+                .updateVehicleLocation(anyString(), anyDouble(), anyDouble());
     }
 
     @Test
     @DisplayName("Should handle JSON parsing error for status update")
     void shouldHandleJsonParsingErrorForStatusUpdate() throws Exception {
         // Arrange
-        String topic = "topic/update_status";
+        String topic = "topic/vehicle/update/status";
         String invalidPayload = "invalid json";
 
         headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
         when(message.getHeaders()).thenReturn(new MessageHeaders(headers));
         when(message.getPayload()).thenReturn(invalidPayload);
         when(objectMapper.readValue(invalidPayload, UpdateVehicleStatusDto.class))
-                .thenThrow(new JsonProcessingException("Invalid JSON") {
-                });
+                .thenThrow(new JsonProcessingException("Invalid JSON") {});
 
         // Act
         mqttService.handleIncomingMessage(message);
@@ -193,9 +189,7 @@ class MqttServiceTest {
         verify(vehicleService, never()).updateVehicleStatus(anyString(), any(VehicleStatus.class));
     }
 
-    /**
-     * PUBLISH TESTS
-     */
+    /** PUBLISH TESTS */
     @Test
     @DisplayName("Should publish message successfully")
     void shouldPublishMessageSuccessfully() throws Exception {
@@ -223,8 +217,7 @@ class MqttServiceTest {
         Object data = new Object();
 
         when(objectMapper.writeValueAsString(data))
-                .thenThrow(new JsonProcessingException("Serialization error") {
-                });
+                .thenThrow(new JsonProcessingException("Serialization error") {});
 
         // Act & Assert
         assertThatThrownBy(() -> mqttService.publish(topic, data))
@@ -259,9 +252,7 @@ class MqttServiceTest {
         assertThat(topicCaptor.getValue()).isEqualTo(topic);
     }
 
-    /**
-     * EDGE CASES
-     */
+    /** EDGE CASES */
     @Test
     @DisplayName("Should handle null topic in message")
     void shouldHandleNullTopicInMessage() {
@@ -274,7 +265,8 @@ class MqttServiceTest {
         mqttService.handleIncomingMessage(message);
 
         // Assert
-        verify(vehicleService, never()).updateVehicleLocation(anyString(), anyDouble(), anyDouble());
+        verify(vehicleService, never())
+                .updateVehicleLocation(anyString(), anyDouble(), anyDouble());
         verify(vehicleService, never()).updateVehicleStatus(anyString(), any(VehicleStatus.class));
     }
 
@@ -282,28 +274,28 @@ class MqttServiceTest {
     @DisplayName("Should handle empty payload")
     void shouldHandleEmptyPayload() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         String emptyPayload = "";
 
         headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
         when(message.getHeaders()).thenReturn(new MessageHeaders(headers));
         when(message.getPayload()).thenReturn(emptyPayload);
         when(objectMapper.readValue(emptyPayload, UpdateVehicleLocationDto.class))
-                .thenThrow(new JsonProcessingException("Empty payload") {
-                });
+                .thenThrow(new JsonProcessingException("Empty payload") {});
 
         // Act
         mqttService.handleIncomingMessage(message);
 
         // Assert
-        verify(vehicleService, never()).updateVehicleLocation(anyString(), anyDouble(), anyDouble());
+        verify(vehicleService, never())
+                .updateVehicleLocation(anyString(), anyDouble(), anyDouble());
     }
 
     @Test
     @DisplayName("Should handle multiple location updates in sequence")
     void shouldHandleMultipleLocationUpdatesInSequence() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         UpdateVehicleLocationDto dto1 = new UpdateVehicleLocationDto();
         dto1.setVinNumber("WAUZZZ8K9DA123456"); // VIN001 =WAUZZZ8K9DA123456
         dto1.setLongitude(10.0);
@@ -333,8 +325,9 @@ class MqttServiceTest {
     @DisplayName("Should handle negative coordinates")
     void shouldHandleNegativeCoordinates() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
-        String payload = """
+        String topic = "topic/vehicle/update/location";
+        String payload =
+                """
                 {
                     "vinNumber": "1HGCM82633A004352",
                     "longitude": -118.2437,
@@ -363,12 +356,16 @@ class MqttServiceTest {
     @DisplayName("Should handle all vehicle statuses")
     void shouldHandleAllVehicleStatuses() throws Exception {
         // Test each status
-        VehicleStatus[] statuses = {VehicleStatus.IDLE, VehicleStatus.IN_USE, VehicleStatus.ON_WAY,
-                VehicleStatus.OUT_OF_SERVICE};
+        VehicleStatus[] statuses = {
+            VehicleStatus.IDLE,
+            VehicleStatus.IN_USE,
+            VehicleStatus.ON_WAY,
+            VehicleStatus.OUT_OF_SERVICE
+        };
 
         for (VehicleStatus status : statuses) {
             // Arrange
-            String topic = "topic/update_status";
+            String topic = "topic/vehicle/update/status";
             UpdateVehicleStatusDto dto = new UpdateVehicleStatusDto();
             dto.setVinNumber("1HGCM82633A004352"); // Using same VIN for simplicity
             dto.setStatus(status);
@@ -390,19 +387,19 @@ class MqttServiceTest {
     @DisplayName("Should not call vehicle service when JSON parsing fails")
     void shouldNotCallVehicleServiceWhenJsonParsingFails() throws Exception {
         // Arrange
-        String topic = "topic/update_location";
+        String topic = "topic/vehicle/update/location";
         headers.put(MqttHeaders.RECEIVED_TOPIC, topic);
         when(message.getHeaders()).thenReturn(new MessageHeaders(headers));
         when(message.getPayload()).thenReturn("bad json");
         when(objectMapper.readValue(anyString(), eq(UpdateVehicleLocationDto.class)))
-                .thenThrow(new JsonProcessingException("Parse error") {
-                });
+                .thenThrow(new JsonProcessingException("Parse error") {});
 
         // Act
         mqttService.handleIncomingMessage(message);
 
         // Assert
-        verify(vehicleService, never()).updateVehicleLocation(anyString(), anyDouble(), anyDouble());
+        verify(vehicleService, never())
+                .updateVehicleLocation(anyString(), anyDouble(), anyDouble());
         verify(vehicleService, never()).updateVehicleStatus(anyString(), any());
     }
 }

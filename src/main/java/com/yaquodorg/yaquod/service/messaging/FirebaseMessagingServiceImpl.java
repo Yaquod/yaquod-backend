@@ -1,14 +1,12 @@
 package com.yaquodorg.yaquod.service.messaging;
 
-import org.springframework.stereotype.Service;
-
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -25,15 +23,11 @@ public class FirebaseMessagingServiceImpl implements FirebaseMessagingService {
         }
 
         try {
-            Notification notification = Notification.builder()
-                    .setTitle(title)
-                    .setBody(body)
-                    .build();
+            Notification notification =
+                    Notification.builder().setTitle(title).setBody(body).build();
 
-            Message message = Message.builder()
-                    .setToken(token)
-                    .setNotification(notification)
-                    .build();
+            Message message =
+                    Message.builder().setToken(token).setNotification(notification).build();
 
             String response = firebaseMessaging.send(message);
             log.info("Successfully sent notification: {} and token: {}", response, token);

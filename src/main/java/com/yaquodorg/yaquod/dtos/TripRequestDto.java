@@ -28,5 +28,4 @@ public class TripRequestDto {
     @DecimalMin("-90.0")
     @DecimalMax("90.0")
     private double endLat;
-
 }

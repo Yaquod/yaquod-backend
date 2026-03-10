@@ -2,10 +2,9 @@ package com.yaquodorg.yaquod.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.sql.Timestamp;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
-
-import java.sql.Timestamp;
 
 @Getter
 @Setter
@@ -34,11 +33,9 @@ public class Request {
     @Column(nullable = false)
     private Timestamp createdAt;
 
-    @Column
-    private double estimatedTime;
+    @Column private double estimatedTime;
 
-    @Column
-    private double estimatedFare;
+    @Column private double estimatedFare;
 
     @JsonIgnore
     @ManyToOne

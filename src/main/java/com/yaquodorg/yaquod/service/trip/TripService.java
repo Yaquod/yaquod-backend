@@ -1,13 +1,13 @@
 package com.yaquodorg.yaquod.service.trip;
 
-import java.util.List;
-
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.TripStatus;
+import java.util.List;
 
 public interface TripService {
-    void createTrip(Request request, double startLong, double startLat, double endLong, double endLat);
+    void createTrip(
+            Request request, double startLong, double startLat, double endLong, double endLat);
 
     Trip getTripByRequestId(Long requestId);
 

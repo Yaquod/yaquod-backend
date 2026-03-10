@@ -6,10 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/**
- * DTO for user registration requests.
- * Ensures all fields meet basic validation constraints.
- */
+/** DTO for user registration requests. Ensures all fields meet basic validation constraints. */
 @Data
 public class RegisterUserDto {
 
@@ -30,7 +27,8 @@ public class RegisterUserDto {
     private String lastName;
 
     @NotBlank(message = "Phone number cannot be blank")
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone number must be between 10 and 15 digits and may start " +
-            "with +")
+    @Pattern(
+            regexp = "^\\+?[0-9]{10,15}$",
+            message = "Phone number must be between 10 and 15 digits and may start " + "with +")
     private String phoneNumber;
 }

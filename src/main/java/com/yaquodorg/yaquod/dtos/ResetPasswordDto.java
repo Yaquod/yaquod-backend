@@ -3,9 +3,7 @@ package com.yaquodorg.yaquod.dtos;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
-/**
- * DTO used when a user resets their password.
- */
+/** DTO used when a user resets their password. */
 @Data
 public class ResetPasswordDto {
 

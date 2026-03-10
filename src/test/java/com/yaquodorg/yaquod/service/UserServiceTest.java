@@ -1,49 +1,48 @@
 package com.yaquodorg.yaquod.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.dtos.UpdateUserDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.repository.UserRepository;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.user.UserServiceImpl;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-
-/**
- * Unit tests for UserService
- * Tests user management operations
- */
+/** Unit tests for UserService Tests user management operations */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService Unit Tests")
 class UserServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private JwtService jwtService;
+    @Mock private JwtService jwtService;
 
-    @InjectMocks
-    private UserServiceImpl userService;
+    @InjectMocks private UserServiceImpl userService;
 
     private User user;
     private String authHeader;
+    private GoogleLoginDto googleLoginDto;
 
     @BeforeEach
     void setUp() {
@@ -58,11 +57,15 @@ class UserServiceTest {
         user.setEmailVerified(true);
 
         authHeader = "Bearer valid-jwt-token";
+
+        googleLoginDto = new GoogleLoginDto();
+        googleLoginDto.setEmail("google@example.com");
+        googleLoginDto.setName("John Doe");
+        googleLoginDto.setGivenName("John");
+        googleLoginDto.setFamilyName("Doe");
     }
 
-    /**
-     * SAVE USER TESTS
-     */
+    /** SAVE USER TESTS */
     @Test
     @DisplayName("Should save user successfully")
     void shouldSaveUserSuccessfully() {
@@ -115,9 +118,99 @@ class UserServiceTest {
         assertThat(result.getEmail()).isEqualTo("different@example.com");
     }
 
-    /**
-     * GET USER TESTS
-     */
+    /** GOOGLE LOGIN TESTS */
+    @Test
+    @DisplayName("Should return existing user without creating a new one")
+    void shouldReturnExistingGoogleUser() {
+        // Arrange
+        User existingUser = new User();
+        existingUser.setEmail(googleLoginDto.getEmail());
+
+        when(userRepository.findByEmail(googleLoginDto.getEmail()))
+                .thenReturn(Optional.of(existingUser));
+
+        // Act
+        User result = userService.findOrCreateGoogleUser(googleLoginDto);
+
+        // Assert
+        assertThat(result).isEqualTo(existingUser);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should create and save new user when Google user does not exist")
+    void shouldCreateNewGoogleUser() {
+        // Arrange
+        when(userRepository.findByEmail(googleLoginDto.getEmail())).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        User result = userService.findOrCreateGoogleUser(googleLoginDto);
+
+        // Assert
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+
+        User saved = captor.getValue();
+        assertThat(saved.getEmail()).isEqualTo(googleLoginDto.getEmail());
+        assertThat(saved.getFirstName()).isEqualTo("John");
+        assertThat(saved.getLastName()).isEqualTo("Doe");
+        assertThat(saved.getRole()).isEqualTo(Role.CLIENT);
+        assertThat(saved.isEmailVerified()).isTrue();
+        assertThat(saved.getPasswordHash()).isEqualTo("N/A");
+        assertThat(saved.getPhoneNumber()).isEqualTo("N/A");
+        assertThat(saved.getJoin_date()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Should use full name as first name when given name is null")
+    void shouldUseFullNameWhenGivenNameIsNull() {
+        // Arrange
+        GoogleLoginDto dto = new GoogleLoginDto();
+        dto.setEmail("google@example.com");
+        dto.setName("Full Name");
+        dto.setGivenName(null);
+        dto.setFamilyName(null);
+
+        when(userRepository.findByEmail(dto.getEmail())).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        userService.findOrCreateGoogleUser(dto);
+
+        // Assert
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+
+        User saved = captor.getValue();
+        assertThat(saved.getFirstName()).isEqualTo("Full Name");
+        assertThat(saved.getLastName()).isEqualTo("");
+    }
+
+    @Test
+    @DisplayName("Should use empty string as last name when family name is null")
+    void shouldUseEmptyStringWhenFamilyNameIsNull() {
+        // Arrange
+        GoogleLoginDto dto = new GoogleLoginDto();
+        dto.setEmail("google@example.com");
+        dto.setName("John");
+        dto.setGivenName("John");
+        dto.setFamilyName(null);
+
+        when(userRepository.findByEmail(dto.getEmail())).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        userService.findOrCreateGoogleUser(dto);
+
+        // Assert
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+
+        assertThat(captor.getValue().getLastName()).isEqualTo("");
+    }
+
+    /** GET USER TESTS */
     @Test
     @DisplayName("Should get user by email successfully")
     void shouldGetUserByEmail() {
@@ -149,9 +242,7 @@ class UserServiceTest {
         verify(userRepository, times(1)).findByEmail("nonexistent@example.com");
     }
 
-    /**
-     * GET USER BY JWT TESTS
-     */
+    /** GET USER BY JWT TESTS */
     @Test
     @DisplayName("Should get user by JWT successfully")
     void shouldGetUserByJwtSuccessfully() {
@@ -223,9 +314,7 @@ class UserServiceTest {
                 .hasMessageContaining("User not found");
     }
 
-    /**
-     * GET USER BY ID TESTS
-     */
+    /** GET USER BY ID TESTS */
     @Test
     @DisplayName("Should get user by ID successfully")
     void shouldGetUserByIdSuccessfully() {
@@ -256,9 +345,7 @@ class UserServiceTest {
         verify(userRepository, times(1)).findById(999L);
     }
 
-    /**
-     * GET ALL USERS TESTS
-     */
+    /** GET ALL USERS TESTS */
     @Test
     @DisplayName("Should get all users successfully")
     void shouldGetAllUsersSuccessfully() {
@@ -275,7 +362,8 @@ class UserServiceTest {
 
         // Assert
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(User::getEmail)
+        assertThat(result)
+                .extracting(User::getEmail)
                 .containsExactly("test@example.com", "user2@example.com");
 
         verify(userRepository, times(1)).findAll();
@@ -296,9 +384,7 @@ class UserServiceTest {
         verify(userRepository, times(1)).findAll();
     }
 
-    /**
-     * UPDATE USER TESTS
-     */
+    /** UPDATE USER TESTS */
     @Test
     @DisplayName("Should update user successfully")
     void shouldUpdateUserSuccessfully() throws ParseException {
@@ -365,9 +451,7 @@ class UserServiceTest {
         assertThat(result.getRole()).isEqualTo(originalRole);
     }
 
-    /**
-     * UPDATE USER PHOTO TESTS
-     */
+    /** UPDATE USER PHOTO TESTS */
     @Test
     @DisplayName("Should update user photo successfully")
     void shouldUpdateUserPhotoSuccessfully() {
@@ -403,9 +487,7 @@ class UserServiceTest {
         assertThat(user.getImageUrl()).isEqualTo(newPhotoUrl);
     }
 
-    /**
-     * UPDATE FCM TOKEN TESTS
-     */
+    /** UPDATE FCM TOKEN TESTS */
     @Test
     @DisplayName("Should update FCM token successfully")
     void shouldUpdateFcmTokenSuccessfully() {

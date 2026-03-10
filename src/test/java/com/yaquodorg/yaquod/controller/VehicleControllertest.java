@@ -1,12 +1,29 @@
 package com.yaquodorg.yaquod.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
 import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.entity.Role;
+import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.response.CreateVehicleResponse;
 import com.yaquodorg.yaquod.service.mqtt.MqttService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,27 +36,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 /**
  * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- * <p>
- * Unit tests for VehicleController
- * Tests controller logic with mocked services
- * Does NOT test security
+ *
+ * <p>Unit tests for VehicleController Tests controller logic with mocked services Does NOT test
+ * security
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("VehicleController Unit Tests")
@@ -47,16 +48,14 @@ class VehicleControllerTest {
 
     private final String VinNumber1 = "1HGCM82633A004352";
     private final String VinNumber2 = "1M8GDM9AXKP042788";
-    @Mock
-    private VehicleService vehicleService;
-    @Mock
-    private MqttService mqttService;
-    @InjectMocks
-    private VehicleController vehicleController;
+    @Mock private VehicleService vehicleService;
+    @Mock private MqttService mqttService;
+    @InjectMocks private VehicleController vehicleController;
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
     private CreateVehicleDto createVehicleDto;
     private Vehicle vehicle;
+    private User adminUser;
 
     @BeforeEach
     void setUp() {
@@ -64,15 +63,26 @@ class VehicleControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(vehicleController).build();
         objectMapper = new ObjectMapper();
 
+        // Setup admin user
+        adminUser =
+                User.builder()
+                        .id(1L)
+                        .email("admin@example.com")
+                        .firstName("Admin")
+                        .lastName("User")
+                        .role(Role.ADMIN)
+                        .build();
+
         // Setup test data
-        createVehicleDto = CreateVehicleDto.builder()
-                .vinNumber(VinNumber1)
-                .plateNo("ABC-123")
-                .color("RED")
-                .carCompany("Toyota")
-                .model("Camry")
-                .seats(4)
-                .build();
+        createVehicleDto =
+                CreateVehicleDto.builder()
+                        .vinNumber(VinNumber1)
+                        .plateNo("ABC-123")
+                        .color("RED")
+                        .carCompany("Toyota")
+                        .model("Camry")
+                        .seats(4)
+                        .build();
 
         vehicle = new Vehicle();
         vehicle.setId(1L);
@@ -92,24 +102,35 @@ class VehicleControllerTest {
     @DisplayName("POST /api/vehicles - Should create vehicle successfully")
     void shouldCreateVehicle() throws Exception {
         // Arrange
-        when(vehicleService.createVehicle(any(CreateVehicleDto.class))).thenReturn(vehicle);
+        CreateVehicleResponse response =
+                CreateVehicleResponse.builder()
+                        .vehicle(vehicle)
+                        .apiKey("VEH_test-api-key")
+                        .apiSecret("test-secret")
+                        .build();
+
+        when(vehicleService.createVehicle(any(CreateVehicleDto.class), any(User.class)))
+                .thenReturn(response);
 
         // Act & Assert
-        mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+        mockMvc.perform(
+                        post("/api/vehicles")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.vinNumber").value(VinNumber1))
-                .andExpect(jsonPath("$.data.plateNo").value("ABC-123"))
-                .andExpect(jsonPath("$.data.model").value("Camry"))
-                .andExpect(jsonPath("$.data.status").value("IDLE"));
+                .andExpect(jsonPath("$.data.vehicle.id").value(1))
+                .andExpect(jsonPath("$.data.vehicle.vinNumber").value(VinNumber1))
+                .andExpect(jsonPath("$.data.vehicle.plateNo").value("ABC-123"))
+                .andExpect(jsonPath("$.data.vehicle.model").value("Camry"))
+                .andExpect(jsonPath("$.data.vehicle.status").value("IDLE"));
 
         // Verify service was called with correct DTO
-        ArgumentCaptor<CreateVehicleDto> dtoCaptor = ArgumentCaptor.forClass(CreateVehicleDto.class);
-        verify(vehicleService, times(1)).createVehicle(dtoCaptor.capture());
+        ArgumentCaptor<CreateVehicleDto> dtoCaptor =
+                ArgumentCaptor.forClass(CreateVehicleDto.class);
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(vehicleService, times(1)).createVehicle(dtoCaptor.capture(), userCaptor.capture());
 
         CreateVehicleDto capturedDto = dtoCaptor.getValue();
         assertThat(capturedDto.getPlateNo()).isEqualTo("ABC-123");
@@ -120,29 +141,29 @@ class VehicleControllerTest {
     @DisplayName("POST /api/vehicles - Should return 400 when service throws exception")
     void shouldReturn400WhenCreateVehicleFails() throws Exception {
         // Arrange
-        when(vehicleService.createVehicle(any(CreateVehicleDto.class)))
+        when(vehicleService.createVehicle(any(CreateVehicleDto.class), any(User.class)))
                 .thenThrow(new RuntimeException("Duplicate plate number"));
 
         // Act & Assert
-        mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+        mockMvc.perform(
+                        post("/api/vehicles")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value(containsString("Failed to create vehicle")))
                 .andExpect(jsonPath("$.message").value(containsString("Duplicate plate number")));
 
-        verify(vehicleService, times(1)).createVehicle(any(CreateVehicleDto.class));
+        verify(vehicleService, times(1))
+                .createVehicle(any(CreateVehicleDto.class), any(User.class));
     }
 
     @Test
     @DisplayName("POST /api/vehicles - Should handle null DTO")
     void shouldHandleNullDtoOnCreate() throws Exception {
         // Act & Assert
-        mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+        mockMvc.perform(post("/api/vehicles").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
@@ -209,8 +230,7 @@ class VehicleControllerTest {
     @DisplayName("GET /api/vehicles/id/{vehicleId} - Should return 400 when vehicle not found")
     void shouldReturn400WhenVehicleNotFoundById() throws Exception {
         // Arrange
-        when(vehicleService.getVehicle(999L))
-                .thenThrow(new RuntimeException("Vehicle not found"));
+        when(vehicleService.getVehicle(999L)).thenThrow(new RuntimeException("Vehicle not found"));
 
         // Act & Assert
         mockMvc.perform(get("/api/vehicles/id/{vehicleId}", 999L))
@@ -241,7 +261,8 @@ class VehicleControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/vehicles/vin/{vinNumber} - Should return 400 when vehicle not found by VIN")
+    @DisplayName(
+            "GET /api/vehicles/vin/{vinNumber} - Should return 400 when vehicle not found by VIN")
     void shouldReturn400WhenVehicleNotFoundByVIN() throws Exception {
         // Arrange
         String vin = "2GCEK19T7Y1156789";
@@ -262,14 +283,15 @@ class VehicleControllerTest {
     @DisplayName("PATCH /api/vehicles - Should update vehicle successfully")
     void shouldUpdateVehicle() throws Exception {
         // Arrange
-        CreateVehicleDto updateDto = CreateVehicleDto.builder()
-                .vinNumber(VinNumber1)
-                .plateNo("XYZ-999")
-                .color("RED")
-                .carCompany("Update Company")
-                .model("Updated Model")
-                .seats(6)
-                .build();
+        CreateVehicleDto updateDto =
+                CreateVehicleDto.builder()
+                        .vinNumber(VinNumber1)
+                        .plateNo("XYZ-999")
+                        .color("RED")
+                        .carCompany("Update Company")
+                        .model("Updated Model")
+                        .seats(6)
+                        .build();
 
         Vehicle updatedVehicle = new Vehicle();
         updatedVehicle.setId(1L);
@@ -283,9 +305,10 @@ class VehicleControllerTest {
         when(vehicleService.updateVehicle(any(CreateVehicleDto.class))).thenReturn(updatedVehicle);
 
         // Act & Assert
-        mockMvc.perform(patch("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+        mockMvc.perform(
+                        patch("/api/vehicles")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateDto)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -304,9 +327,10 @@ class VehicleControllerTest {
                 .thenThrow(new RuntimeException("Vehicle not found"));
 
         // Act & Assert
-        mockMvc.perform(patch("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+        mockMvc.perform(
+                        patch("/api/vehicles")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -335,8 +359,7 @@ class VehicleControllerTest {
     @DisplayName("DELETE /api/vehicles/id/{vehicleId} - Should return 400 when delete fails")
     void shouldReturn400WhenDeleteFails() throws Exception {
         // Arrange
-        doThrow(new RuntimeException("Vehicle not found"))
-                .when(vehicleService).deleteVehicle(999L);
+        doThrow(new RuntimeException("Vehicle not found")).when(vehicleService).deleteVehicle(999L);
 
         // Act & Assert
         mockMvc.perform(delete("/api/vehicles/id/{vehicleId}", 999L))
@@ -353,14 +376,16 @@ class VehicleControllerTest {
     void shouldHandleServiceExceptionOnDelete() throws Exception {
         // Arrange
         doThrow(new RuntimeException("Database connection error"))
-                .when(vehicleService).deleteVehicle(1L);
+                .when(vehicleService)
+                .deleteVehicle(1L);
 
         // Act & Assert
         mockMvc.perform(delete("/api/vehicles/id/{vehicleId}", 1L))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Database connection error")));
+                .andExpect(
+                        jsonPath("$.message").value(containsString("Database connection error")));
 
         verify(vehicleService, times(1)).deleteVehicle(1L);
     }
@@ -385,7 +410,7 @@ class VehicleControllerTest {
         verify(mqttService, times(1)).publish(topicCaptor.capture(), dtoCaptor.capture());
 
         // Verify correct topic
-        assertThat(topicCaptor.getValue()).isEqualTo("topic/update_location/order");
+        assertThat(topicCaptor.getValue()).isEqualTo("topic/vehicle/update/location/order");
 
         // Verify correct payload
         VehicleDto capturedDto = dtoCaptor.getValue();
@@ -393,26 +418,33 @@ class VehicleControllerTest {
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/location-update - Should return 400 when MQTT fails")
+    @DisplayName(
+            "PATCH /api/vehicles/vin/{vinNumber}/location-update - Should return 400 when MQTT"
+                    + " fails")
     void shouldReturn400WhenLocationUpdateFails() throws Exception {
         // Arrange
         String vin = VinNumber1;
         doThrow(new RuntimeException("MQTT broker unavailable"))
-                .when(mqttService).publish(anyString(), any());
+                .when(mqttService)
+                .publish(anyString(), any());
 
         // Act & Assert
         mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/location-update", vin))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Could not send signal to vehicle")))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(containsString("Could not send signal to vehicle")))
                 .andExpect(jsonPath("$.message").value(containsString("MQTT broker unavailable")));
 
         verify(mqttService, times(1)).publish(anyString(), any());
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/location-update - Should handle valid VIN for location update")
+    @DisplayName(
+            "PATCH /api/vehicles/vin/{vinNumber}/location-update - Should handle valid VIN for"
+                    + " location update")
     void shouldHandleSpecialCharactersInVINForLocationUpdate() throws Exception {
         // Arrange
         String vin = VinNumber2;
@@ -450,7 +482,7 @@ class VehicleControllerTest {
         verify(mqttService, times(1)).publish(topicCaptor.capture(), dtoCaptor.capture());
 
         // Verify correct topic
-        assertThat(topicCaptor.getValue()).isEqualTo("topic/update_status/order");
+        assertThat(topicCaptor.getValue()).isEqualTo("topic/vehicle/update/status/order");
 
         // Verify correct payload
         VehicleDto capturedDto = dtoCaptor.getValue();
@@ -458,19 +490,23 @@ class VehicleControllerTest {
     }
 
     @Test
-    @DisplayName("PATCH /api/vehicles/vin/{vinNumber}/status-update - Should return 400 when MQTT fails")
+    @DisplayName(
+            "PATCH /api/vehicles/vin/{vinNumber}/status-update - Should return 400 when MQTT fails")
     void shouldReturn400WhenStatusUpdateFails() throws Exception {
         // Arrange
         String vin = VinNumber1;
         doThrow(new RuntimeException("MQTT connection timeout"))
-                .when(mqttService).publish(anyString(), any());
+                .when(mqttService)
+                .publish(anyString(), any());
 
         // Act & Assert
         mockMvc.perform(patch("/api/vehicles/vin/{vinNumber}/status-update", vin))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Could not send signal to vehicle")))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(containsString("Could not send signal to vehicle")))
                 .andExpect(jsonPath("$.message").value(containsString("MQTT connection timeout")));
 
         verify(mqttService, times(1)).publish(anyString(), any());
@@ -496,8 +532,7 @@ class VehicleControllerTest {
     @DisplayName("Should handle negative vehicle ID")
     void shouldHandleNegativeVehicleId() throws Exception {
         // Arrange
-        when(vehicleService.getVehicle(-1L))
-                .thenThrow(new RuntimeException("Invalid ID"));
+        when(vehicleService.getVehicle(-1L)).thenThrow(new RuntimeException("Invalid ID"));
 
         // Act & Assert
         mockMvc.perform(get("/api/vehicles/id/{vehicleId}", -1L))
@@ -511,8 +546,7 @@ class VehicleControllerTest {
     @DisplayName("Should handle zero vehicle ID")
     void shouldHandleZeroVehicleId() throws Exception {
         // Arrange
-        when(vehicleService.getVehicle(0L))
-                .thenThrow(new RuntimeException("Invalid ID"));
+        when(vehicleService.getVehicle(0L)).thenThrow(new RuntimeException("Invalid ID"));
 
         // Act & Assert
         mockMvc.perform(get("/api/vehicles/id/{vehicleId}", 0L))
@@ -536,7 +570,7 @@ class VehicleControllerTest {
         // Assert - Verify location topic
         ArgumentCaptor<String> topicCaptor1 = ArgumentCaptor.forClass(String.class);
         verify(mqttService, times(1)).publish(topicCaptor1.capture(), any());
-        assertThat(topicCaptor1.getValue()).isEqualTo("topic/update_location/order");
+        assertThat(topicCaptor1.getValue()).isEqualTo("topic/vehicle/update/location/order");
 
         // Reset mock
         reset(mqttService);
@@ -549,24 +583,26 @@ class VehicleControllerTest {
         // Assert - Verify status topic
         ArgumentCaptor<String> topicCaptor2 = ArgumentCaptor.forClass(String.class);
         verify(mqttService, times(1)).publish(topicCaptor2.capture(), any());
-        assertThat(topicCaptor2.getValue()).isEqualTo("topic/update_status/order");
+        assertThat(topicCaptor2.getValue()).isEqualTo("topic/vehicle/update/status/order");
     }
 
     @Test
     @DisplayName("Should not call service when vehicle service throws NullPointerException")
     void shouldHandleNullPointerException() throws Exception {
         // Arrange
-        when(vehicleService.createVehicle(any(CreateVehicleDto.class)))
+        when(vehicleService.createVehicle(any(CreateVehicleDto.class), any(User.class)))
                 .thenThrow(new NullPointerException("Unexpected null value"));
 
         // Act & Assert
-        mockMvc.perform(post("/api/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createVehicleDto)))
+        mockMvc.perform(
+                        post("/api/vehicles")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createVehicleDto)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
 
-        verify(vehicleService, times(1)).createVehicle(any(CreateVehicleDto.class));
+        verify(vehicleService, times(1))
+                .createVehicle(any(CreateVehicleDto.class), any(User.class));
     }
 }
