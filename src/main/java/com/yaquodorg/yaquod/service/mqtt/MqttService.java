@@ -23,9 +23,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class MqttService {
 
-    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/vehicle/update_location/order";
+    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/vehicle/update/location/order";
     private static final String TOPIC_UPDATE_LOCATION = "topic/vehicle/update/location";
-    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/vehicle/update_status/order";
+    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/vehicle/update/status/order";
     private static final String TOPIC_UPDATE_STATUS = "topic/vehicle/update/status";
     private static final String TOPIC_INIT_TRIP = "topic/trip/init";
     private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
@@ -145,19 +145,19 @@ public class MqttService {
             String message;
             if (isNearLocation(dto.getLatitude(), dto.getLongitude(), startLat, startLong)) {
                 message = carInfo + " has arrived at your pickup location.";
-                tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_DESTINATION);
+                tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_PICKUP);
                 vehicleService.updateVehicleStatus(
                         dto.getVinNumber(), VehicleStatus.WAITING_PASSENGER);
             } else if (isNearLocation(
                     dto.getLatitude(), dto.getLongitude(), destinationLat, destinationLong)) {
                 message = carInfo + " has arrived at your destination.";
-                tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_PICKUP);
+                tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_DESTINATION);
             } else {
                 message =
                         String.format(
                                 "%s is at location: %.6f, %.6f",
                                 carInfo, dto.getLatitude(), dto.getLongitude());
-                tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_DESTINATION);
+                tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_PICKUP);
                 vehicleService.updateVehicleStatus(
                         dto.getVinNumber(), VehicleStatus.WAITING_PASSENGER);
             }

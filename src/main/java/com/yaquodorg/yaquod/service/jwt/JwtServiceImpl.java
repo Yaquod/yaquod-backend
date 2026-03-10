@@ -61,6 +61,8 @@ public class JwtServiceImpl implements JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
+                .claim("roles", userDetails.getAuthorities())
+                .setId(UUID.randomUUID().toString())
                 .signWith(getKey())
                 .compact();
     }
@@ -90,6 +92,10 @@ public class JwtServiceImpl implements JwtService {
         return Jwts.builder()
                 .setSubject(vehicle.getApiKey())
                 .setIssuedAt(now)
+                .claim("roles", Role.VEHICLE)
+                .claim("vehicleId", vehicle.getId())
+                .claim("adminId", vehicle.getCreatedByAdmin().getId())
+                .setId(UUID.randomUUID().toString())
                 .setExpiration(expiryDate)
                 .signWith(getKey())
                 .compact();
