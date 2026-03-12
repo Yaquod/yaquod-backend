@@ -40,7 +40,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @DisplayName("VehicleController Integration Tests with Security")
-class VehicleControllerSecurityIntegrationTest {
+class VehicleControllerIntegrationTest {
 
     private final String VinNumber1 = "1HGCM82633A004352";
     private final String VinNumber2 = "1M8GDM9AXKP042788";
