@@ -473,7 +473,6 @@ class TripControllerTest {
                 .andExpect(jsonPath("$.message").value("Unauthorized to decline this request"));
     }
 
-
     @Test
     @DisplayName("shouldAcceptRequestSuccessfully")
     @WithMockUser
@@ -527,7 +526,6 @@ class TripControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Unauthorized to accept this request"));
     }
-
 
     @Test
     @DisplayName("shouldStartTripSuccessfully")
