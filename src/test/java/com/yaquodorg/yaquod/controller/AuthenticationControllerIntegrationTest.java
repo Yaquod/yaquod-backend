@@ -49,7 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("User & Authentication Controller Integration Tests")
-class UserControllerIntegrationTest {
+class AuthenticationControllerIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
 
