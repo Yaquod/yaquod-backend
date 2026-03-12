@@ -424,4 +424,104 @@ class VehicleServiceTest {
         verify(vehicleRepository, times(1)).findKNearestVehicles(any(), eq(1));
         verify(vehicleRepository, times(1)).findKNearestVehicles(any(), eq(10));
     }
+
+    @Test
+    @DisplayName("Should get vehicle by API key successfully")
+    void shouldGetVehicleByApiKey() {
+        // Arrange
+        vehicle.setApiKey("VEH_test-api-key");
+        when(vehicleRepository.findByApiKey("VEH_test-api-key")).thenReturn(Optional.of(vehicle));
+
+        // Act
+        Vehicle result = vehicleService.getVehicleByApiKey("VEH_test-api-key");
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getApiKey()).isEqualTo("VEH_test-api-key");
+        verify(vehicleRepository, times(1)).findByApiKey("VEH_test-api-key");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when vehicle not found by API key")
+    void shouldThrowExceptionWhenVehicleNotFoundByApiKey() {
+        // Arrange
+        when(vehicleRepository.findByApiKey("non-existent")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> vehicleService.getVehicleByApiKey("non-existent"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Vehicle not found!");
+
+        verify(vehicleRepository, times(1)).findByApiKey("non-existent");
+    }
+
+    @Test
+    @DisplayName("Should update vehicle fields successfully")
+    void shouldUpdateVehicle() {
+        // Arrange
+        CreateVehicleDto updateDto =
+                CreateVehicleDto.builder()
+                        .vinNumber(VinNumber2)
+                        .plateNo("NEW-123")
+                        .color("BLUE")
+                        .carCompany("Toyota")
+                        .model("Corolla")
+                        .seats(5)
+                        .build();
+
+        when(vehicleRepository.findByVinNumber(VinNumber2)).thenReturn(Optional.of(vehicle));
+
+        // Act
+        Vehicle result = vehicleService.updateVehicle(updateDto);
+
+        // Assert
+        assertThat(result.getPlateNo()).isEqualTo("NEW-123");
+        assertThat(result.getColor()).isEqualTo("BLUE");
+        assertThat(result.getCarCompany()).isEqualTo("Toyota");
+        assertThat(result.getModel()).isEqualTo("Corolla");
+        assertThat(result.getSeats()).isEqualTo(5);
+
+        verify(vehicleRepository, times(1)).findByVinNumber(VinNumber2);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating non-existent vehicle")
+    void shouldThrowExceptionWhenUpdatingNonExistentVehicle() {
+        // Arrange
+        CreateVehicleDto updateDto = CreateVehicleDto.builder().vinNumber("NON_EXISTENT").build();
+
+        when(vehicleRepository.findByVinNumber("NON_EXISTENT")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> vehicleService.updateVehicle(updateDto))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Vehicle with VIN NON_EXISTENT not found!");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when creating vehicle with existing VIN")
+    void shouldThrowExceptionWhenCreatingVehicleWithExistingVin() {
+        // Arrange
+        when(vehicleRepository.findByVinNumber(VinNumber1)).thenReturn(Optional.of(vehicle));
+
+        // Act & Assert
+        assertThatThrownBy(() -> vehicleService.createVehicle(createVehicleDto, adminUser))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Vehicle already exists!");
+
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating status for non-existent vehicle")
+    void shouldThrowExceptionWhenUpdatingStatusForNonExistentVehicle() {
+        // Arrange
+        String vin = "NON_EXISTENT";
+        when(vehicleRepository.findByVinNumber(vin)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> vehicleService.updateVehicleStatus(vin, VehicleStatus.IN_USE))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Vehicle not found with VIN: " + vin);
+    }
 }

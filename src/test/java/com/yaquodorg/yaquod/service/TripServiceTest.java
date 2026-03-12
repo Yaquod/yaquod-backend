@@ -370,4 +370,119 @@ class TripServiceImplTest {
         assertTrue(result.isEmpty());
         verify(tripRepository).findAll();
     }
+
+    @Test
+    @DisplayName("shouldUpdateTripStatusSuccessfully")
+    void shouldUpdateTripStatusSuccessfully() {
+        // Arrange
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(testTrip));
+
+        // Act
+        tripService.updateTripStatus(1L, TripStatus.COMPLETED);
+
+        // Assert
+        assertEquals(TripStatus.COMPLETED, testTrip.getStatus());
+        assertNotNull(testTrip.getUpdatedAt());
+        verify(tripRepository).findById(1L);
+    }
+
+    @Test
+    @DisplayName("shouldThrowExceptionWhenUpdatingStatusForNonExistentTrip")
+    void shouldThrowExceptionWhenUpdatingStatusForNonExistentTrip() {
+        // Arrange
+        when(tripRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> tripService.updateTripStatus(999L, TripStatus.COMPLETED));
+
+        assertEquals("Trip not found!", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("shouldStartTripSuccessfully")
+    void shouldStartTripSuccessfully() {
+        // Arrange
+        testRequest.setDestinationLocation(
+                new org.locationtech.jts.geom.GeometryFactory(
+                                new org.locationtech.jts.geom.PrecisionModel(), 4326)
+                        .createPoint(new org.locationtech.jts.geom.Coordinate(31.5, 30.5)));
+        testTrip.setRequest(testRequest);
+        testTrip.setVehicle(testVehicle);
+
+        when(tripRepository.findByRequestId(1L)).thenReturn(testTrip);
+        when(tripRepository.findById(testTrip.getId())).thenReturn(Optional.of(testTrip));
+
+        // Act
+        tripService.startTrip(1L);
+
+        // Assert
+        verify(vehicleService)
+                .updateVehicleStatus(testVehicle.getVinNumber(), VehicleStatus.IN_USE);
+        verify(eventPublisher).publishEvent(any(com.yaquodorg.yaquod.dtos.MoveVehicleDto.class));
+    }
+
+    @Test
+    @DisplayName("shouldEndTripSuccessfully")
+    void shouldEndTripSuccessfully() {
+        // Arrange
+        testTrip.setRequest(testRequest);
+        testTrip.setVehicle(testVehicle);
+
+        when(tripRepository.findByRequestId(1L)).thenReturn(testTrip);
+        when(tripRepository.findById(testTrip.getId())).thenReturn(Optional.of(testTrip));
+
+        // Act
+        tripService.endTrip(1L);
+
+        // Assert
+        verify(vehicleService).updateVehicleStatus(testVehicle.getVinNumber(), VehicleStatus.IDLE);
+        verify(eventPublisher).publishEvent(any(com.yaquodorg.yaquod.dtos.VehicleDto.class));
+    }
+
+    @Test
+    @DisplayName("shouldThrowExceptionWhenStartingTripWithNoVehicle")
+    void shouldThrowExceptionWhenStartingTripWithNoVehicle() {
+        // Arrange
+        Trip tripNoVehicle =
+                Trip.builder()
+                        .id(2L)
+                        .request(testRequest)
+                        .vehicle(null)
+                        .user(testUser)
+                        .status(TripStatus.INITIATED)
+                        .build();
+
+        when(tripRepository.findByRequestId(1L)).thenReturn(tripNoVehicle);
+
+        // Act & Assert
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, () -> tripService.startTrip(1L));
+
+        assertTrue(exception.getMessage().contains("No vehicle was matched with trip"));
+    }
+
+    @Test
+    @DisplayName("shouldThrowExceptionWhenStartingTripWithNoRequest")
+    void shouldThrowExceptionWhenStartingTripWithNoRequest() {
+        // Arrange
+        Trip tripNoRequest =
+                Trip.builder()
+                        .id(2L)
+                        .request(null)
+                        .vehicle(testVehicle)
+                        .user(testUser)
+                        .status(TripStatus.INITIATED)
+                        .build();
+
+        when(tripRepository.findByRequestId(1L)).thenReturn(tripNoRequest);
+
+        // Act & Assert
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, () -> tripService.startTrip(1L));
+
+        assertTrue(exception.getMessage().contains("was not assigned with a request"));
+    }
 }

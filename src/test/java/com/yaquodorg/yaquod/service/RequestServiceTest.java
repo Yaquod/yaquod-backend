@@ -4,13 +4,19 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
+import com.yaquodorg.yaquod.entity.Trip;
+import com.yaquodorg.yaquod.entity.TripStatus;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.repository.RequestRepository;
 import com.yaquodorg.yaquod.service.request.RequestServiceImpl;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +34,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.AccessDeniedException;
 
 /** NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY */
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +47,10 @@ class RequestServiceTest {
     @Mock private UserService userService;
 
     @Mock private TripService tripService;
+
+    @Mock private VehicleService vehicleService;
+
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks private RequestServiceImpl requestService;
 
@@ -287,5 +299,164 @@ class RequestServiceTest {
 
         // Assert
         verify(requestRepository).deleteById(999L);
+    }
+
+    @Test
+    @DisplayName("Should update request status successfully")
+    void shouldUpdateRequestStatus() {
+        // Arrange
+        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+
+        // Act
+        requestService.updateRequestStatus(1L, RequestStatus.ACCEPTED);
+
+        // Assert
+        assertEquals(RequestStatus.ACCEPTED, testRequest.getStatus());
+        verify(requestRepository).findById(1L);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating status for non-existent request")
+    void shouldThrowExceptionWhenUpdatingStatusForNonExistentRequest() {
+        // Arrange
+        when(requestRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> requestService.updateRequestStatus(999L, RequestStatus.COMPLETED));
+
+        assertEquals("Request not found!", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should decline request successfully")
+    void shouldDeclineRequestSuccessfully() {
+        // Arrange
+        Vehicle vehicle =
+                Vehicle.builder().id(1L).vinNumber("VIN123").status(VehicleStatus.ON_HOLD).build();
+        Trip trip = Trip.builder().id(10L).vehicle(vehicle).status(TripStatus.INITIATED).build();
+        testRequest.setStatus(RequestStatus.COMPLETED);
+        testRequest.setTrip(trip);
+
+        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+
+        // Act
+        requestService.declineRequestById(1L, 1L);
+
+        // Assert
+        assertEquals(RequestStatus.DECLINED, testRequest.getStatus());
+        verify(tripService).updateTripStatus(10L, TripStatus.CANCELLED_BY_PASSENGER);
+        verify(vehicleService).updateVehicleStatus("VIN123", VehicleStatus.IDLE);
+    }
+
+    @Test
+    @DisplayName("Should throw AccessDeniedException when declining other user's request")
+    void shouldThrowAccessDeniedWhenDecliningOtherUsersRequest() {
+        // Arrange
+        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+
+        // Act & Assert
+        assertThrows(
+                AccessDeniedException.class, () -> requestService.declineRequestById(1L, 999L));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when declining request not in COMPLETED state")
+    void shouldThrowExceptionWhenDecliningRequestNotInCompletedState() {
+        // Arrange
+        Vehicle vehicle =
+                Vehicle.builder().id(1L).vinNumber("VIN123").status(VehicleStatus.ON_HOLD).build();
+        Trip trip = Trip.builder().id(10L).vehicle(vehicle).status(TripStatus.INITIATED).build();
+        testRequest.setStatus(RequestStatus.PENDING);
+        testRequest.setTrip(trip);
+
+        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+
+        // Act & Assert
+        IllegalStateException exception =
+                assertThrows(
+                        IllegalStateException.class,
+                        () -> requestService.declineRequestById(1L, 1L));
+
+        assertEquals("Request is not in COMPLETED state", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when declining request with no trip")
+    void shouldThrowExceptionWhenDecliningRequestWithNoTrip() {
+        // Arrange
+        testRequest.setTrip(null);
+
+        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> requestService.declineRequestById(1L, 1L));
+    }
+
+    @Test
+    @DisplayName("Should accept request successfully")
+    void shouldAcceptRequestSuccessfully() {
+        // Arrange
+        Vehicle vehicle =
+                Vehicle.builder().id(1L).vinNumber("VIN123").status(VehicleStatus.ON_HOLD).build();
+        Trip trip = Trip.builder().id(10L).vehicle(vehicle).status(TripStatus.INITIATED).build();
+        testRequest.setStatus(RequestStatus.COMPLETED);
+        testRequest.setTrip(trip);
+
+        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+
+        // Act
+        Request result = requestService.acceptRequestById(1L, 1L);
+
+        // Assert
+        assertEquals(RequestStatus.ACCEPTED, result.getStatus());
+        verify(tripService).updateTripStatus(10L, TripStatus.VEHICLE_ON_WAY);
+        verify(vehicleService).updateVehicleStatus("VIN123", VehicleStatus.ON_WAY);
+        verify(eventPublisher).publishEvent(any(MoveVehicleDto.class));
+    }
+
+    @Test
+    @DisplayName("Should throw AccessDeniedException when accepting other user's request")
+    void shouldThrowAccessDeniedWhenAcceptingOtherUsersRequest() {
+        // Arrange
+        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+
+        // Act & Assert
+        assertThrows(AccessDeniedException.class, () -> requestService.acceptRequestById(1L, 999L));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when accepting request not in COMPLETED state")
+    void shouldThrowExceptionWhenAcceptingRequestNotInCompletedState() {
+        // Arrange
+        Vehicle vehicle =
+                Vehicle.builder().id(1L).vinNumber("VIN123").status(VehicleStatus.ON_HOLD).build();
+        Trip trip = Trip.builder().id(10L).vehicle(vehicle).status(TripStatus.INITIATED).build();
+        testRequest.setStatus(RequestStatus.PENDING);
+        testRequest.setTrip(trip);
+
+        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+
+        // Act & Assert
+        IllegalStateException exception =
+                assertThrows(
+                        IllegalStateException.class,
+                        () -> requestService.acceptRequestById(1L, 1L));
+
+        assertEquals("Request is not in COMPLETED state", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when accpeting request with no trip")
+    void shouldThrowExceptionWhenAcceptingRequestWithNoTrip() {
+        // Arrange
+        testRequest.setTrip(null);
+
+        when(requestRepository.findById(1L)).thenReturn(Optional.of(testRequest));
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> requestService.acceptRequestById(1L, 1L));
     }
 }
