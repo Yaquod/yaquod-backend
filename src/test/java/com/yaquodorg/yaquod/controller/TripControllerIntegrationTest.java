@@ -497,7 +497,7 @@ class TripControllerIntegrationTest {
         // Act & Assert - should fail because admin doesn't own this request
         mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/decline"))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false));
     }
 

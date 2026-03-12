@@ -17,7 +17,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -339,6 +341,11 @@ public class TripController {
             requestService.declineRequestById(requestId, user.getId());
             return ResponseEntity.ok(
                     createSuccessResponse(new MessageResponse("Request declined successfully")));
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(
+                            ApiResponse.createFailureResponse(
+                                    "Failed to decline Request: " + e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(
@@ -370,9 +377,13 @@ public class TripController {
                     Long requestId,
             @AuthenticationPrincipal User user) {
         try {
-
             Request request = requestService.acceptRequestById(requestId, user.getId());
             return ResponseEntity.ok(createSuccessResponse(request));
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(
+                            ApiResponse.createFailureResponse(
+                                    "Failed to accept Request: " + e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(

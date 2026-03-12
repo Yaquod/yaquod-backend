@@ -102,8 +102,8 @@ class JwtServiceTest {
 
         Claims claims = jwtService.extractAllClaims(token);
         assertThat(claims.getSubject()).isEqualTo("VEH_test-api-key");
-        assertThat(claims.get("vehicleId", Integer.class)).isEqualTo(10);
-        assertThat(claims.get("adminId", Integer.class)).isEqualTo(2);
+        assertThat(claims.get("vehicleId", Long.class)).isEqualTo(10L);
+        assertThat(claims.get("adminId", Long.class)).isEqualTo(2L);
     }
 
     @Test
@@ -183,14 +183,11 @@ class JwtServiceTest {
     @DisplayName("Should throw ExpiredJwtException for expired token")
     void shouldThrowForExpiredToken() throws Exception {
         // Arrange - Set very short expiration
-        setField(jwtService, "accessTokenExpiration", 1L); // 1ms
+        setField(jwtService, "accessTokenExpiration", -1L);
         // Reset signing key cache
         setField(jwtService, "signingKey", null);
 
         String token = jwtService.generateAccessToken(testUser);
-
-        // Wait for token to expire
-        Thread.sleep(50);
 
         // Act & Assert
         assertThatThrownBy(() -> jwtService.validateToken(token))

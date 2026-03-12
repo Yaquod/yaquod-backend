@@ -36,6 +36,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -466,6 +467,26 @@ class TripControllerTest {
     }
 
     @Test
+    @DisplayName("shouldReturnForbiddenWhenDeclineRequestAccessDenied")
+    @WithMockUser
+    void shouldReturnForbiddenWhenDeclineRequestAccessDenied() throws Exception {
+        // Arrange
+        doThrow(new AccessDeniedException("Unauthorized to decline this request"))
+                .when(requestService)
+                .declineRequestById(eq(1L), any());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/decline"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Failed to decline Request: Unauthorized to decline this"
+                                                + " request"));
+    }
+
+    @Test
     @DisplayName("shouldAcceptRequestSuccessfully")
     @WithMockUser
     void shouldAcceptRequestSuccessfully() throws Exception {
@@ -502,6 +523,25 @@ class TripControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Failed to accept Request: Cannot accept"));
+    }
+
+    @Test
+    @DisplayName("shouldReturnForbiddenWhenAcceptRequestAccessDenied")
+    @WithMockUser
+    void shouldReturnForbiddenWhenAcceptRequestAccessDenied() throws Exception {
+        // Arrange
+        when(requestService.acceptRequestById(eq(1L), any()))
+                .thenThrow(new AccessDeniedException("Unauthorized to accept this request"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/accept"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Failed to accept Request: Unauthorized to accept this"
+                                                + " request"));
     }
 
     @Test

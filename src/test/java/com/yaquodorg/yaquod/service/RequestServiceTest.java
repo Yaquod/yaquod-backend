@@ -449,7 +449,7 @@ class RequestServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception when accpeting request with no trip")
+    @DisplayName("Should throw exception when accepting request with no trip")
     void shouldThrowExceptionWhenAcceptingRequestWithNoTrip() {
         // Arrange
         testRequest.setTrip(null);
