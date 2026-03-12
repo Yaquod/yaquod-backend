@@ -92,7 +92,7 @@ class UserServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> userService.saveUser(user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(com.yaquodorg.yaquod.exception.ResourceAlreadyExistsException.class)
                 .hasMessageContaining("Email Already Exists!");
 
         verify(userRepository, times(1)).findByEmail(user.getEmail());

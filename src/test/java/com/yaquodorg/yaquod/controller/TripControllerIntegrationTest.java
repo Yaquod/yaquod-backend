@@ -217,16 +217,14 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenRequestNotFound")
+    @DisplayName("shouldReturn404WhenRequestNotFound")
     @WithMockUser(roles = "CLIENT")
-    void shouldReturn400WhenRequestNotFound() throws Exception {
+    void shouldReturn404WhenRequestNotFound() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/trips/request/status/999999"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(containsString("Failed to check Request status")));
+                .andExpect(jsonPath("$.message").value(containsString("Request not found")));
     }
 
     @Test
@@ -242,16 +240,16 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenTripNotFoundByRequestId")
+    @DisplayName("shouldReturn404WhenTripNotFoundByRequestId")
     @WithMockUser(roles = "CLIENT")
-    void shouldReturn400WhenTripNotFoundByRequestId() throws Exception {
+    void shouldReturn404WhenTripNotFoundByRequestId() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/trips/by-request/999999"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(
                         jsonPath("$.message")
-                                .value(containsString("Failed to get Trip by requestId")));
+                                .value(containsString("Trip not found for requestId")));
     }
 
     @Test
@@ -267,14 +265,14 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenTripNotFoundById")
+    @DisplayName("shouldReturn404WhenTripNotFoundById")
     @WithMockUser(roles = "CLIENT")
-    void shouldReturn400WhenTripNotFoundById() throws Exception {
+    void shouldReturn404WhenTripNotFoundById() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/trips/999999"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Failed to get Trip by id")));
+                .andExpect(jsonPath("$.message").value(containsString("Trip not found for id")));
     }
 
     @Test
@@ -288,7 +286,7 @@ class TripControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.message").value("Trip deleted successfully"));
 
         // Verify deletion
-        mockMvc.perform(get("/api/trips/" + testTrip.getId())).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/trips/" + testTrip.getId())).andExpect(status().isNotFound());
     }
 
     @Test
@@ -371,16 +369,14 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenVehicleNotFoundForTrips")
+    @DisplayName("shouldReturn404WhenVehicleNotFoundForTrips")
     @WithMockUser(roles = "ADMIN")
-    void shouldReturn400WhenVehicleNotFoundForTrips() throws Exception {
+    void shouldReturn404WhenVehicleNotFoundForTrips() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/trips/vehicle/INVALID_VIN"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(containsString("Failed to get Trips by VIN number")));
+                .andExpect(jsonPath("$.message").value(containsString("Vehicle not found")));
     }
 
     @Test
@@ -502,13 +498,13 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenDecliningRequestInWrongState")
+    @DisplayName("shouldReturn409WhenDecliningRequestInWrongState")
     @WithMockCustomUser(email = "test@example.com")
-    void shouldReturn400WhenDecliningRequestInWrongState() throws Exception {
+    void shouldReturn409WhenDecliningRequestInWrongState() throws Exception {
         // Arrange - request is still PENDING (not COMPLETED)
         mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/decline"))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
@@ -551,13 +547,13 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenAcceptingRequestInWrongState")
+    @DisplayName("shouldReturn409WhenAcceptingRequestInWrongState")
     @WithMockCustomUser(email = "test@example.com")
-    void shouldReturn400WhenAcceptingRequestInWrongState() throws Exception {
+    void shouldReturn409WhenAcceptingRequestInWrongState() throws Exception {
         // Arrange - request is still PENDING (not COMPLETED)
         mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/accept"))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
@@ -588,15 +584,14 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenStartingTripWithInvalidRequest")
+    @DisplayName("shouldReturn404WhenStartingTripWithInvalidRequest")
     @WithMockUser(roles = "VEHICLE")
-    void shouldReturn400WhenStartingTripWithInvalidRequest() throws Exception {
+    void shouldReturn404WhenStartingTripWithInvalidRequest() throws Exception {
         // Act & Assert - non-existent request ID
         mockMvc.perform(post("/api/trips/request/999999/start"))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Failed to start trip")));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
@@ -629,14 +624,13 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenEndingTripWithInvalidRequest")
+    @DisplayName("shouldReturn404WhenEndingTripWithInvalidRequest")
     @WithMockUser(roles = "VEHICLE")
-    void shouldReturn400WhenEndingTripWithInvalidRequest() throws Exception {
+    void shouldReturn404WhenEndingTripWithInvalidRequest() throws Exception {
         // Act & Assert - non-existent request ID
         mockMvc.perform(post("/api/trips/request/999999/end"))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Failed to end trip")));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
     }
 }

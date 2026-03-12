@@ -23,6 +23,7 @@ import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
@@ -33,7 +34,6 @@ import com.yaquodorg.yaquod.service.mail.MailSenderService;
 import com.yaquodorg.yaquod.service.user.UserService;
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -327,7 +327,7 @@ class AuthenticationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> authenticationService.verifyUser(verifyCodeDto))
-                .isInstanceOf(NoSuchElementException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User not found");
     }
 
@@ -358,7 +358,7 @@ class AuthenticationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> authenticationService.regenerateOtp("nonexistent@example.com"))
-                .isInstanceOf(NoSuchElementException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User not found");
 
         verify(mailSenderService, never()).sendEmail(anyString(), anyString(), anyString());

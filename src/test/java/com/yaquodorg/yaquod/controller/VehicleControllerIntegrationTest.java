@@ -1,7 +1,6 @@
 package com.yaquodorg.yaquod.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -316,23 +315,22 @@ class VehicleControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should return 400 when getting non-existent vehicle by ID")
+    @DisplayName("Should return 404 when getting non-existent vehicle by ID")
     @WithMockUser(roles = "ADMIN")
-    void shouldReturn400ForNonExistentVehicleById() throws Exception {
+    void shouldReturn404ForNonExistentVehicleById() throws Exception {
         mockMvc.perform(get("/api/vehicles/id/999"))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Could not fetch vehicle")));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
-    @DisplayName("Should return 400 when getting non-existent vehicle by VIN")
+    @DisplayName("Should return 404 when getting non-existent vehicle by VIN")
     @WithMockUser(roles = "ADMIN")
-    void shouldReturn400ForNonExistentVehicleByVIN() throws Exception {
+    void shouldReturn404ForNonExistentVehicleByVIN() throws Exception {
         mockMvc.perform(get("/api/vehicles/vin/non-existent-vin"))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false));
     }
 

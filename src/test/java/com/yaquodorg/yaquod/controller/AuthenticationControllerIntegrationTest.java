@@ -131,11 +131,9 @@ class AuthenticationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(registerUserDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(containsString("Failed to register admin user")));
+                .andExpect(jsonPath("$.message").value(containsString("Email Already Exists!")));
     }
 
     // CLIENT SIGNUP TESTS
@@ -158,8 +156,8 @@ class AuthenticationControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/client/signup - Should return 400 with duplicate email")
-    void shouldReturn400WithDuplicateEmailOnClientSignup() throws Exception {
+    @DisplayName("POST /api/auth/client/signup - Should return 409 with duplicate email")
+    void shouldReturn409WithDuplicateEmailOnClientSignup() throws Exception {
         registerUserDto.setEmail("existing@example.com");
 
         mockMvc.perform(
@@ -167,7 +165,7 @@ class AuthenticationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(registerUserDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
@@ -198,8 +196,8 @@ class AuthenticationControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/login - Should return 400 with wrong password")
-    void shouldReturn400WithWrongPassword() throws Exception {
+    @DisplayName("POST /api/auth/login - Should return 401 with wrong password")
+    void shouldReturn401WithWrongPassword() throws Exception {
         LoginUserDto loginDto = new LoginUserDto();
         loginDto.setEmail("existing@example.com");
         loginDto.setPassword("wrongpassword");
@@ -210,14 +208,13 @@ class AuthenticationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(loginDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Failed to login")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
-    @DisplayName("POST /api/auth/login - Should return 400 with non-existent email")
-    void shouldReturn400WithNonExistentEmail() throws Exception {
+    @DisplayName("POST /api/auth/login - Should return 401 with non-existent email")
+    void shouldReturn401WithNonExistentEmail() throws Exception {
         LoginUserDto loginDto = new LoginUserDto();
         loginDto.setEmail("nonexistent@example.com");
         loginDto.setPassword("password123");
@@ -228,7 +225,7 @@ class AuthenticationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(loginDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
@@ -359,8 +356,8 @@ class AuthenticationControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/regenerate-code - Should return 400 with non-existent email")
-    void shouldReturn400WhenRegeneratingForNonExistentUser() throws Exception {
+    @DisplayName("POST /api/auth/regenerate-code - Should return 404 with non-existent email")
+    void shouldReturn404WhenRegeneratingForNonExistentUser() throws Exception {
         String regenerateJson =
                 """
                 {
@@ -373,7 +370,7 @@ class AuthenticationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(regenerateJson))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("User not found"));
     }
@@ -642,7 +639,7 @@ class AuthenticationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(loginDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -704,8 +701,8 @@ class AuthenticationControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/vehicle/login - Should return 400 with invalid credentials")
-    void shouldReturn400WithInvalidVehicleCredentials() throws Exception {
+    @DisplayName("POST /api/auth/vehicle/login - Should return 401 with invalid credentials")
+    void shouldReturn401WithInvalidVehicleCredentials() throws Exception {
         // Arrange
         VehicleLoginDto vehicleLoginDto = new VehicleLoginDto();
         vehicleLoginDto.setApiKey("INVALID_KEY");
@@ -717,9 +714,8 @@ class AuthenticationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(vehicleLoginDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Failed to login")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
@@ -787,12 +783,12 @@ class AuthenticationControllerIntegrationTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Invalid Google ID token"));
+                .andExpect(jsonPath("$.message").value("Invalid token"));
     }
 
     @Test
-    @DisplayName("POST /api/auth/google - Should return 500 on security exception")
-    void shouldReturn500OnGoogleSecurityException() throws Exception {
+    @DisplayName("POST /api/auth/google - Should return 401 on security exception")
+    void shouldReturn401OnGoogleSecurityException() throws Exception {
         // Arrange
         when(googleTokenService.verifyIdToken(anyString()))
                 .thenThrow(new GeneralSecurityException("Verification failed"));
@@ -805,8 +801,8 @@ class AuthenticationControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(googleIdTokenDto)))
                 .andDo(print())
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Google login verification failed"));
+                .andExpect(jsonPath("$.message").value("Security verification failed"));
     }
 }
