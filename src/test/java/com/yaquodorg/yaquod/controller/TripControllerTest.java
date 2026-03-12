@@ -431,4 +431,136 @@ class TripControllerTest {
                         jsonPath("$.message")
                                 .value("Failed to get Trips by VIN number: Vehicle not found"));
     }
+
+    @Test
+    @DisplayName("shouldDeclineRequestSuccessfully")
+    @WithMockUser
+    void shouldDeclineRequestSuccessfully() throws Exception {
+        // Arrange
+        doNothing().when(requestService).declineRequestById(eq(1L), any());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/decline"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.message").value("Request declined successfully"));
+
+        verify(requestService).declineRequestById(eq(1L), any());
+    }
+
+    @Test
+    @DisplayName("shouldReturnBadRequestWhenDeclineRequestFails")
+    @WithMockUser
+    void shouldReturnBadRequestWhenDeclineRequestFails() throws Exception {
+        // Arrange
+        doThrow(new RuntimeException("Cannot decline"))
+                .when(requestService)
+                .declineRequestById(eq(1L), any());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/decline"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(
+                        jsonPath("$.message").value("Failed to decline Request: Cannot decline"));
+    }
+
+    @Test
+    @DisplayName("shouldAcceptRequestSuccessfully")
+    @WithMockUser
+    void shouldAcceptRequestSuccessfully() throws Exception {
+        // Arrange
+        Request acceptedRequest =
+                Request.builder()
+                        .id(1L)
+                        .user(testUser)
+                        .status(RequestStatus.ACCEPTED)
+                        .createdAt(new Timestamp(System.currentTimeMillis()))
+                        .build();
+        when(requestService.acceptRequestById(eq(1L), any())).thenReturn(acceptedRequest);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/accept"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.status").value("ACCEPTED"));
+
+        verify(requestService).acceptRequestById(eq(1L), any());
+    }
+
+    @Test
+    @DisplayName("shouldReturnBadRequestWhenAcceptRequestFails")
+    @WithMockUser
+    void shouldReturnBadRequestWhenAcceptRequestFails() throws Exception {
+        // Arrange
+        when(requestService.acceptRequestById(eq(1L), any()))
+                .thenThrow(new RuntimeException("Cannot accept"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/accept"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Failed to accept Request: Cannot accept"));
+    }
+
+    @Test
+    @DisplayName("shouldStartTripSuccessfully")
+    @WithMockUser
+    void shouldStartTripSuccessfully() throws Exception {
+        // Arrange
+        doNothing().when(tripService).startTrip(1L);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/start"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.message").value("Trip started successfully!"));
+
+        verify(tripService).startTrip(1L);
+    }
+
+    @Test
+    @DisplayName("shouldReturnBadRequestWhenStartTripFails")
+    @WithMockUser
+    void shouldReturnBadRequestWhenStartTripFails() throws Exception {
+        // Arrange
+        doThrow(new RuntimeException("Trip not ready")).when(tripService).startTrip(1L);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/start"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Failed to start trip: Trip not ready"));
+    }
+
+    @Test
+    @DisplayName("shouldEndTripSuccessfully")
+    @WithMockUser
+    void shouldEndTripSuccessfully() throws Exception {
+        // Arrange
+        doNothing().when(tripService).endTrip(1L);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/end"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.message").value("Trip ended successfully!"));
+
+        verify(tripService).endTrip(1L);
+    }
+
+    @Test
+    @DisplayName("shouldReturnBadRequestWhenEndTripFails")
+    @WithMockUser
+    void shouldReturnBadRequestWhenEndTripFails() throws Exception {
+        // Arrange
+        doThrow(new RuntimeException("Trip not in progress")).when(tripService).endTrip(1L);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/1/end"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Failed to end trip: Trip not in progress"));
+    }
 }

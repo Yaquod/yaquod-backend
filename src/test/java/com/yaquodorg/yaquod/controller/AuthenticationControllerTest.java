@@ -12,9 +12,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.*;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.response.LoginResponse;
+import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.service.auth.AuthenticationService;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.security.GeneralSecurityException;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import org.junit.jupiter.api.BeforeEach;
@@ -536,5 +540,151 @@ class AuthenticationControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().string("Authentication Service is up and running!"));
+    }
+
+    /** GOOGLE LOGIN TESTS */
+    @Test
+    @DisplayName("POST /api/auth/google - Should login with Google successfully")
+    void shouldGoogleLoginSuccessfully() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("valid-google-token", "fcm-token");
+
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setAccessToken("access-token");
+        loginResponse.setRefreshToken("refresh-token");
+        loginResponse.setAccessTokenExpiresIn(new Date(System.currentTimeMillis() + 3600000));
+        loginResponse.setRefreshTokenExpiresIn(new Date(System.currentTimeMillis() + 86400000));
+
+        when(authenticationService.googleLogin(any(GoogleIdTokenDto.class)))
+                .thenReturn(loginResponse);
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.data.refreshToken").value("refresh-token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should return 400 with invalid token")
+    void shouldReturn400WithInvalidGoogleToken() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("invalid-token", null);
+
+        when(authenticationService.googleLogin(any(GoogleIdTokenDto.class)))
+                .thenThrow(new IllegalArgumentException("Invalid token"));
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid Google ID token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should return 500 on security exception")
+    void shouldReturn500OnGoogleSecurityException() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("some-token", null);
+
+        when(authenticationService.googleLogin(any(GoogleIdTokenDto.class)))
+                .thenThrow(new GeneralSecurityException("Verification failed"));
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Google login verification failed"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should return 500 on unexpected error")
+    void shouldReturn500OnGoogleUnexpectedError() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("some-token", null);
+
+        when(authenticationService.googleLogin(any(GoogleIdTokenDto.class)))
+                .thenThrow(new RuntimeException("Unexpected"));
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Internal Server Error"));
+    }
+
+    /** VEHICLE LOGIN TESTS */
+    @Test
+    @DisplayName("POST /api/auth/vehicle/login - Should login vehicle successfully")
+    void shouldVehicleLoginSuccessfully() throws Exception {
+        // Arrange
+        VehicleLoginDto vehicleLoginDto = new VehicleLoginDto();
+        vehicleLoginDto.setApiKey("valid-api-key");
+        vehicleLoginDto.setApiSecret("valid-api-secret");
+
+        Vehicle vehicle =
+                Vehicle.builder().id(1L).vinNumber("VIN123").status(VehicleStatus.IDLE).build();
+
+        VehicleLoginResponse loginResponse =
+                VehicleLoginResponse.builder()
+                        .accessToken("vehicle-access-token")
+                        .refreshToken("vehicle-refresh-token")
+                        .accessTokenExpiresIn(new Date(System.currentTimeMillis() + 3600000))
+                        .refreshTokenExpiresIn(new Date(System.currentTimeMillis() + 86400000))
+                        .vehicle(vehicle)
+                        .build();
+
+        when(authenticationService.vehicleLogin(any(VehicleLoginDto.class)))
+                .thenReturn(loginResponse);
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/vehicle/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(vehicleLoginDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").value("vehicle-access-token"))
+                .andExpect(jsonPath("$.data.vehicle.vinNumber").value("VIN123"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/vehicle/login - Should return 400 with invalid credentials")
+    void shouldReturn400WithInvalidVehicleCredentials() throws Exception {
+        // Arrange
+        VehicleLoginDto vehicleLoginDto = new VehicleLoginDto();
+        vehicleLoginDto.setApiKey("invalid-key");
+        vehicleLoginDto.setApiSecret("invalid-secret");
+
+        when(authenticationService.vehicleLogin(any(VehicleLoginDto.class)))
+                .thenThrow(new RuntimeException("Invalid credentials"));
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/vehicle/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(vehicleLoginDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Failed to login: Invalid credentials"));
     }
 }
