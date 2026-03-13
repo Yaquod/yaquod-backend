@@ -13,6 +13,7 @@ import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.dtos.UpdateUserDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.exception.ResourceAlreadyExistsException;
 import com.yaquodorg.yaquod.repository.UserRepository;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.user.UserServiceImpl;
@@ -92,7 +93,7 @@ class UserServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> userService.saveUser(user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(ResourceAlreadyExistsException.class)
                 .hasMessageContaining("Email Already Exists!");
 
         verify(userRepository, times(1)).findByEmail(user.getEmail());

@@ -4,6 +4,8 @@ import com.yaquodorg.yaquod.dtos.InitTripDto;
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
 import com.yaquodorg.yaquod.dtos.VehicleDto;
 import com.yaquodorg.yaquod.entity.*;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
+import com.yaquodorg.yaquod.exception.ServiceUnavailableException;
 import com.yaquodorg.yaquod.repository.TripRepository;
 import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
@@ -51,7 +53,8 @@ public class TripServiceImpl implements TripService {
         List<Vehicle> vehicles = vehicleService.findKNearestVehicles(startLong, startLat, 1);
         if (vehicles.isEmpty()) {
             log.error("No vehicles available for location: ({}, {})", startLong, startLat);
-            throw new RuntimeException("No vehicles available for the requested location");
+            throw new ServiceUnavailableException(
+                    "No vehicles available for the requested location");
         }
 
         // get vin number and set vehicle state as processing
@@ -94,7 +97,7 @@ public class TripServiceImpl implements TripService {
         Trip trip = tripRepository.findByRequestId(requestId);
         if (trip == null) {
             log.error("Trip not found for requestId: {}", requestId);
-            throw new RuntimeException("Trip not found for requestId: " + requestId);
+            throw new ResourceNotFoundException("Trip not found for requestId: " + requestId);
         }
         log.debug("Found trip id: {} for request id: {}", trip.getId(), requestId);
         return trip;
@@ -108,7 +111,7 @@ public class TripServiceImpl implements TripService {
                 .orElseThrow(
                         () -> {
                             log.error("Trip not found for id: {}", id);
-                            return new RuntimeException("Trip not found for id: " + id);
+                            return new ResourceNotFoundException("Trip not found for id: " + id);
                         });
     }
 
@@ -123,7 +126,7 @@ public class TripServiceImpl implements TripService {
                         .orElseThrow(
                                 () -> {
                                     log.error("Trip not found for id: {}", id);
-                                    return new RuntimeException("Trip not found!");
+                                    return new ResourceNotFoundException("Trip not found!");
                                 });
         trip.setStatus(tripStatus);
         trip.setUpdatedAt(new Timestamp(now.getTime()));
@@ -149,10 +152,6 @@ public class TripServiceImpl implements TripService {
     public List<Trip> getTripsByUserId(Long userId) {
         log.debug("Fetching trips for user id: {}", userId);
         User user = userService.getUserById(userId);
-        if (user == null) {
-            log.error("User not found for id: {}", userId);
-            throw new RuntimeException("User not found for id: " + userId);
-        }
 
         List<Trip> trips = tripRepository.findByUserId(userId);
         log.debug("Found {} trips for user id: {}", trips.size(), userId);
@@ -177,7 +176,7 @@ public class TripServiceImpl implements TripService {
                         .orElseThrow(
                                 () -> {
                                     log.error("Vehicle not found for VIN: {}", vinNumber);
-                                    return new RuntimeException(
+                                    return new ResourceNotFoundException(
                                             "Vehicle not found for vin number: " + vinNumber);
                                 });
 
@@ -243,13 +242,13 @@ public class TripServiceImpl implements TripService {
         Vehicle vehicle = trip.getVehicle();
         if (vehicle == null) {
             log.error("No vehicle was matched with trip: {}", tripId);
-            throw new RuntimeException("No vehicle was matched with trip: " + tripId);
+            throw new IllegalStateException("No vehicle was matched with trip: " + tripId);
         }
 
         Request request = trip.getRequest();
         if (request == null) {
             log.error("Trip: {} was not assigned with a request", tripId);
-            throw new RuntimeException("Trip: " + tripId + " was not assigned with a request");
+            throw new IllegalStateException("Trip: " + tripId + " was not assigned with a request");
         }
 
         log.debug("Trip validated successfully for trip id: {}", tripId);

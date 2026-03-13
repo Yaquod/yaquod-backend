@@ -12,21 +12,28 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.yaquodorg.yaquod.dtos.GoogleIdTokenDto;
 import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
 import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
+import com.yaquodorg.yaquod.dtos.VehicleLoginDto;
 import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.response.LoginResponse;
+import com.yaquodorg.yaquod.response.VehicleLoginResponse;
+import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
 import com.yaquodorg.yaquod.service.auth.AuthenticationServiceImpl;
+import com.yaquodorg.yaquod.service.google.GoogleTokenService;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import com.yaquodorg.yaquod.service.mail.MailSenderService;
 import com.yaquodorg.yaquod.service.user.UserService;
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,12 +49,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/**
- * NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY
- *
- * <p>Unit tests for AuthenticationService Tests authentication, registration, verification, and
- * password reset logic
- */
+/** NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthenticationService Unit Tests")
 class AuthenticationServiceTest {
@@ -61,6 +63,8 @@ class AuthenticationServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
 
     @Mock private AuthenticationManager authenticationManager;
+
+    @Mock private GoogleTokenService googleTokenService;
 
     @InjectMocks private AuthenticationServiceImpl authenticationService;
 
@@ -323,7 +327,7 @@ class AuthenticationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> authenticationService.verifyUser(verifyCodeDto))
-                .isInstanceOf(NoSuchElementException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User not found");
     }
 
@@ -354,7 +358,7 @@ class AuthenticationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> authenticationService.regenerateOtp("nonexistent@example.com"))
-                .isInstanceOf(NoSuchElementException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User not found");
 
         verify(mailSenderService, never()).sendEmail(anyString(), anyString(), anyString());
@@ -466,5 +470,94 @@ class AuthenticationServiceTest {
         assertThatThrownBy(() -> authenticationService.refreshToken(null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Invalid or missing refresh token");
+    }
+
+    /** GOOGLE LOGIN TESTS */
+    @Test
+    @DisplayName("Should login with Google successfully")
+    void shouldGoogleLoginSuccessfully() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto();
+        googleIdTokenDto.setIdToken("valid-google-token");
+        googleIdTokenDto.setFcmToken("fcm-token");
+
+        when(googleTokenService.verifyIdToken("valid-google-token")).thenReturn(googleLoginDto);
+        when(userService.findOrCreateGoogleUser(googleLoginDto)).thenReturn(user);
+        doNothing().when(userService).updateFcmToken(anyString(), anyString());
+        when(jwtService.generateAccessToken(user)).thenReturn("google-access-token");
+        when(jwtService.generateRefreshToken(user)).thenReturn("google-refresh-token");
+        when(jwtService.extractExpiration(anyString())).thenReturn(new Date());
+
+        // Act
+        LoginResponse response = authenticationService.googleLogin(googleIdTokenDto);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getAccessToken()).isEqualTo("google-access-token");
+        assertThat(response.getRefreshToken()).isEqualTo("google-refresh-token");
+        assertThat(response.getUser()).isEqualTo(user);
+
+        verify(googleTokenService).verifyIdToken("valid-google-token");
+        verify(userService).findOrCreateGoogleUser(googleLoginDto);
+        verify(userService).updateFcmToken(user.getEmail(), "fcm-token");
+    }
+
+    @Test
+    @DisplayName("Should login with Google without FCM token")
+    void shouldGoogleLoginWithoutFcmToken() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto();
+        googleIdTokenDto.setIdToken("valid-google-token");
+        googleIdTokenDto.setFcmToken(null);
+
+        when(googleTokenService.verifyIdToken("valid-google-token")).thenReturn(googleLoginDto);
+        when(userService.findOrCreateGoogleUser(googleLoginDto)).thenReturn(user);
+        when(jwtService.generateAccessToken(user)).thenReturn("access-token");
+        when(jwtService.generateRefreshToken(user)).thenReturn("refresh-token");
+        when(jwtService.extractExpiration(anyString())).thenReturn(new Date());
+
+        // Act
+        LoginResponse response = authenticationService.googleLogin(googleIdTokenDto);
+
+        // Assert
+        assertThat(response).isNotNull();
+        verify(userService, never()).updateFcmToken(anyString(), anyString());
+    }
+
+    /** VEHICLE LOGIN TESTS */
+    @Test
+    @DisplayName("Should login vehicle successfully")
+    void shouldVehicleLoginSuccessfully() {
+        // Arrange
+        VehicleLoginDto vehicleLoginDto = new VehicleLoginDto();
+        vehicleLoginDto.setApiKey("VEH_api-key");
+        vehicleLoginDto.setApiSecret("api-secret");
+
+        Vehicle vehicle =
+                Vehicle.builder()
+                        .id(1L)
+                        .apiKey("VEH_api-key")
+                        .status(VehicleStatus.IDLE)
+                        .createdByAdmin(user)
+                        .build();
+
+        VehicleAuthenticationToken mockAuth = mock(VehicleAuthenticationToken.class);
+        when(mockAuth.getDetails()).thenReturn(vehicle);
+        when(authenticationManager.authenticate(any())).thenReturn(mockAuth);
+        when(jwtService.generateVehicleToken(vehicle)).thenReturn("vehicle-access-token");
+        when(jwtService.generateVehicleRefreshToken(vehicle)).thenReturn("vehicle-refresh-token");
+        when(jwtService.extractExpiration("vehicle-access-token")).thenReturn(new Date());
+        when(jwtService.extractExpiration("vehicle-refresh-token")).thenReturn(new Date());
+
+        // Act
+        VehicleLoginResponse response = authenticationService.vehicleLogin(vehicleLoginDto);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getAccessToken()).isEqualTo("vehicle-access-token");
+        assertThat(response.getRefreshToken()).isEqualTo("vehicle-refresh-token");
+        assertThat(response.getVehicle()).isEqualTo(vehicle);
+
+        verify(authenticationManager).authenticate(any(VehicleAuthenticationToken.class));
     }
 }

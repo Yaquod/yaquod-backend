@@ -8,6 +8,7 @@ import com.yaquodorg.yaquod.entity.TripStatus;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.RequestRepository;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
@@ -99,7 +100,7 @@ public class RequestServiceImpl implements RequestService {
                 .orElseThrow(
                         () -> {
                             log.error("Request not found for id: {}", requestId);
-                            return new RuntimeException("Request not found!");
+                            return new ResourceNotFoundException("Request not found!");
                         });
     }
 
@@ -122,7 +123,7 @@ public class RequestServiceImpl implements RequestService {
                         .orElseThrow(
                                 () -> {
                                     log.error("Request not found for id: {}", requestId);
-                                    return new RuntimeException("Request not found!");
+                                    return new ResourceNotFoundException("Request not found!");
                                 });
 
         request.setStatus(requestStatus);
@@ -141,7 +142,7 @@ public class RequestServiceImpl implements RequestService {
                         .orElseThrow(
                                 () -> {
                                     log.error("Request not found for id: {}", requestId);
-                                    return new RuntimeException("Request not found!");
+                                    return new ResourceNotFoundException("Request not found!");
                                 });
 
         request.setStatus(requestStatus);
@@ -168,14 +169,14 @@ public class RequestServiceImpl implements RequestService {
         Trip trip = request.getTrip();
         if (trip == null) {
             log.error("No trip associated with request id: {}", id);
-            throw new RuntimeException("No trip associated with request " + id);
+            throw new IllegalStateException("No trip associated with request " + id);
         }
         long tripId = trip.getId();
 
         Vehicle vehicle = trip.getVehicle();
         if (vehicle == null) {
             log.error("No vehicle associated with trip of request id: {}", id);
-            throw new RuntimeException("No vehicle associated with trip of request " + id);
+            throw new IllegalStateException("No vehicle associated with trip of request " + id);
         }
         String vinNumber = vehicle.getVinNumber();
 
@@ -224,14 +225,14 @@ public class RequestServiceImpl implements RequestService {
         Trip trip = request.getTrip();
         if (trip == null) {
             log.error("No trip associated with request id: {}", id);
-            throw new RuntimeException("No trip associated with request " + id);
+            throw new IllegalStateException("No trip associated with request " + id);
         }
         long tripId = trip.getId();
 
         Vehicle vehicle = trip.getVehicle();
         if (vehicle == null) {
             log.error("No vehicle associated with trip of request id: {}", id);
-            throw new RuntimeException("No vehicle associated with trip of request " + id);
+            throw new IllegalStateException("No vehicle associated with trip of request " + id);
         }
         String vinNumber = vehicle.getVinNumber();
 

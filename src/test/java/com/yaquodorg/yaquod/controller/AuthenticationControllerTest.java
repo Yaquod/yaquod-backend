@@ -12,9 +12,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.*;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.response.LoginResponse;
+import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.service.auth.AuthenticationService;
+import com.yaquodorg.yaquod.utils.GlobalExceptionHandler;
 import io.jsonwebtoken.ExpiredJwtException;
+import java.security.GeneralSecurityException;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +57,10 @@ class AuthenticationControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(authenticationController).build();
+        mockMvc =
+                MockMvcBuilders.standaloneSetup(authenticationController)
+                        .setControllerAdvice(new GlobalExceptionHandler())
+                        .build();
         objectMapper = new ObjectMapper();
 
         // Setup test user
@@ -110,8 +118,8 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/admin/signup - Should return 400 on failure")
-    void shouldReturn400OnAdminSignupFailure() throws Exception {
+    @DisplayName("POST /api/auth/admin/signup - Should return 500 on failure")
+    void shouldReturn500OnAdminSignupFailure() throws Exception {
         // Arrange
         when(authenticationService.signup(any(RegisterUserDto.class), eq("ADMIN")))
                 .thenThrow(new RuntimeException("Email already exists"));
@@ -122,11 +130,9 @@ class AuthenticationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(registerUserDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(containsString("Failed to register admin user")));
+                .andExpect(jsonPath("$.message").value(containsString("Email already exists")));
     }
 
     /** CLIENT SIGNUP TESTS */
@@ -151,8 +157,8 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/client/signup - Should return 400 on failure")
-    void shouldReturn400OnClientSignupFailure() throws Exception {
+    @DisplayName("POST /api/auth/client/signup - Should return 409 on duplicate email")
+    void shouldReturn409OnClientSignupFailure() throws Exception {
         // Arrange
         when(authenticationService.signup(any(RegisterUserDto.class), eq("CLIENT")))
                 .thenThrow(new IllegalStateException("Email Already Exists!"));
@@ -163,11 +169,9 @@ class AuthenticationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(registerUserDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(containsString("Failed to register student user")));
+                .andExpect(jsonPath("$.message").value("Email Already Exists!"));
     }
 
     /** LOGIN TESTS */
@@ -193,8 +197,8 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/login - Should return 400 with wrong credentials")
-    void shouldReturn400WithWrongCredentials() throws Exception {
+    @DisplayName("POST /api/auth/login - Should return 401 with wrong credentials")
+    void shouldReturn401WithWrongCredentials() throws Exception {
         // Arrange
         when(authenticationService.login(any(LoginUserDto.class)))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
@@ -205,9 +209,9 @@ class AuthenticationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(loginUserDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Failed to login")));
+                .andExpect(jsonPath("$.message").value(containsString("Bad credentials")));
     }
 
     /** VERIFY CODE TESTS */
@@ -256,8 +260,8 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/verify-code - Should return 400 when user not found")
-    void shouldReturn400WhenUserNotFoundOnVerify() throws Exception {
+    @DisplayName("POST /api/auth/verify-code - Should return 404 when user not found")
+    void shouldReturn404WhenUserNotFoundOnVerify() throws Exception {
         // Arrange
         VerifyCodeDto verifyCodeDto = new VerifyCodeDto();
         verifyCodeDto.setEmail("nonexistent@example.com");
@@ -272,7 +276,7 @@ class AuthenticationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(verifyCodeDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("User not found"));
     }
@@ -294,9 +298,9 @@ class AuthenticationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(verifyCodeDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Internal Server Error")));
+                .andExpect(jsonPath("$.message").value(containsString("Database error")));
     }
 
     /** REGENERATE CODE TESTS */
@@ -325,8 +329,8 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/regenerate-code - Should return 400 when user not found")
-    void shouldReturn400WhenUserNotFoundOnRegenerate() throws Exception {
+    @DisplayName("POST /api/auth/regenerate-code - Should return 404 when user not found")
+    void shouldReturn404WhenUserNotFoundOnRegenerate() throws Exception {
         // Arrange
         RegenerateCodeDto regenerateCodeDto = new RegenerateCodeDto();
         regenerateCodeDto.setEmail("nonexistent@example.com");
@@ -341,7 +345,7 @@ class AuthenticationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(regenerateCodeDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("User not found"));
     }
@@ -365,7 +369,7 @@ class AuthenticationControllerTest {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Internal Server Error")));
+                .andExpect(jsonPath("$.message").value(containsString("Mail server error")));
     }
 
     /** TOKEN REFRESH TEST */
@@ -400,7 +404,11 @@ class AuthenticationControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Bad Request")));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Failed to refresh token: No authorization header"
+                                                + " provided"));
     }
 
     @Test
@@ -417,7 +425,7 @@ class AuthenticationControllerTest {
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Refresh Token Expired")));
+                .andExpect(jsonPath("$.message").value(containsString("Token expired")));
     }
 
     @Test
@@ -432,7 +440,7 @@ class AuthenticationControllerTest {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Unexpected Error")));
+                .andExpect(jsonPath("$.message").value(containsString("Database error")));
     }
 
     /** RESET PASSWORD TESTS */
@@ -483,8 +491,8 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/reset-password - Should return 400 when user not found")
-    void shouldReturn400WhenUserNotFoundOnReset() throws Exception {
+    @DisplayName("POST /api/auth/reset-password - Should return 404 when user not found")
+    void shouldReturn404WhenUserNotFoundOnReset() throws Exception {
         // Arrange
         ResetPasswordDto resetPasswordDto = new ResetPasswordDto();
         resetPasswordDto.setEmail("nonexistent@example.com");
@@ -500,7 +508,7 @@ class AuthenticationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(resetPasswordDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("User not found"));
     }
@@ -525,7 +533,7 @@ class AuthenticationControllerTest {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Internal Server Error")));
+                .andExpect(jsonPath("$.message").value(containsString("Database error")));
     }
 
     /** TEST ENDPOINT */
@@ -536,5 +544,151 @@ class AuthenticationControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().string("Authentication Service is up and running!"));
+    }
+
+    /** GOOGLE LOGIN TESTS */
+    @Test
+    @DisplayName("POST /api/auth/google - Should login with Google successfully")
+    void shouldGoogleLoginSuccessfully() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("valid-google-token", "fcm-token");
+
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setAccessToken("access-token");
+        loginResponse.setRefreshToken("refresh-token");
+        loginResponse.setAccessTokenExpiresIn(new Date(System.currentTimeMillis() + 3600000));
+        loginResponse.setRefreshTokenExpiresIn(new Date(System.currentTimeMillis() + 86400000));
+
+        when(authenticationService.googleLogin(any(GoogleIdTokenDto.class)))
+                .thenReturn(loginResponse);
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.data.refreshToken").value("refresh-token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should return 400 with invalid token")
+    void shouldReturn400WithInvalidGoogleToken() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("invalid-token", null);
+
+        when(authenticationService.googleLogin(any(GoogleIdTokenDto.class)))
+                .thenThrow(new IllegalArgumentException("Invalid token"));
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should return 401 on security exception")
+    void shouldReturn401OnGoogleSecurityException() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("some-token", null);
+
+        when(authenticationService.googleLogin(any(GoogleIdTokenDto.class)))
+                .thenThrow(new GeneralSecurityException("Verification failed"));
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Security verification failed"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should return 500 on unexpected error")
+    void shouldReturn500OnGoogleUnexpectedError() throws Exception {
+        // Arrange
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("some-token", null);
+
+        when(authenticationService.googleLogin(any(GoogleIdTokenDto.class)))
+                .thenThrow(new RuntimeException("Unexpected"));
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(containsString("Unexpected")));
+    }
+
+    /** VEHICLE LOGIN TESTS */
+    @Test
+    @DisplayName("POST /api/auth/vehicle/login - Should login vehicle successfully")
+    void shouldVehicleLoginSuccessfully() throws Exception {
+        // Arrange
+        VehicleLoginDto vehicleLoginDto = new VehicleLoginDto();
+        vehicleLoginDto.setApiKey("valid-api-key");
+        vehicleLoginDto.setApiSecret("valid-api-secret");
+
+        Vehicle vehicle =
+                Vehicle.builder().id(1L).vinNumber("VIN123").status(VehicleStatus.IDLE).build();
+
+        VehicleLoginResponse loginResponse =
+                VehicleLoginResponse.builder()
+                        .accessToken("vehicle-access-token")
+                        .refreshToken("vehicle-refresh-token")
+                        .accessTokenExpiresIn(new Date(System.currentTimeMillis() + 3600000))
+                        .refreshTokenExpiresIn(new Date(System.currentTimeMillis() + 86400000))
+                        .vehicle(vehicle)
+                        .build();
+
+        when(authenticationService.vehicleLogin(any(VehicleLoginDto.class)))
+                .thenReturn(loginResponse);
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/vehicle/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(vehicleLoginDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").value("vehicle-access-token"))
+                .andExpect(jsonPath("$.data.vehicle.vinNumber").value("VIN123"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/vehicle/login - Should return 500 with invalid credentials")
+    void shouldReturn500WithInvalidVehicleCredentials() throws Exception {
+        // Arrange
+        VehicleLoginDto vehicleLoginDto = new VehicleLoginDto();
+        vehicleLoginDto.setApiKey("invalid-key");
+        vehicleLoginDto.setApiSecret("invalid-secret");
+
+        when(authenticationService.vehicleLogin(any(VehicleLoginDto.class)))
+                .thenThrow(new RuntimeException("Invalid credentials"));
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/vehicle/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(vehicleLoginDto)))
+                .andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(containsString("Invalid credentials")));
     }
 }
