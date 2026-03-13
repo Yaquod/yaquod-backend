@@ -295,7 +295,8 @@ class TripServiceImplTest {
     @DisplayName("shouldThrowExceptionWhenUserNotFoundForTrips")
     void shouldThrowExceptionWhenUserNotFoundForTrips() {
         // Arrange
-        when(userService.getUserById(999L)).thenReturn(null);
+        when(userService.getUserById(999L))
+                .thenThrow(new ResourceNotFoundException("User not found for id: 999"));
 
         // Act & Assert
         RuntimeException exception =
