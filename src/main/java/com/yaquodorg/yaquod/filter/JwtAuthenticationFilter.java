@@ -61,6 +61,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             filterChain.doFilter(request, response);
+        } catch (IllegalStateException e) {
+            // User email is not verified
+            sendErrorResponse(
+                    response,
+                    HttpServletResponse.SC_UNAUTHORIZED,
+                    e.getMessage());
+            log.error("Authentication failed: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
             sendErrorResponse(
                     response,
@@ -81,6 +88,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            
+            // Check if user is enabled (email verified)
+            if (!userDetails.isEnabled()) {
+                throw new IllegalStateException("User email is not verified");
+            }
+            
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());

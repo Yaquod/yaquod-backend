@@ -145,7 +145,7 @@ public class AuthenticationController {
                         responseCode = "200",
                         description = "Login successful, tokens returned"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
+                        responseCode = "401",
                         description = "Invalid credentials")
             })
     @PostMapping("/login")

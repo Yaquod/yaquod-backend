@@ -197,7 +197,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/login - Should return 500 with wrong credentials")
+    @DisplayName("POST /api/auth/login - Should return 401 with wrong credentials")
     void shouldReturn401WithWrongCredentials() throws Exception {
         // Arrange
         when(authenticationService.login(any(LoginUserDto.class)))

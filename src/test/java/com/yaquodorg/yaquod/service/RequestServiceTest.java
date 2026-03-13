@@ -12,6 +12,7 @@ import com.yaquodorg.yaquod.entity.TripStatus;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.RequestRepository;
 import com.yaquodorg.yaquod.service.request.RequestServiceImpl;
 import com.yaquodorg.yaquod.service.trip.TripService;
@@ -322,9 +323,9 @@ class RequestServiceTest {
         when(requestRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception =
+        ResourceNotFoundException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        ResourceNotFoundException.class,
                         () -> requestService.updateRequestStatus(999L, RequestStatus.COMPLETED));
 
         assertEquals("Request not found!", exception.getMessage());
