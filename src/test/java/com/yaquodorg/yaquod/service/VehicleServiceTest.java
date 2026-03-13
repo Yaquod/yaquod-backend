@@ -11,6 +11,7 @@ import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.VehicleRepository;
 import com.yaquodorg.yaquod.response.CreateVehicleResponse;
 import com.yaquodorg.yaquod.service.vehicle.VehicleServiceImpl;
@@ -449,7 +450,7 @@ class VehicleServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> vehicleService.getVehicleByApiKey("non-existent"))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Vehicle not found!");
 
         verify(vehicleRepository, times(1)).findByApiKey("non-existent");

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.yaquodorg.yaquod.dtos.InitTripDto;
 import com.yaquodorg.yaquod.entity.*;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.TripRepository;
 import com.yaquodorg.yaquod.service.trip.TripServiceImpl;
 import com.yaquodorg.yaquod.service.user.UserService;
@@ -393,9 +394,9 @@ class TripServiceImplTest {
         when(tripRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception =
+        ResourceNotFoundException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        ResourceNotFoundException.class,
                         () -> tripService.updateTripStatus(999L, TripStatus.COMPLETED));
 
         assertEquals("Trip not found!", exception.getMessage());

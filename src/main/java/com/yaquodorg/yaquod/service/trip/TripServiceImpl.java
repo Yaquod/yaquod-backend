@@ -152,10 +152,6 @@ public class TripServiceImpl implements TripService {
     public List<Trip> getTripsByUserId(Long userId) {
         log.debug("Fetching trips for user id: {}", userId);
         User user = userService.getUserById(userId);
-        if (user == null) {
-            log.error("User not found for id: {}", userId);
-            throw new ResourceNotFoundException("User not found for id: " + userId);
-        }
 
         List<Trip> trips = tripRepository.findByUserId(userId);
         log.debug("Found {} trips for user id: {}", trips.size(), userId);

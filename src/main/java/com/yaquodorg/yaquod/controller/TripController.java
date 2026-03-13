@@ -50,7 +50,10 @@ public class TripController {
                         description = "Trip request created successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "Failed to create trip request")
+                        description = "Failed to create trip request"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "503",
+                        description = "Service unavailable - no vehicles available")
             })
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @PostMapping("/request")
@@ -251,7 +254,10 @@ public class TripController {
                         description = "Access denied"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "Request not found")
+                        description = "Request not found"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "Invalid request state for decline")
             })
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @PostMapping("/request/{requestId}/decline")
@@ -278,7 +284,10 @@ public class TripController {
                         description = "Access denied"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "Request not found")
+                        description = "Request not found"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "Invalid request state for acceptance")
             })
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @PostMapping("/request/{requestId}/accept")
