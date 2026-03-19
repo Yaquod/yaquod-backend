@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -59,21 +60,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } else {
                 handleUserAuthentication(jwt, request);
             }
-
-            filterChain.doFilter(request, response);
+        } catch (DisabledException e) {
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+            log.error("Authentication failed: {}", e.getMessage());
+            return;
         } catch (ExpiredJwtException e) {
             sendErrorResponse(
                     response,
                     HttpServletResponse.SC_UNAUTHORIZED,
                     "Token expired: " + e.getMessage());
             log.error("Token Expired: {}", e.getMessage());
+            return;
         } catch (Exception e) {
             sendErrorResponse(
                     response,
                     HttpServletResponse.SC_UNAUTHORIZED,
                     "JWT authentication failed: " + e.getMessage());
             log.error("JwtAuthenticationFilterError: {}", e.getMessage());
+            return;
         }
+
+        filterChain.doFilter(request, response);
     }
 
     private void handleUserAuthentication(String jwt, HttpServletRequest request) {
@@ -81,6 +88,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            if (!userDetails.isEnabled()) {
+                throw new DisabledException("User email is not verified");
+            }
+
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());

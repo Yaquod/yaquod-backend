@@ -248,6 +248,55 @@ class VehicleRepositoryTest {
     }
 
     @Test
+    @DisplayName("Should find vehicle by API key")
+    void shouldFindVehicleByApiKey() {
+        // Arrange
+        entityManager.persist(vehicle1);
+        entityManager.flush();
+
+        // Act
+        Optional<Vehicle> found = vehicleRepository.findByApiKey("VEH_test-api-key");
+
+        // Assert
+        assertThat(found).isPresent();
+        assertThat(found.get().getVinNumber()).isEqualTo(VinNumber1);
+    }
+
+    @Test
+    @DisplayName("Should return empty when vehicle API key not found")
+    void shouldReturnEmptyWhenApiKeyNotFound() {
+        // Act
+        Optional<Vehicle> found = vehicleRepository.findByApiKey("non-existent-key");
+
+        // Assert
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should return empty when plate number not found")
+    void shouldReturnEmptyWhenPlateNoNotFound() {
+        // Act
+        Optional<Vehicle> found = vehicleRepository.findByPlateNo("NON-EXISTENT");
+
+        // Assert
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should return empty list when no vehicles match status")
+    void shouldReturnEmptyListWhenNoVehiclesMatchStatus() {
+        // Arrange
+        entityManager.persist(vehicle1); // IDLE
+        entityManager.flush();
+
+        // Act
+        List<Vehicle> vehicles = vehicleRepository.findByStatus(VehicleStatus.OUT_OF_SERVICE);
+
+        // Assert
+        assertThat(vehicles).isEmpty();
+    }
+
+    @Test
     @DisplayName("Should handle concurrent updates correctly")
     void shouldHandleConcurrentUpdates() {
         // Arrange

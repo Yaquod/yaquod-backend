@@ -2,6 +2,8 @@ package com.yaquodorg.yaquod.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -10,12 +12,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.GoogleIdTokenDto;
+import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.dtos.LoginUserDto;
 import com.yaquodorg.yaquod.dtos.RegisterUserDto;
+import com.yaquodorg.yaquod.dtos.VehicleLoginDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.repository.UserRepository;
+import com.yaquodorg.yaquod.repository.VehicleRepository;
+import com.yaquodorg.yaquod.service.google.GoogleTokenService;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
+import java.security.GeneralSecurityException;
 import java.sql.Timestamp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -38,7 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("User & Authentication Controller Integration Tests")
-class UserControllerIntegrationTest {
+class AuthenticationControllerIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
 
@@ -50,11 +61,16 @@ class UserControllerIntegrationTest {
 
     @Autowired private PasswordEncoder passwordEncoder;
 
+    @Autowired private VehicleRepository vehicleRepository;
+
+    @MockBean private GoogleTokenService googleTokenService;
+
     private RegisterUserDto registerUserDto;
     private User testUser;
 
     @BeforeEach
     void setUp() {
+        vehicleRepository.deleteAll();
         userRepository.deleteAll();
 
         // Setup registration DTO
@@ -115,11 +131,9 @@ class UserControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(registerUserDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(containsString("Failed to register admin user")));
+                .andExpect(jsonPath("$.message").value(containsString("Email Already Exists!")));
     }
 
     // CLIENT SIGNUP TESTS
@@ -142,8 +156,8 @@ class UserControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/client/signup - Should return 400 with duplicate email")
-    void shouldReturn400WithDuplicateEmailOnClientSignup() throws Exception {
+    @DisplayName("POST /api/auth/client/signup - Should return 409 with duplicate email")
+    void shouldReturn409WithDuplicateEmailOnClientSignup() throws Exception {
         registerUserDto.setEmail("existing@example.com");
 
         mockMvc.perform(
@@ -151,7 +165,7 @@ class UserControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(registerUserDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
@@ -182,8 +196,8 @@ class UserControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/login - Should return 400 with wrong password")
-    void shouldReturn400WithWrongPassword() throws Exception {
+    @DisplayName("POST /api/auth/login - Should return 401 with wrong password")
+    void shouldReturn401WithWrongPassword() throws Exception {
         LoginUserDto loginDto = new LoginUserDto();
         loginDto.setEmail("existing@example.com");
         loginDto.setPassword("wrongpassword");
@@ -194,14 +208,13 @@ class UserControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(loginDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Failed to login")));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
-    @DisplayName("POST /api/auth/login - Should return 400 with non-existent email")
-    void shouldReturn400WithNonExistentEmail() throws Exception {
+    @DisplayName("POST /api/auth/login - Should return 401 with non-existent email")
+    void shouldReturn401WithNonExistentEmail() throws Exception {
         LoginUserDto loginDto = new LoginUserDto();
         loginDto.setEmail("nonexistent@example.com");
         loginDto.setPassword("password123");
@@ -212,7 +225,7 @@ class UserControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(loginDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
@@ -343,8 +356,8 @@ class UserControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/regenerate-code - Should return 400 with non-existent email")
-    void shouldReturn400WhenRegeneratingForNonExistentUser() throws Exception {
+    @DisplayName("POST /api/auth/regenerate-code - Should return 404 with non-existent email")
+    void shouldReturn404WhenRegeneratingForNonExistentUser() throws Exception {
         String regenerateJson =
                 """
                 {
@@ -357,7 +370,7 @@ class UserControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(regenerateJson))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("User not found"));
     }
@@ -626,7 +639,7 @@ class UserControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(loginDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -636,5 +649,160 @@ class UserControllerIntegrationTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().string("Authentication Service is up and running!"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/vehicle/login - Should login vehicle successfully")
+    void shouldVehicleLoginSuccessfully() throws Exception {
+        // Arrange - create an admin user for vehicle creation reference
+        User adminUser =
+                User.builder()
+                        .email("admin@example.com")
+                        .passwordHash(passwordEncoder.encode("admin123"))
+                        .firstName("Admin")
+                        .lastName("User")
+                        .phoneNumber("+9876543210")
+                        .join_date(new Timestamp(System.currentTimeMillis()))
+                        .role(Role.ADMIN)
+                        .code(222222)
+                        .emailVerified(true)
+                        .build();
+        adminUser = userRepository.save(adminUser);
+
+        // Create vehicle with known API credentials
+        String rawApiSecret = "test-secret-123";
+        Vehicle vehicle =
+                Vehicle.builder()
+                        .vinNumber("TESTVEHICLE123")
+                        .model("TestModel")
+                        .status(VehicleStatus.IDLE)
+                        .createdAt(new Timestamp(System.currentTimeMillis()))
+                        .createdByAdmin(adminUser)
+                        .apiKey("VEH_test-vehicle-key")
+                        .apiSecretHash(passwordEncoder.encode(rawApiSecret))
+                        .build();
+        vehicleRepository.save(vehicle);
+
+        VehicleLoginDto vehicleLoginDto = new VehicleLoginDto();
+        vehicleLoginDto.setApiKey("VEH_test-vehicle-key");
+        vehicleLoginDto.setApiSecret(rawApiSecret);
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/vehicle/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(vehicleLoginDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andExpect(jsonPath("$.data.refreshToken").exists())
+                .andExpect(jsonPath("$.data.vehicle.vinNumber").value("TESTVEHICLE123"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/vehicle/login - Should return 401 with invalid credentials")
+    void shouldReturn401WithInvalidVehicleCredentials() throws Exception {
+        // Arrange
+        VehicleLoginDto vehicleLoginDto = new VehicleLoginDto();
+        vehicleLoginDto.setApiKey("INVALID_KEY");
+        vehicleLoginDto.setApiSecret("INVALID_SECRET");
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/vehicle/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(vehicleLoginDto)))
+                .andDo(print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should login with Google for new user")
+    void shouldGoogleLoginForNewUser() throws Exception {
+        // Arrange - mock GoogleTokenService
+        GoogleLoginDto googleUserInfo =
+                new GoogleLoginDto("google@example.com", "Google User", "Google", "User");
+        when(googleTokenService.verifyIdToken(anyString())).thenReturn(googleUserInfo);
+
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("valid-google-token", "fcm-token");
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andExpect(jsonPath("$.data.refreshToken").exists())
+                .andExpect(jsonPath("$.data.user.email").value("google@example.com"));
+
+        // Verify user was created in database
+        assertThat(userRepository.findByEmail("google@example.com")).isPresent();
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should login with Google for existing user")
+    void shouldGoogleLoginForExistingUser() throws Exception {
+        // Arrange - mock GoogleTokenService with existing user's email
+        GoogleLoginDto googleUserInfo =
+                new GoogleLoginDto("existing@example.com", "Existing User", "Existing", "User");
+        when(googleTokenService.verifyIdToken(anyString())).thenReturn(googleUserInfo);
+
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("valid-google-token", "fcm-token");
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andExpect(jsonPath("$.data.user.email").value("existing@example.com"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should return 400 with invalid token")
+    void shouldReturn400WithInvalidGoogleToken() throws Exception {
+        // Arrange - mock GoogleTokenService to throw
+        when(googleTokenService.verifyIdToken(anyString()))
+                .thenThrow(new IllegalArgumentException("Invalid token"));
+
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("invalid-token", null);
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google - Should return 401 on security exception")
+    void shouldReturn401OnGoogleSecurityException() throws Exception {
+        // Arrange
+        when(googleTokenService.verifyIdToken(anyString()))
+                .thenThrow(new GeneralSecurityException("Verification failed"));
+
+        GoogleIdTokenDto googleIdTokenDto = new GoogleIdTokenDto("bad-token", null);
+
+        // Act & Assert
+        mockMvc.perform(
+                        post("/api/auth/google")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(googleIdTokenDto)))
+                .andDo(print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Security verification failed"));
     }
 }

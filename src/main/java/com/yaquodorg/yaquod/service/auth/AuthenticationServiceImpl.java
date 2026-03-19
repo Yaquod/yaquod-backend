@@ -10,6 +10,7 @@ import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.response.VehicleLoginResponse;
 import com.yaquodorg.yaquod.security.VehicleAuthenticationToken;
@@ -22,7 +23,6 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.NoSuchElementException;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -213,7 +213,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .orElseThrow(
                                 () -> {
                                     log.error("User not found for email: {}", email);
-                                    return new NoSuchElementException("User not found");
+                                    return new ResourceNotFoundException("User not found");
                                 });
 
         String accessToken = jwtService.generateAccessToken(user);
@@ -247,7 +247,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .orElseThrow(
                                 () -> {
                                     log.error("User not found for email: {}", email);
-                                    return new NoSuchElementException("User not found");
+                                    return new ResourceNotFoundException("User not found");
                                 });
         int verificationCode = user.getCode();
 
@@ -273,7 +273,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .orElseThrow(
                                 () -> {
                                     log.error("User not found for email: {}", email);
-                                    return new NoSuchElementException("User not found");
+                                    return new ResourceNotFoundException("User not found");
                                 });
         int newOtp = generateRandomOtp();
 
@@ -300,7 +300,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .orElseThrow(
                                 () -> {
                                     log.error("User not found for email: {}", email);
-                                    return new NoSuchElementException("User not found");
+                                    return new ResourceNotFoundException("User not found");
                                 });
         int verificationCode = user.getCode();
 

@@ -1,5 +1,6 @@
 package com.yaquodorg.yaquod.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -216,16 +217,14 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenRequestNotFound")
+    @DisplayName("shouldReturn404WhenRequestNotFound")
     @WithMockUser(roles = "CLIENT")
-    void shouldReturn400WhenRequestNotFound() throws Exception {
+    void shouldReturn404WhenRequestNotFound() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/trips/request/status/999999"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(containsString("Failed to check Request status")));
+                .andExpect(jsonPath("$.message").value(containsString("Request not found")));
     }
 
     @Test
@@ -241,16 +240,16 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenTripNotFoundByRequestId")
+    @DisplayName("shouldReturn404WhenTripNotFoundByRequestId")
     @WithMockUser(roles = "CLIENT")
-    void shouldReturn400WhenTripNotFoundByRequestId() throws Exception {
+    void shouldReturn404WhenTripNotFoundByRequestId() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/trips/by-request/999999"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(
                         jsonPath("$.message")
-                                .value(containsString("Failed to get Trip by requestId")));
+                                .value(containsString("Trip not found for requestId")));
     }
 
     @Test
@@ -266,14 +265,14 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenTripNotFoundById")
+    @DisplayName("shouldReturn404WhenTripNotFoundById")
     @WithMockUser(roles = "CLIENT")
-    void shouldReturn400WhenTripNotFoundById() throws Exception {
+    void shouldReturn404WhenTripNotFoundById() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/trips/999999"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(containsString("Failed to get Trip by id")));
+                .andExpect(jsonPath("$.message").value(containsString("Trip not found for id")));
     }
 
     @Test
@@ -287,7 +286,7 @@ class TripControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.message").value("Trip deleted successfully"));
 
         // Verify deletion
-        mockMvc.perform(get("/api/trips/" + testTrip.getId())).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/trips/" + testTrip.getId())).andExpect(status().isNotFound());
     }
 
     @Test
@@ -370,16 +369,14 @@ class TripControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldReturn400WhenVehicleNotFoundForTrips")
+    @DisplayName("shouldReturn404WhenVehicleNotFoundForTrips")
     @WithMockUser(roles = "ADMIN")
-    void shouldReturn400WhenVehicleNotFoundForTrips() throws Exception {
+    void shouldReturn404WhenVehicleNotFoundForTrips() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/trips/vehicle/INVALID_VIN"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(containsString("Failed to get Trips by VIN number")));
+                .andExpect(jsonPath("$.message").value(containsString("Vehicle not found")));
     }
 
     @Test
@@ -445,5 +442,195 @@ class TripControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("shouldDeclineRequestSuccessfully")
+    @WithMockCustomUser(email = "test@example.com")
+    void shouldDeclineRequestSuccessfully() throws Exception {
+        // Arrange - set up the required state: Request=COMPLETED, Trip=INITIATED, Vehicle=ON_HOLD
+        testRequest.setStatus(RequestStatus.COMPLETED);
+        testRequest = requestRepository.save(testRequest);
+
+        testTrip.setStatus(TripStatus.INITIATED);
+        testTrip = tripRepository.save(testTrip);
+
+        testVehicle.setStatus(VehicleStatus.ON_HOLD);
+        testVehicle = vehicleRepository.save(testVehicle);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/decline"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.message").value("Request declined successfully"));
+
+        // Verify state changes
+        entityManager.flush();
+        entityManager.clear();
+
+        Request updatedRequest = requestRepository.findById(testRequest.getId()).orElseThrow();
+        assertThat(updatedRequest.getStatus()).isEqualTo(RequestStatus.DECLINED);
+
+        Trip updatedTrip = tripRepository.findById(testTrip.getId()).orElseThrow();
+        assertThat(updatedTrip.getStatus()).isEqualTo(TripStatus.CANCELLED_BY_PASSENGER);
+
+        Vehicle updatedVehicle = vehicleRepository.findById(testVehicle.getId()).orElseThrow();
+        assertThat(updatedVehicle.getStatus()).isEqualTo(VehicleStatus.IDLE);
+    }
+
+    @Test
+    @DisplayName("shouldReturn403WhenDecliningOtherUsersRequest")
+    @WithMockCustomUser(email = "admin@example.com")
+    void shouldReturn403WhenDecliningOtherUsersRequest() throws Exception {
+        // Arrange - request belongs to testUser, but admin is trying to decline
+        testRequest.setStatus(RequestStatus.COMPLETED);
+        testRequest = requestRepository.save(testRequest);
+
+        // Act & Assert - should fail because admin doesn't own this request
+        mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/decline"))
+                .andDo(print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    @DisplayName("shouldReturn409WhenDecliningRequestInWrongState")
+    @WithMockCustomUser(email = "test@example.com")
+    void shouldReturn409WhenDecliningRequestInWrongState() throws Exception {
+        // Arrange - request is still PENDING (not COMPLETED)
+        mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/decline"))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    @DisplayName("shouldAcceptRequestSuccessfully")
+    @WithMockCustomUser(email = "test@example.com")
+    void shouldAcceptRequestSuccessfully() throws Exception {
+        // Arrange - set up the required state: Request=COMPLETED, Trip=INITIATED, Vehicle=ON_HOLD
+        testRequest.setStatus(RequestStatus.COMPLETED);
+        testRequest = requestRepository.save(testRequest);
+
+        testTrip.setStatus(TripStatus.INITIATED);
+        testTrip = tripRepository.save(testTrip);
+
+        testVehicle.setStatus(VehicleStatus.ON_HOLD);
+        testVehicle = vehicleRepository.save(testVehicle);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/accept"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("ACCEPTED"));
+
+        // Verify state changes
+        entityManager.flush();
+        entityManager.clear();
+
+        Request updatedRequest = requestRepository.findById(testRequest.getId()).orElseThrow();
+        assertThat(updatedRequest.getStatus()).isEqualTo(RequestStatus.ACCEPTED);
+
+        Trip updatedTrip = tripRepository.findById(testTrip.getId()).orElseThrow();
+        assertThat(updatedTrip.getStatus()).isEqualTo(TripStatus.VEHICLE_ON_WAY);
+
+        Vehicle updatedVehicle = vehicleRepository.findById(testVehicle.getId()).orElseThrow();
+        assertThat(updatedVehicle.getStatus()).isEqualTo(VehicleStatus.ON_WAY);
+    }
+
+    @Test
+    @DisplayName("shouldReturn409WhenAcceptingRequestInWrongState")
+    @WithMockCustomUser(email = "test@example.com")
+    void shouldReturn409WhenAcceptingRequestInWrongState() throws Exception {
+        // Arrange - request is still PENDING (not COMPLETED)
+        mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/accept"))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    @DisplayName("shouldStartTripSuccessfully")
+    @WithMockUser(roles = "VEHICLE")
+    void shouldStartTripSuccessfully() throws Exception {
+        // Arrange - trip needs vehicle and request with destination
+        testTrip.setStatus(TripStatus.VEHICLE_ON_WAY);
+        testTrip = tripRepository.save(testTrip);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/start"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.message").value("Trip started successfully!"));
+
+        // Verify state changes
+        entityManager.flush();
+        entityManager.clear();
+
+        Trip updatedTrip = tripRepository.findById(testTrip.getId()).orElseThrow();
+        assertThat(updatedTrip.getStatus()).isEqualTo(TripStatus.IN_PROGRESS);
+
+        Vehicle updatedVehicle = vehicleRepository.findById(testVehicle.getId()).orElseThrow();
+        assertThat(updatedVehicle.getStatus()).isEqualTo(VehicleStatus.IN_USE);
+    }
+
+    @Test
+    @DisplayName("shouldReturn404WhenStartingTripWithInvalidRequest")
+    @WithMockUser(roles = "VEHICLE")
+    void shouldReturn404WhenStartingTripWithInvalidRequest() throws Exception {
+        // Act & Assert - non-existent request ID
+        mockMvc.perform(post("/api/trips/request/999999/start"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    @DisplayName("shouldEndTripSuccessfully")
+    @WithMockUser(roles = "VEHICLE")
+    void shouldEndTripSuccessfully() throws Exception {
+        // Arrange - trip must be in progress
+        testTrip.setStatus(TripStatus.IN_PROGRESS);
+        testTrip = tripRepository.save(testTrip);
+
+        testVehicle.setStatus(VehicleStatus.IN_USE);
+        testVehicle = vehicleRepository.save(testVehicle);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/trips/request/" + testRequest.getId() + "/end"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.message").value("Trip ended successfully!"));
+
+        // Verify state changes
+        entityManager.flush();
+        entityManager.clear();
+
+        Trip updatedTrip = tripRepository.findById(testTrip.getId()).orElseThrow();
+        assertThat(updatedTrip.getStatus()).isEqualTo(TripStatus.COMPLETED);
+
+        Vehicle updatedVehicle = vehicleRepository.findById(testVehicle.getId()).orElseThrow();
+        assertThat(updatedVehicle.getStatus()).isEqualTo(VehicleStatus.IDLE);
+    }
+
+    @Test
+    @DisplayName("shouldReturn404WhenEndingTripWithInvalidRequest")
+    @WithMockUser(roles = "VEHICLE")
+    void shouldReturn404WhenEndingTripWithInvalidRequest() throws Exception {
+        // Act & Assert - non-existent request ID
+        mockMvc.perform(post("/api/trips/request/999999/end"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
     }
 }

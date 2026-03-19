@@ -4,6 +4,8 @@ import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.exception.ResourceAlreadyExistsException;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.VehicleRepository;
 import com.yaquodorg.yaquod.response.CreateVehicleResponse;
 import java.sql.Timestamp;
@@ -42,7 +44,7 @@ public class VehicleServiceImpl implements VehicleService {
             log.warn(
                     "Attempted to create vehicle with existing VIN: {}",
                     createVehicleDto.getVinNumber());
-            throw new RuntimeException("Vehicle already exists!");
+            throw new ResourceAlreadyExistsException("Vehicle already exists!");
         }
 
         Vehicle vehicle = new Vehicle();
@@ -69,7 +71,7 @@ public class VehicleServiceImpl implements VehicleService {
                 .orElseThrow(
                         () -> {
                             log.warn("Vehicle not found with ID: {}", id);
-                            return new RuntimeException("Vehicle not found!");
+                            return new ResourceNotFoundException("Vehicle not found!");
                         });
     }
 
@@ -81,7 +83,7 @@ public class VehicleServiceImpl implements VehicleService {
                 .orElseThrow(
                         () -> {
                             log.warn("Vehicle not found with apiKey: {}", apiKey);
-                            return new RuntimeException("Vehicle not found!");
+                            return new ResourceNotFoundException("Vehicle not found!");
                         });
     }
 
@@ -102,7 +104,7 @@ public class VehicleServiceImpl implements VehicleService {
                                     log.warn(
                                             "Vehicle not found with VIN: {}",
                                             createVehicleDto.getVinNumber());
-                                    return new RuntimeException(
+                                    return new ResourceNotFoundException(
                                             "Vehicle with VIN "
                                                     + createVehicleDto.getVinNumber()
                                                     + " not found!");
@@ -134,7 +136,7 @@ public class VehicleServiceImpl implements VehicleService {
                         .orElseThrow(
                                 () -> {
                                     log.warn("Vehicle not found with VIN: {}", vinNumber);
-                                    return new RuntimeException(
+                                    return new ResourceNotFoundException(
                                             "Vehicle not found with VIN: " + vinNumber);
                                 });
 
@@ -158,7 +160,7 @@ public class VehicleServiceImpl implements VehicleService {
                         .orElseThrow(
                                 () -> {
                                     log.warn("Vehicle not found with VIN: {}", vinNumber);
-                                    return new RuntimeException(
+                                    return new ResourceNotFoundException(
                                             "Vehicle not found with VIN: " + vinNumber);
                                 });
         vehicle.setStatus(status);

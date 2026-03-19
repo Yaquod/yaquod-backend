@@ -1,6 +1,5 @@
 package com.yaquodorg.yaquod.controller;
 
-import static com.yaquodorg.yaquod.response.ApiResponse.createFailureResponse;
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 import static org.springframework.http.HttpStatus.CREATED;
 
@@ -8,6 +7,7 @@ import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
 import com.yaquodorg.yaquod.dtos.VehicleDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.CreateVehicleResponse;
 import com.yaquodorg.yaquod.response.MessageResponse;
@@ -54,8 +54,8 @@ public class VehicleController {
                         responseCode = "201",
                         description = "Vehicle created successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Invalid vehicle data or creation failed"),
+                        responseCode = "409",
+                        description = "Vehicle already exists"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "Access denied - requires ADMIN role")
@@ -65,13 +65,8 @@ public class VehicleController {
     public ResponseEntity<ApiResponse<CreateVehicleResponse>> createVehicle(
             @Valid @RequestBody CreateVehicleDto createVehicleDto,
             @AuthenticationPrincipal User user) {
-        try {
-            CreateVehicleResponse response = vehicleService.createVehicle(createVehicleDto, user);
-            return ResponseEntity.status(CREATED).body(createSuccessResponse(response));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(createFailureResponse("Failed to create vehicle: " + e.getMessage()));
-        }
+        CreateVehicleResponse response = vehicleService.createVehicle(createVehicleDto, user);
+        return ResponseEntity.status(CREATED).body(createSuccessResponse(response));
     }
 
     @Operation(
@@ -101,7 +96,7 @@ public class VehicleController {
                         responseCode = "200",
                         description = "Vehicle retrieved successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
+                        responseCode = "404",
                         description = "Vehicle not found"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
@@ -113,13 +108,8 @@ public class VehicleController {
             @Parameter(description = "The unique database ID of the vehicle", required = true)
                     @PathVariable
                     Long vehicleId) {
-        try {
-            Vehicle vehicle = vehicleService.getVehicle(vehicleId);
-            return ResponseEntity.ok(createSuccessResponse(vehicle));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(createFailureResponse("Could not fetch vehicle: " + e.getMessage()));
-        }
+        Vehicle vehicle = vehicleService.getVehicle(vehicleId);
+        return ResponseEntity.ok(createSuccessResponse(vehicle));
     }
 
     @Operation(
@@ -133,7 +123,7 @@ public class VehicleController {
                         responseCode = "200",
                         description = "Vehicle retrieved successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
+                        responseCode = "404",
                         description = "Vehicle not found"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
@@ -148,16 +138,11 @@ public class VehicleController {
                             example = "1HGBH41JXMN109186")
                     @PathVariable
                     String vinNumber) {
-        try {
-            Vehicle vehicle =
-                    vehicleService
-                            .getVehicleByVinNumber(vinNumber)
-                            .orElseThrow(() -> new RuntimeException("Vehicle not found!"));
-            return ResponseEntity.ok(createSuccessResponse(vehicle));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(createFailureResponse("Could not fetch vehicle: " + e.getMessage()));
-        }
+        Vehicle vehicle =
+                vehicleService
+                        .getVehicleByVinNumber(vinNumber)
+                        .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found!"));
+        return ResponseEntity.ok(createSuccessResponse(vehicle));
     }
 
     @Operation(
@@ -170,8 +155,8 @@ public class VehicleController {
                         responseCode = "200",
                         description = "Vehicle updated successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Invalid vehicle data or update failed"),
+                        responseCode = "404",
+                        description = "Vehicle not found"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "Access denied - requires ADMIN role")
@@ -180,13 +165,8 @@ public class VehicleController {
     @PatchMapping
     public ResponseEntity<ApiResponse<Vehicle>> updateVehicle(
             @Valid @RequestBody CreateVehicleDto createVehicleDto) {
-        try {
-            Vehicle vehicle = vehicleService.updateVehicle(createVehicleDto);
-            return ResponseEntity.ok(createSuccessResponse(vehicle));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(createFailureResponse("Failed to update vehicle: " + e.getMessage()));
-        }
+        Vehicle vehicle = vehicleService.updateVehicle(createVehicleDto);
+        return ResponseEntity.ok(createSuccessResponse(vehicle));
     }
 
     @Operation(
@@ -199,8 +179,8 @@ public class VehicleController {
                         responseCode = "200",
                         description = "Vehicle deleted successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Vehicle not found or deletion failed"),
+                        responseCode = "404",
+                        description = "Vehicle not found"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "Access denied - requires ADMIN role")
@@ -213,14 +193,9 @@ public class VehicleController {
                             required = true)
                     @PathVariable
                     Long vehicleId) {
-        try {
-            vehicleService.deleteVehicle(vehicleId);
-            return ResponseEntity.ok(
-                    createSuccessResponse(new MessageResponse("Vehicle deleted successfully!")));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(createFailureResponse("Could not delete vehicle: " + e.getMessage()));
-        }
+        vehicleService.deleteVehicle(vehicleId);
+        return ResponseEntity.ok(
+                createSuccessResponse(new MessageResponse("Vehicle deleted successfully!")));
     }
 
     @Operation(
@@ -234,9 +209,6 @@ public class VehicleController {
                         responseCode = "200",
                         description = "Location update signal sent successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Failed to send signal to vehicle"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "Access denied - requires ADMIN role")
             })
@@ -249,17 +221,8 @@ public class VehicleController {
                             example = "1HGBH41JXMN109186")
                     @PathVariable
                     String vinNumber) {
-        try {
-            mqttService.publish(TOPIC_ORDER_UPDATE_LOCATION, new VehicleDto(vinNumber));
-
-            return ResponseEntity.ok(
-                    createSuccessResponse(new MessageResponse("Order signal sent!")));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(
-                            createFailureResponse(
-                                    "Could not send signal to vehicle: " + e.getMessage()));
-        }
+        mqttService.publish(TOPIC_ORDER_UPDATE_LOCATION, new VehicleDto(vinNumber));
+        return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Order signal sent!")));
     }
 
     @Operation(
@@ -273,9 +236,6 @@ public class VehicleController {
                         responseCode = "200",
                         description = "Status update signal sent successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Failed to send signal to vehicle"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "Access denied - requires ADMIN role")
             })
@@ -288,15 +248,7 @@ public class VehicleController {
                             example = "1HGBH41JXMN109186")
                     @PathVariable
                     String vinNumber) {
-        try {
-            mqttService.publish(TOPIC_ORDER_UPDATE_STATUS, new VehicleDto(vinNumber));
-            return ResponseEntity.ok(
-                    createSuccessResponse(new MessageResponse("Order signal sent!")));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(
-                            createFailureResponse(
-                                    "Could not send signal to vehicle: " + e.getMessage()));
-        }
+        mqttService.publish(TOPIC_ORDER_UPDATE_STATUS, new VehicleDto(vinNumber));
+        return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Order signal sent!")));
     }
 }

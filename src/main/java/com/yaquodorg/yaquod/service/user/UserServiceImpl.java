@@ -4,6 +4,8 @@ import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
 import com.yaquodorg.yaquod.dtos.UpdateUserDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.exception.ResourceAlreadyExistsException;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.UserRepository;
 import com.yaquodorg.yaquod.service.jwt.JwtService;
 import jakarta.transaction.Transactional;
@@ -32,7 +34,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> userOptional = userRepository.findByEmail(user.getEmail());
         if (userOptional.isPresent()) {
             log.warn("Email already exists: {}", user.getEmail());
-            throw new IllegalStateException("Email Already Exists!");
+            throw new ResourceAlreadyExistsException("Email Already Exists!");
         }
 
         User savedUser = userRepository.save(user);
@@ -83,14 +85,14 @@ public class UserServiceImpl implements UserService {
                         .orElseThrow(
                                 () -> {
                                     log.error("User not found for email: {}", email);
-                                    return new RuntimeException("User not found");
+                                    return new ResourceNotFoundException("User not found");
                                 });
             }
             log.warn("Token validation failed");
-            throw new RuntimeException("Token is not valid");
+            throw new IllegalArgumentException("Token is not valid");
         }
         log.warn("Invalid authorization header");
-        throw new RuntimeException("Token is invalid");
+        throw new IllegalArgumentException("Token is invalid");
     }
 
     @Override
@@ -101,7 +103,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(
                         () -> {
                             log.error("User not found with id: {}", id);
-                            return new RuntimeException("User not found");
+                            return new ResourceNotFoundException("User not found");
                         });
     }
 
@@ -151,7 +153,7 @@ public class UserServiceImpl implements UserService {
                         .orElseThrow(
                                 () -> {
                                     log.error("User not found with email: {}", email);
-                                    return new RuntimeException("user not found");
+                                    return new ResourceNotFoundException("user not found");
                                 });
         user.setFirebaseToken(fcmToken);
         log.info("FCM token updated successfully for user id: {}", user.getId());
