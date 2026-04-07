@@ -2,6 +2,7 @@ package com.yaquodorg.yaquod.utils;
 
 import static com.yaquodorg.yaquod.response.ApiResponse.createFailureResponse;
 
+import com.yaquodorg.yaquod.exception.DuplicateKey;
 import com.yaquodorg.yaquod.exception.ResourceAlreadyExistsException;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.exception.ServiceUnavailableException;
@@ -222,5 +223,14 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(createFailureResponse("Internal server error: " + ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateKey.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ApiResponse<MessageResponse>> handleDuplicateKeyException(
+            DuplicateKey ex) {
+        log.error("Duplicate key error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(createFailureResponse(ex.getMessage()));
     }
 }
