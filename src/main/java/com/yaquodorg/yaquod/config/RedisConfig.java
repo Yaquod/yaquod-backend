@@ -15,8 +15,8 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 @Configuration
 public class RedisConfig {
     @Bean
-    public RedisTemplate<String, ?> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<String, ?> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
     }
@@ -35,11 +35,10 @@ public class RedisConfig {
                                 RedisSerializationContext.SerializationPair.fromSerializer(
                                         new GenericJackson2JsonRedisSerializer()));
 
+        // TODO: Add specific cache configurations here if needed, e.g.:
+        // "userCache", defaultConfig.entryTtl(Duration.ofMinutes(30)),
         Map<String, RedisCacheConfiguration> cacheConfigs =
-                Map.of(
-                        // TODO: Add specific cache configurations here if needed, e.g.:
-                        // "userCache", defaultConfig.entryTtl(Duration.ofMinutes(30)),
-                        );
+                Map.of();
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig.entryTtl(Duration.ofHours(1))) // fallback TTL
