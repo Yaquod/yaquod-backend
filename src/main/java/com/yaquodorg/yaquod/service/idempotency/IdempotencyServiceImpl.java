@@ -1,11 +1,12 @@
 package com.yaquodorg.yaquod.service.idempotency;
 
 import com.yaquodorg.yaquod.exception.DuplicateKeyException;
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -23,5 +24,11 @@ public class IdempotencyServiceImpl implements IdempotencyService {
         if (Boolean.FALSE.equals(isNew)) {
             throw new DuplicateKeyException("Duplicate request detected for key: " + key);
         }
+    }
+
+    @Override
+    public void invalidate(String key, String paymentId) {
+        String redisKey = "idempotency:" + paymentId + ":" + key;
+        redisTemplate.delete(redisKey);
     }
 }
