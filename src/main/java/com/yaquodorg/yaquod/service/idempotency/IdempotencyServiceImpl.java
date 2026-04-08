@@ -1,7 +1,5 @@
 package com.yaquodorg.yaquod.service.idempotency;
 
-import com.yaquodorg.yaquod.exception.DuplicateKey;
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
