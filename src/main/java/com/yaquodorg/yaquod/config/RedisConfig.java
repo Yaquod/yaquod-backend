@@ -15,7 +15,8 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 @Configuration
 public class RedisConfig {
     @Bean
-    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate<String, String> redisTemplate(
+            RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
@@ -37,8 +38,7 @@ public class RedisConfig {
 
         // TODO: Add specific cache configurations here if needed, e.g.:
         // "userCache", defaultConfig.entryTtl(Duration.ofMinutes(30)),
-        Map<String, RedisCacheConfiguration> cacheConfigs =
-                Map.of();
+        Map<String, RedisCacheConfiguration> cacheConfigs = Map.of();
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig.entryTtl(Duration.ofHours(1))) // fallback TTL
