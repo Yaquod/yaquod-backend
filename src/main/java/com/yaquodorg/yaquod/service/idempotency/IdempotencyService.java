@@ -6,4 +6,5 @@ public interface IdempotencyService {
 
     void invalidate(String key, String paymentId);
 
+    String findExistingKey(String key, String paymentId);
 }

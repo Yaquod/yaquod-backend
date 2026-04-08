@@ -31,4 +31,14 @@ public class IdempotencyServiceImpl implements IdempotencyService {
         String redisKey = "idempotency:" + paymentId + ":" + key;
         redisTemplate.delete(redisKey);
     }
+
+    @Override
+    public String findExistingKey(String key, String paymentId) {
+        String redisKey = "idempotency:" + paymentId + ":" + key;
+        String value = redisTemplate.opsForValue().get(redisKey);
+        if (value != null) {
+            log.info("Existing idempotency key found: {}", redisKey);
+        }
+        return value;
+    }
 }
