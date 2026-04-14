@@ -25,6 +25,8 @@ services:
     depends_on:
       postgis:
         condition: service_healthy
+      redis:
+        condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -49,8 +51,9 @@ services:
 
   redis:
     image: redis:7
+    container_name: redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
 
 volumes:
   postgis_data:
