@@ -67,3 +67,5 @@ build/
 /.github/skills
 /.windsurf
 nul
+*.env
+qodana.yaml
