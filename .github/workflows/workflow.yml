@@ -75,7 +75,7 @@ jobs:
         run: mvn -B clean package -DskipTests
 
       - name: Run Unit & Integration Tests
-        run: mvn test
+        run: mvn test -DforkCount=1 -DreuseForks=false
 
       - name: Spotless Check
         run: mvn spotless:check
