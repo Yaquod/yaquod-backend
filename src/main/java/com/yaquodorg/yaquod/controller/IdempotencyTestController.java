@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-//TODO: This is just for manual testing of the idempotency service
-//TODO: MUST BE DELETED LATER
+// TODO: This is just for manual testing of the idempotency service
+// TODO: MUST BE DELETED LATER
 @RestController
 @RequestMapping("/api/test/idempotency")
 @RequiredArgsConstructor
@@ -33,9 +33,8 @@ public class IdempotencyTestController {
             responseCode = "409",
             description = "Duplicate key detected")
     @PostMapping("/validate")
-    public ResponseEntity<ApiResponse<String>> validate(
-            @RequestParam String key, @RequestParam String paymentId) {
-        idempotencyService.validate(key, paymentId);
+    public ResponseEntity<ApiResponse<String>> validate(@RequestParam String key) {
+        idempotencyService.validate(key);
         return ResponseEntity.ok(ApiResponse.createSuccessResponse("Idempotency key validated"));
     }
 
@@ -46,9 +45,8 @@ public class IdempotencyTestController {
             responseCode = "200",
             description = "Key deleted successfully")
     @DeleteMapping("/invalidate")
-    public ResponseEntity<ApiResponse<String>> invalidate(
-            @RequestParam String key, @RequestParam String paymentId) {
-        idempotencyService.invalidate(key, paymentId);
+    public ResponseEntity<ApiResponse<String>> invalidate(@RequestParam String key) {
+        idempotencyService.invalidate(key);
         return ResponseEntity.ok(ApiResponse.createSuccessResponse("Idempotency key invalidated"));
     }
 
@@ -59,9 +57,8 @@ public class IdempotencyTestController {
             responseCode = "200",
             description = "Key found")
     @GetMapping("/find")
-    public ResponseEntity<ApiResponse<String>> find(
-            @RequestParam String key, @RequestParam String paymentId) {
-        String value = idempotencyService.findExistingKey(key, paymentId);
+    public ResponseEntity<ApiResponse<String>> find(@RequestParam String key) {
+        String value = idempotencyService.findExistingKey(key);
         return ResponseEntity.ok(ApiResponse.createSuccessResponse(value));
     }
 }

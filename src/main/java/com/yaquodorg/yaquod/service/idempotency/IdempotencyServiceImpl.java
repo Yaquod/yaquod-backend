@@ -15,10 +15,9 @@ public class IdempotencyServiceImpl implements IdempotencyService {
     private static final Duration TTL = Duration.ofMinutes(5);
 
     @Override
-    public void validate(String key, String paymentId) {
-        String redisKey = "idempotency:" + paymentId + ":" + key;
-
-        Boolean isNew = redisTemplate.opsForValue().setIfAbsent(redisKey, "pending", TTL);
+    public void validate(String key) {
+        Boolean isNew =
+                redisTemplate.opsForValue().setIfAbsent("idempotency:" + key, "pending", TTL);
 
         if (Boolean.FALSE.equals(isNew)) {
             throw new DuplicateKeyException("Duplicate request detected for key: " + key);
@@ -26,14 +25,13 @@ public class IdempotencyServiceImpl implements IdempotencyService {
     }
 
     @Override
-    public void invalidate(String key, String paymentId) {
-        String redisKey = "idempotency:" + paymentId + ":" + key;
-        redisTemplate.delete(redisKey);
+    public void invalidate(String key) {
+        redisTemplate.delete("idempotency:" + key);
     }
 
     @Override
-    public String findExistingKey(String key, String paymentId) {
-        String redisKey = "idempotency:" + paymentId + ":" + key;
+    public String findExistingKey(String key) {
+        String redisKey = "idempotency:" + key;
         String value = redisTemplate.opsForValue().get(redisKey);
         if (value != null) {
             log.info("Existing idempotency key found: {}", redisKey);
