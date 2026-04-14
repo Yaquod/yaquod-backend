@@ -51,14 +51,14 @@ jobs:
         run: |
           echo "${{ secrets.FIREBASE_CONFIG_JSON }}" | base64 --decode > src/main/resources/firebase-service-account.json
 
+      - name: Spotless Check
+        run: mvn spotless:check
+
       - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
       - name: Run Unit & Integration Tests
         run: mvn test -DforkCount=1 -DreuseForks=false
-
-      - name: Spotless Check
-        run: mvn spotless:check
 
       - name: Upload test reports on failure
         if: failure()

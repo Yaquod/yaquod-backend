@@ -60,7 +60,8 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers("/swagger-ui/**", "/v3/api-docs*/**")
                                         .permitAll()
-                                        //NOTE: This is uncommented only in the case of manual testing and 
+                                        // NOTE: This is uncommented only in the case of manual
+                                        // testing and
                                         // it should be commented back after.
                                         // .requestMatchers("/api/test/**")
                                         // .permitAll()
