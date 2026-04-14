@@ -2,6 +2,14 @@ spring:
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ""
+      time-to-live: 600000 # Cache entries expire after 10 minutes
+  cache:
+    type: redis
   jpa:
     hibernate:
       ddl-auto: create-drop
