@@ -43,7 +43,7 @@ jobs:
       - name: Verify Broker is running on localhost:1883
         run: |
           echo "Waiting for broker to start..."
-          sleep 2 # Give the broker a moment to initialize
+          sleep 10 # Give the broker a moment to initialize
           
           echo "Subscribing to topic 'github/action'..."
           # Subscribe in the background, wait for 1 message (-C 1), then exit
