@@ -1,7 +1,7 @@
 package com.yaquodorg.yaquod.service.payment;
 
-import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
-import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
+import com.yaquodorg.yaquod.dtos.CreateCheckoutResponse;
+import com.yaquodorg.yaquod.dtos.SavedCardDto;
 import java.util.List;
 
 public interface PaymentService {

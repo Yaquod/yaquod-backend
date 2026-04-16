@@ -2,8 +2,8 @@ package com.yaquodorg.yaquod.service.payment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
-import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
+import com.yaquodorg.yaquod.dtos.CreateCheckoutResponse;
+import com.yaquodorg.yaquod.dtos.SavedCardDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.PaymentStatus;
 import com.yaquodorg.yaquod.entity.SavedCard;
@@ -146,7 +146,8 @@ public class PaymentServiceImpl implements PaymentService {
             JsonNode root = objectMapper.readTree(payload);
 
             String type = root.path("type").asText();
-            //TODO: The orderId is extracted assuming it's a transaction callback not a token callback.
+            // TODO: The orderId is extracted assuming it's a transaction callback not a token
+            // callback.
             String orderId = root.path("obj").path("order").path("id").asText();
             String transactionId = root.path("obj").path("id").asText();
             int amountCents = root.path("obj").path("amount_cents").asInt();

@@ -2,8 +2,8 @@ package com.yaquodorg.yaquod.controller;
 
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
-import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
-import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
+import com.yaquodorg.yaquod.dtos.CreateCheckoutResponse;
+import com.yaquodorg.yaquod.dtos.SavedCardDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.service.payment.PaymentService;
