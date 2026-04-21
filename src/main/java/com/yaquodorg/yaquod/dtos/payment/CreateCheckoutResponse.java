@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.payment;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

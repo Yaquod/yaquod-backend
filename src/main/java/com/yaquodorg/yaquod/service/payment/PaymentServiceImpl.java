@@ -2,8 +2,9 @@ package com.yaquodorg.yaquod.service.payment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.CreateCheckoutResponse;
-import com.yaquodorg.yaquod.dtos.SavedCardDto;
+import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
+import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
+import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.PaymentStatus;
 import com.yaquodorg.yaquod.entity.SavedCard;
@@ -11,6 +12,7 @@ import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.PaymentRepository;
 import com.yaquodorg.yaquod.repository.SavedCardRepository;
+import com.yaquodorg.yaquod.repository.UserRepository;
 import com.yaquodorg.yaquod.service.user.UserService;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +34,7 @@ import org.springframework.web.client.RestTemplate;
 public class PaymentServiceImpl implements PaymentService {
 
     private final UserService userService;
+    private final UserRepository userRepository;
 
     private final SavedCardRepository savedCardRepository;
     private final PaymentRepository paymentRepository;
@@ -83,6 +86,87 @@ public class PaymentServiceImpl implements PaymentService {
         String response = restTemplate.postForObject(url, request, String.class);
 
         return parseIntentionResponse(response);
+    }
+
+    @Override
+    @Transactional
+    public PayWithSavedCardResponse payWithSavedCard(User user, double amountInEgp, Long savedCardId) {
+        log.info("Pay with saved card for user: {}, amount: {} EGP", user.getId(), amountInEgp);
+
+        SavedCard savedCard;
+        if (savedCardId != null) {
+            savedCard = savedCardRepository.findById(savedCardId).orElse(null);
+            if (savedCard == null || !savedCard.getUser().getId().equals(user.getId())) {
+                throw new ResourceNotFoundException("Saved card not found");
+            }
+        } else {
+            if (user.getSavedCards().isEmpty()) {
+                throw new ResourceNotFoundException("No saved cards found for user");
+            }
+            savedCard = user.getSavedCards().get(0);
+        }
+
+        int amountInCents = (int) (amountInEgp * 100);
+
+        Map<String, Object> intentionRequest = buildCitIntentionRequest(user, savedCard, amountInCents);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Token " + secretKey);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(intentionRequest, headers);
+
+        String url = paymobBaseUrl + "/v1/intention/";
+        log.info("Calling Paymob CIT Intention API: {}", url);
+
+        String response = restTemplate.postForObject(url, request, String.class);
+
+        return parseCitIntentionResponse(response);
+    }
+
+    private Map<String, Object> buildCitIntentionRequest(User user, SavedCard savedCard, int amountInCents) {
+        Map<String, Object> billingData = new HashMap<>();
+        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
+        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
+        billingData.put("email", user.getEmail());
+        billingData.put("phone_number", user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+
+        Map<String, Object> item = new HashMap<>();
+        item.put("name", "Trip Payment");
+        item.put("amount", amountInCents);
+        item.put("description", "Payment for trip");
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("amount", amountInCents);
+        request.put("currency", "EGP");
+        request.put("payment_methods", List.of(Integer.parseInt(integrationId)));
+        request.put("items", List.of(item));
+        request.put("billing_data", billingData);
+        request.put("card_tokens", List.of(savedCard.getToken()));
+        request.put("notification_url", notificationUrl);
+        request.put("redirection_url", redirectionUrl);
+
+        return request;
+    }
+
+    private PayWithSavedCardResponse parseCitIntentionResponse(String responseBody) {
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+
+            String clientSecret = root.path("client_secret").asText();
+            String orderId = root.path("intention_order_id").asText();
+
+            String checkoutUrl = UNIFIED_CHECKOUT_URL + "?publicKey=" + publicKey + "&clientSecret=" + clientSecret;
+
+            return PayWithSavedCardResponse.builder()
+                    .checkoutUrl(checkoutUrl)
+                    .clientSecret(clientSecret)
+                    .orderId(orderId)
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to parse Paymob CIT intention response", e);
+            throw new RuntimeException("Failed to create checkout URL", e);
+        }
     }
 
     private Map<String, Object> buildIntentionRequest(User user) {

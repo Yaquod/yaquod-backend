@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.payment;
 
 import java.sql.Timestamp;
 import lombok.AllArgsConstructor;
