@@ -90,7 +90,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public PayWithSavedCardResponse payWithSavedCard(User user, double amountInEgp, Long savedCardId) {
+    public PayWithSavedCardResponse payWithSavedCard(
+            User user, double amountInEgp, Long savedCardId) {
         log.info("Pay with saved card for user: {}, amount: {} EGP", user.getId(), amountInEgp);
 
         SavedCard savedCard;
@@ -108,7 +109,8 @@ public class PaymentServiceImpl implements PaymentService {
 
         int amountInCents = (int) (amountInEgp * 100);
 
-        Map<String, Object> intentionRequest = buildCitIntentionRequest(user, savedCard, amountInCents);
+        Map<String, Object> intentionRequest =
+                buildCitIntentionRequest(user, savedCard, amountInCents);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -124,12 +126,15 @@ public class PaymentServiceImpl implements PaymentService {
         return parseCitIntentionResponse(response);
     }
 
-    private Map<String, Object> buildCitIntentionRequest(User user, SavedCard savedCard, int amountInCents) {
+    private Map<String, Object> buildCitIntentionRequest(
+            User user, SavedCard savedCard, int amountInCents) {
         Map<String, Object> billingData = new HashMap<>();
         billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
         billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
         billingData.put("email", user.getEmail());
-        billingData.put("phone_number", user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+        billingData.put(
+                "phone_number",
+                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
 
         Map<String, Object> item = new HashMap<>();
         item.put("name", "Trip Payment");
@@ -156,7 +161,12 @@ public class PaymentServiceImpl implements PaymentService {
             String clientSecret = root.path("client_secret").asText();
             String orderId = root.path("intention_order_id").asText();
 
-            String checkoutUrl = UNIFIED_CHECKOUT_URL + "?publicKey=" + publicKey + "&clientSecret=" + clientSecret;
+            String checkoutUrl =
+                    UNIFIED_CHECKOUT_URL
+                            + "?publicKey="
+                            + publicKey
+                            + "&clientSecret="
+                            + clientSecret;
 
             return PayWithSavedCardResponse.builder()
                     .checkoutUrl(checkoutUrl)

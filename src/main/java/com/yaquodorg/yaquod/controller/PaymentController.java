@@ -9,8 +9,6 @@ import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.service.payment.PaymentService;
-import com.yaquodorg.yaquod.response.ApiResponse;
-import com.yaquodorg.yaquod.service.payment.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -54,12 +52,15 @@ public class PaymentController {
             summary = "Pay with saved card",
             description = "Creates a payment intention using a saved card")
     public ResponseEntity<ApiResponse<PayWithSavedCardResponse>> payWithSavedCard(
-            @AuthenticationPrincipal User user,
-            @RequestBody PayWithSavedCardRequest request) {
-        log.info("Pay with saved card for user: {}, amount: {} EGP", user.getId(), request.getAmount());
+            @AuthenticationPrincipal User user, @RequestBody PayWithSavedCardRequest request) {
+        log.info(
+                "Pay with saved card for user: {}, amount: {} EGP",
+                user.getId(),
+                request.getAmount());
 
         PayWithSavedCardResponse response =
-                paymentService.payWithSavedCard(user, request.getAmount(), request.getSavedCardId());
+                paymentService.payWithSavedCard(
+                        user, request.getAmount(), request.getSavedCardId());
         return ResponseEntity.ok(createSuccessResponse(response));
     }
 
