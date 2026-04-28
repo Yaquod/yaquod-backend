@@ -29,24 +29,24 @@ public class MqttConfig {
     private String clientId;
     private String[] topics;
     /*
-  Use QoS 1 when:
-  • You need to get every message and your use case can
-  handle duplicates. QoS level 1 is the most frequently used
-  service level because it guarantees the message arrives
-  at least once but allows for multiple deliveries. Of course,
-  your application must tolerate duplicates and be able to
-  process them accordingly.
-  • You can’t bear the overhead of QoS 2. QoS 1 delivers
-  messages much faster than QoS 2.
-  Use QoS 2 when:
-  • It is critical to your application to receive all messages
-  exactly once. This is often the case if a duplicate delivery
-  can harm application users or subscribing clients. Be
-  aware of the overhead and that the QoS 2 interaction
-  takes more time to complete.
+    Use QoS 1 when:
+    • You need to get every message and your use case can
+    handle duplicates. QoS level 1 is the most frequently used
+    service level because it guarantees the message arrives
+    at least once but allows for multiple deliveries. Of course,
+    your application must tolerate duplicates and be able to
+    process them accordingly.
+    • You can’t bear the overhead of QoS 2. QoS 1 delivers
+    messages much faster than QoS 2.
+    Use QoS 2 when:
+    • It is critical to your application to receive all messages
+    exactly once. This is often the case if a duplicate delivery
+    can harm application users or subscribing clients. Be
+    aware of the overhead and that the QoS 2 interaction
+    takes more time to complete.
 
-  source : hivemq-ebook-mqtt-essentials.pdf
-   */
+    source : hivemq-ebook-mqtt-essentials.pdf
+     */
     private int qos = 2;
     private int connectionTimeout = 60;
     private int keepAliveInterval = 60;
@@ -61,7 +61,7 @@ public class MqttConfig {
 
         log.info("Connecting to MQTT Broker at: {}", resolvedUrl);
 
-        options.setServerURIs(new String[]{resolvedUrl});
+        options.setServerURIs(new String[] {resolvedUrl});
         options.setConnectionTimeout(connectionTimeout);
         options.setKeepAliveInterval(keepAliveInterval);
         options.setCleanSession(true);
