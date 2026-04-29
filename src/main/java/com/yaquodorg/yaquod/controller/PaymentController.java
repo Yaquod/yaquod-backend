@@ -2,11 +2,11 @@ package com.yaquodorg.yaquod.controller;
 
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
+import com.yaquodorg.yaquod.dtos.payment.ChargeSavedCardDirectRequest;
+import com.yaquodorg.yaquod.dtos.payment.ChargeSavedCardDirectResponse;
 import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardRequest;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
-import com.yaquodorg.yaquod.dtos.payment.PreAuthorizePaymentRequest;
-import com.yaquodorg.yaquod.dtos.payment.PreAuthorizePaymentResponse;
 import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
@@ -35,30 +35,28 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping("/checkout-url")
+    @PostMapping("/cards")
     @Operation(
-            summary = "Create checkout URL for adding card",
+            summary = "Add new card",
             description =
                     "Creates a Paymob intention and returns unified checkout URL for user to add"
                             + " their card")
-    public ResponseEntity<ApiResponse<CreateCheckoutResponse>> createCheckout(
+    public ResponseEntity<ApiResponse<CreateCheckoutResponse>> addCard(
             @AuthenticationPrincipal User user) {
-        log.info("Received create checkout request for user: {}", user.getId());
+        log.info("Received add card request for user: {}", user.getId());
 
-        CreateCheckoutResponse response = paymentService.createCheckoutUrl(user.getId());
+        CreateCheckoutResponse response =
+                paymentService.createCardTokenizationCheckout(user.getId());
         return ResponseEntity.ok(createSuccessResponse(response));
     }
 
-    @PostMapping("/pay-with-saved-card")
+    @PostMapping("/cit")
     @Operation(
-            summary = "Pay with saved card",
-            description = "Creates a payment intention using a saved card")
+            summary = "Pay with saved card (CIT)",
+            description = "Customer Initiated Transaction - requires 3DS verification")
     public ResponseEntity<ApiResponse<PayWithSavedCardResponse>> payWithSavedCard(
             @AuthenticationPrincipal User user, @RequestBody PayWithSavedCardRequest request) {
-        log.info(
-                "Pay with saved card for user: {}, amount: {} EGP",
-                user.getId(),
-                request.getAmount());
+        log.info("CIT payment for user: {}, amount: {} EGP", user.getId(), request.getAmount());
 
         PayWithSavedCardResponse response =
                 paymentService.payWithSavedCard(
@@ -66,19 +64,19 @@ public class PaymentController {
         return ResponseEntity.ok(createSuccessResponse(response));
     }
 
-    @PostMapping("/pre-authorize")
+    @PostMapping("/mit")
     @Operation(
-            summary = "MIT Pre-authorize payment",
-            description = "Creates a direct MIT payment using saved card (no 3DS)")
-    public ResponseEntity<ApiResponse<PreAuthorizePaymentResponse>> preAuthorizePayment(
-            @AuthenticationPrincipal User user, @RequestBody PreAuthorizePaymentRequest request) {
+            summary = "Direct charge (MIT)",
+            description = "Merchant Initiated Transaction - no 3DS required")
+    public ResponseEntity<ApiResponse<ChargeSavedCardDirectResponse>> chargeSavedCardDirectly(
+            @AuthenticationPrincipal User user, @RequestBody ChargeSavedCardDirectRequest request) {
         log.info(
-                "MIT Pre-authorize for user: {}, amount: {} EGP",
+                "MIT direct charge for user: {}, amount: {} EGP",
                 user.getId(),
                 request.getAmount());
 
-        PreAuthorizePaymentResponse response =
-                paymentService.preAuthorizePayment(
+        ChargeSavedCardDirectResponse response =
+                paymentService.chargeSavedCardDirectly(
                         user, request.getAmount(), request.getSavedCardId());
         return ResponseEntity.ok(createSuccessResponse(response));
     }

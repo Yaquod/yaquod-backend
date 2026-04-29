@@ -2,9 +2,9 @@ package com.yaquodorg.yaquod.service.payment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.payment.ChargeSavedCardDirectResponse;
 import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
-import com.yaquodorg.yaquod.dtos.payment.PreAuthorizePaymentResponse;
 import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.PaymentStatus;
@@ -69,7 +69,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public CreateCheckoutResponse createCheckoutUrl(Long userId) {
+    public CreateCheckoutResponse createCardTokenizationCheckout(Long userId) {
         log.info("Creating checkout URL for user: {}", userId);
 
         User user = userService.getUserById(userId);
@@ -130,12 +130,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public PreAuthorizePaymentResponse preAuthorizePayment(
+    public ChargeSavedCardDirectResponse chargeSavedCardDirectly(
             User user, double amountInEgp, Long savedCardId) {
-        log.info(
-                "MIT Pre-authorize payment for user: {}, amount: {} EGP",
-                user.getId(),
-                amountInEgp);
+        log.info("MIT Direct charge for user: {}, amount: {} EGP", user.getId(), amountInEgp);
 
         SavedCard savedCard;
         if (savedCardId != null) {
@@ -232,7 +229,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private PreAuthorizePaymentResponse parseMitPayResponse(
+    private ChargeSavedCardDirectResponse parseMitPayResponse(
             String responseBody,
             String orderId,
             User user,
@@ -269,7 +266,7 @@ public class PaymentServiceImpl implements PaymentService {
                 log.warn("MIT payment failed: {}", message);
             }
 
-            return PreAuthorizePaymentResponse.builder()
+            return ChargeSavedCardDirectResponse.builder()
                     .orderId(orderId)
                     .transactionId(transactionId)
                     .success(success)

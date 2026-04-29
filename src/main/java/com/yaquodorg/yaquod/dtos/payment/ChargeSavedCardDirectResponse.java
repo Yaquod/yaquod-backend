@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PreAuthorizePaymentResponse {
+public class ChargeSavedCardDirectResponse {
 
     private String orderId;
     private String transactionId;

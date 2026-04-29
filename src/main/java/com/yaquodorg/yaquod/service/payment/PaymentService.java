@@ -1,18 +1,18 @@
 package com.yaquodorg.yaquod.service.payment;
 
+import com.yaquodorg.yaquod.dtos.payment.ChargeSavedCardDirectResponse;
 import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
-import com.yaquodorg.yaquod.dtos.payment.PreAuthorizePaymentResponse;
 import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.User;
 import java.util.List;
 
 public interface PaymentService {
-    CreateCheckoutResponse createCheckoutUrl(Long userId);
+    CreateCheckoutResponse createCardTokenizationCheckout(Long userId);
 
     PayWithSavedCardResponse payWithSavedCard(User user, double amountInEgp, Long savedCardId);
 
-    PreAuthorizePaymentResponse preAuthorizePayment(
+    ChargeSavedCardDirectResponse chargeSavedCardDirectly(
             User user, double amountInEgp, Long savedCardId);
 
     void processPaymentCallback(String payload);

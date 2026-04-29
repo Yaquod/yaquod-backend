@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PreAuthorizePaymentRequest {
+public class ChargeSavedCardDirectRequest {
 
     @NotNull(message = "Amount cannot be null")
     @Positive(message = "Amount must be positive")
