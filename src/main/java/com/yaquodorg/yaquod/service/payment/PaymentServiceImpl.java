@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
+import com.yaquodorg.yaquod.dtos.payment.PreAuthorizePaymentResponse;
 import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.PaymentStatus;
@@ -12,7 +13,6 @@ import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.PaymentRepository;
 import com.yaquodorg.yaquod.repository.SavedCardRepository;
-import com.yaquodorg.yaquod.repository.UserRepository;
 import com.yaquodorg.yaquod.service.user.UserService;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +34,6 @@ import org.springframework.web.client.RestTemplate;
 public class PaymentServiceImpl implements PaymentService {
 
     private final UserService userService;
-    private final UserRepository userRepository;
 
     private final SavedCardRepository savedCardRepository;
     private final PaymentRepository paymentRepository;
@@ -56,6 +55,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Value("${payment.paymob.integration-id}")
     private String integrationId;
+
+    @Value("${payment.paymob.moto-integration-id}")
+    private String motoIntegrationId;
 
     @Value("${payment.paymob.notification-url}")
     private String notificationUrl;
@@ -124,6 +126,159 @@ public class PaymentServiceImpl implements PaymentService {
         String response = restTemplate.postForObject(url, request, String.class);
 
         return parseCitIntentionResponse(response);
+    }
+
+    @Override
+    @Transactional
+    public PreAuthorizePaymentResponse preAuthorizePayment(
+            User user, double amountInEgp, Long savedCardId) {
+        log.info(
+                "MIT Pre-authorize payment for user: {}, amount: {} EGP",
+                user.getId(),
+                amountInEgp);
+
+        SavedCard savedCard;
+        if (savedCardId != null) {
+            savedCard = savedCardRepository.findById(savedCardId).orElse(null);
+            if (savedCard == null || !savedCard.getUser().getId().equals(user.getId())) {
+                throw new ResourceNotFoundException("Saved card not found");
+            }
+        } else {
+            if (user.getSavedCards().isEmpty()) {
+                throw new ResourceNotFoundException("No saved cards found for user");
+            }
+            savedCard = user.getSavedCards().get(0);
+        }
+
+        int amountInCents = (int) (amountInEgp * 100);
+
+        Map<String, Object> intentionRequest =
+                buildMitIntentionRequest(user, savedCard, amountInCents);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Token " + secretKey);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(intentionRequest, headers);
+
+        String intentionUrl = paymobBaseUrl + "/v1/intention/";
+        log.info("Calling Paymob MIT Intention API: {}", intentionUrl);
+
+        String intentionResponse = restTemplate.postForObject(intentionUrl, request, String.class);
+
+        String paymentToken = extractPaymentToken(intentionResponse);
+        String orderId = extractOrderId(intentionResponse);
+
+        Map<String, Object> payRequest = new HashMap<>();
+        Map<String, Object> source = new HashMap<>();
+        source.put("identifier", savedCard.getToken());
+        source.put("subtype", "TOKEN");
+        payRequest.put("source", source);
+        payRequest.put("payment_token", paymentToken);
+
+        HttpEntity<Map<String, Object>> payHttpRequest = new HttpEntity<>(payRequest, headers);
+
+        String payUrl = paymobBaseUrl + "/api/acceptance/payments/pay";
+        log.info("Calling Paymob Pay API: {}", payUrl);
+
+        String payResponse = restTemplate.postForObject(payUrl, payHttpRequest, String.class);
+
+        return parseMitPayResponse(payResponse, orderId, user, savedCard, amountInCents);
+    }
+
+    private Map<String, Object> buildMitIntentionRequest(
+            User user, SavedCard savedCard, int amountInCents) {
+        Map<String, Object> billingData = new HashMap<>();
+        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
+        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
+        billingData.put("email", user.getEmail());
+        billingData.put(
+                "phone_number",
+                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+
+        Map<String, Object> item = new HashMap<>();
+        item.put("name", "Trip Payment");
+        item.put("amount", amountInCents);
+        item.put("description", "Payment for trip");
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("amount", amountInCents);
+        request.put("currency", "EGP");
+        request.put("payment_methods", List.of(Integer.parseInt(motoIntegrationId)));
+        request.put("items", List.of(item));
+        request.put("billing_data", billingData);
+        request.put("card_tokens", List.of(savedCard.getToken()));
+
+        return request;
+    }
+
+    private String extractPaymentToken(String responseBody) {
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            return root.path("payment_keys").get(0).path("key").asText();
+        } catch (Exception e) {
+            log.error("Failed to extract payment token", e);
+            throw new RuntimeException("Failed to extract payment token", e);
+        }
+    }
+
+    private String extractOrderId(String responseBody) {
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            return root.path("intention_order_id").asText();
+        } catch (Exception e) {
+            log.error("Failed to extract order ID", e);
+            throw new RuntimeException("Failed to extract order ID", e);
+        }
+    }
+
+    private PreAuthorizePaymentResponse parseMitPayResponse(
+            String responseBody,
+            String orderId,
+            User user,
+            SavedCard savedCard,
+            int amountInCents) {
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+
+            String transactionId = root.path("id").asText();
+            boolean success = root.path("success").asBoolean();
+            String message = root.path("data").path("message").asText();
+
+            if (success) {
+                Payment payment =
+                        Payment.builder()
+                                .amount(
+                                        new java.math.BigDecimal(amountInCents)
+                                                .divide(new java.math.BigDecimal(100)))
+                                .currency("EGP")
+                                .status(PaymentStatus.PAID)
+                                .paymobOrderId(orderId)
+                                .paymobTransactionId(transactionId)
+                                .user(user)
+                                .savedCard(savedCard)
+                                .paidAt(new java.sql.Timestamp(System.currentTimeMillis()))
+                                .build();
+
+                paymentRepository.save(payment);
+                log.info(
+                        "MIT payment successful, orderId: {}, transactionId: {}",
+                        orderId,
+                        transactionId);
+            } else {
+                log.warn("MIT payment failed: {}", message);
+            }
+
+            return PreAuthorizePaymentResponse.builder()
+                    .orderId(orderId)
+                    .transactionId(transactionId)
+                    .success(success)
+                    .message(message)
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to parse MIT pay response", e);
+            throw new RuntimeException("Failed to parse MIT pay response", e);
+        }
     }
 
     private Map<String, Object> buildCitIntentionRequest(

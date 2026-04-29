@@ -5,6 +5,8 @@ import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardRequest;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
+import com.yaquodorg.yaquod.dtos.payment.PreAuthorizePaymentRequest;
+import com.yaquodorg.yaquod.dtos.payment.PreAuthorizePaymentResponse;
 import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
@@ -60,6 +62,23 @@ public class PaymentController {
 
         PayWithSavedCardResponse response =
                 paymentService.payWithSavedCard(
+                        user, request.getAmount(), request.getSavedCardId());
+        return ResponseEntity.ok(createSuccessResponse(response));
+    }
+
+    @PostMapping("/pre-authorize")
+    @Operation(
+            summary = "MIT Pre-authorize payment",
+            description = "Creates a direct MIT payment using saved card (no 3DS)")
+    public ResponseEntity<ApiResponse<PreAuthorizePaymentResponse>> preAuthorizePayment(
+            @AuthenticationPrincipal User user, @RequestBody PreAuthorizePaymentRequest request) {
+        log.info(
+                "MIT Pre-authorize for user: {}, amount: {} EGP",
+                user.getId(),
+                request.getAmount());
+
+        PreAuthorizePaymentResponse response =
+                paymentService.preAuthorizePayment(
                         user, request.getAmount(), request.getSavedCardId());
         return ResponseEntity.ok(createSuccessResponse(response));
     }
