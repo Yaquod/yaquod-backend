@@ -23,9 +23,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class MqttService {
 
-    private static final String TOPIC_VEHICLE_UPDATE_LOCATION_ORDER = "topic/vehicle/update/location/order";
+    private static final String TOPIC_VEHICLE_UPDATE_LOCATION_ORDER =
+            "topic/vehicle/update/location/order";
     private static final String TOPIC_VEHICLE_UPDATE_LOCATION = "topic/vehicle/update/location";
-    private static final String TOPIC_VEHICLE_UPDATE_STATUS_ORDER = "topic/vehicle/update/status/order";
+    private static final String TOPIC_VEHICLE_UPDATE_STATUS_ORDER =
+            "topic/vehicle/update/status/order";
     private static final String TOPIC_VEHICLE_UPDATE_STATUS = "topic/vehicle/update/status";
     private static final String TOPIC_TRIP_INIT = "topic/trip/init";
     private static final String TOPIC_TRIP_ETA = "topic/trip/eta";
@@ -46,26 +48,40 @@ public class MqttService {
         String topic = (String) message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC);
         String payload = message.getPayload().toString();
 
-        if (TOPIC_VEHICLE_UPDATE_LOCATION.equals(topic)) {
-            handleVehicleUpdateLocation(payload);
-        } else if (TOPIC_VEHICLE_UPDATE_STATUS.equals(topic)) {
-            handleVehicleUpdateStatus(payload);
-        } else if (TOPIC_TRIP_ETA.equals(topic)) {
-            handleVehicleUpdateEta(payload);
-        } else if (TOPIC_TRIP_ARRIVE.equals(topic)) {
-            handleVehicleArrival(payload);
-        } else if (TOPIC_TRIP_STATUS.equals(topic)) {
-            handleVehicleUpdateTripStatus(payload);
-        } else if (TOPIC_VEHICLE_UPDATE_LOCATION_ORDER.equals(topic)) {
-            log.info("Sent vehicle update location order successfully!");
-        } else if (TOPIC_VEHICLE_UPDATE_STATUS_ORDER.equals(topic)) {
-            log.info("Sent vehicle update status order successfully!");
-        } else if (TOPIC_TRIP_INIT.equals(topic)) {
-            log.info("Sent trip init order successfully!");
-        } else if (TOPIC_TRIP_MOVE.equals(topic)) {
-            log.info("Sent trip move order successfully!");
-        } else {
-            log.warn("Unhandled topic: {}", topic);
+        switch (topic) {
+            case TOPIC_VEHICLE_UPDATE_LOCATION:
+                handleVehicleUpdateLocation(payload);
+                break;
+            case TOPIC_VEHICLE_UPDATE_STATUS:
+                handleVehicleUpdateStatus(payload);
+                break;
+            case TOPIC_TRIP_ETA:
+                handleVehicleUpdateEta(payload);
+                break;
+            case TOPIC_TRIP_ARRIVE:
+                handleVehicleArrival(payload);
+                break;
+            case TOPIC_TRIP_STATUS:
+                handleVehicleUpdateTripStatus(payload);
+                break;
+            case TOPIC_VEHICLE_UPDATE_LOCATION_ORDER:
+                log.info("Sent vehicle update location order successfully!");
+                break;
+            case TOPIC_VEHICLE_UPDATE_STATUS_ORDER:
+                log.info("Sent vehicle update status order successfully!");
+                break;
+            case TOPIC_TRIP_INIT:
+                log.info("Sent trip init order successfully!");
+                break;
+            case TOPIC_TRIP_MOVE:
+                log.info("Sent trip move order successfully!");
+                break;
+            case null:
+                log.warn("Received message with null topic");
+                return;
+            default:
+                log.warn("Unhandled topic: {}", topic);
+                break;
         }
 
         log.info("Received message from topic '{}': {}", topic, payload);
