@@ -23,12 +23,12 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class MqttService {
 
-    private static final String TOPIC_ORDER_UPDATE_LOCATION = "topic/vehicle/update/location/order";
-    private static final String TOPIC_UPDATE_LOCATION = "topic/vehicle/update/location";
-    private static final String TOPIC_ORDER_UPDATE_STATUS = "topic/vehicle/update/status/order";
-    private static final String TOPIC_UPDATE_STATUS = "topic/vehicle/update/status";
-    private static final String TOPIC_INIT_TRIP = "topic/trip/init";
-    private static final String TOPIC_ETA_TRIP = "topic/trip/eta";
+    private static final String TOPIC_VEHICLE_UPDATE_LOCATION_ORDER = "topic/vehicle/update/location/order";
+    private static final String TOPIC_VEHICLE_UPDATE_LOCATION = "topic/vehicle/update/location";
+    private static final String TOPIC_VEHICLE_UPDATE_STATUS_ORDER = "topic/vehicle/update/status/order";
+    private static final String TOPIC_VEHICLE_UPDATE_STATUS = "topic/vehicle/update/status";
+    private static final String TOPIC_TRIP_INIT = "topic/trip/init";
+    private static final String TOPIC_TRIP_ETA = "topic/trip/eta";
     private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private static final String TOPIC_TRIP_ARRIVE = "topic/trip/arrive";
     private static final String TOPIC_TRIP_STATUS = "topic/trip/status";
@@ -46,16 +46,24 @@ public class MqttService {
         String topic = (String) message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC);
         String payload = message.getPayload().toString();
 
-        if (TOPIC_UPDATE_LOCATION.equals(topic)) {
+        if (TOPIC_VEHICLE_UPDATE_LOCATION.equals(topic)) {
             handleVehicleUpdateLocation(payload);
-        } else if (TOPIC_UPDATE_STATUS.equals(topic)) {
+        } else if (TOPIC_VEHICLE_UPDATE_STATUS.equals(topic)) {
             handleVehicleUpdateStatus(payload);
-        } else if (TOPIC_ETA_TRIP.equals(topic)) {
+        } else if (TOPIC_TRIP_ETA.equals(topic)) {
             handleVehicleUpdateEta(payload);
         } else if (TOPIC_TRIP_ARRIVE.equals(topic)) {
             handleVehicleArrival(payload);
         } else if (TOPIC_TRIP_STATUS.equals(topic)) {
             handleVehicleUpdateTripStatus(payload);
+        } else if (TOPIC_VEHICLE_UPDATE_LOCATION_ORDER.equals(topic)) {
+            log.info("Sent vehicle update location order successfully!");
+        } else if (TOPIC_VEHICLE_UPDATE_STATUS_ORDER.equals(topic)) {
+            log.info("Sent vehicle update status order successfully!");
+        } else if (TOPIC_TRIP_INIT.equals(topic)) {
+            log.info("Sent trip init order successfully!");
+        } else if (TOPIC_TRIP_MOVE.equals(topic)) {
+            log.info("Sent trip move order successfully!");
         } else {
             log.warn("Unhandled topic: {}", topic);
         }
@@ -209,7 +217,7 @@ public class MqttService {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleTripInitiated(InitTripDto event) {
-        publish(TOPIC_INIT_TRIP, event);
+        publish(TOPIC_TRIP_INIT, event);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -219,7 +227,7 @@ public class MqttService {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderVehicleUpdateOrder(VehicleDto event) {
-        publish(TOPIC_ORDER_UPDATE_LOCATION, event);
-        publish(TOPIC_ORDER_UPDATE_STATUS, event);
+        publish(TOPIC_VEHICLE_UPDATE_LOCATION_ORDER, event);
+        publish(TOPIC_VEHICLE_UPDATE_STATUS_ORDER, event);
     }
 }
