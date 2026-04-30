@@ -10,6 +10,8 @@ import java.util.List;
 public interface PaymentService {
     CreateCheckoutResponse createCardTokenizationCheckout(Long userId);
 
+    CreateCheckoutResponse createOneTimePayment(User user, double amountInEgp);
+
     PayWithSavedCardResponse payWithSavedCard(User user, double amountInEgp, Long savedCardId);
 
     ChargeSavedCardDirectResponse chargeSavedCardDirectly(

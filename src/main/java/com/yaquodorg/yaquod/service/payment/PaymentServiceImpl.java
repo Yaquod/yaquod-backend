@@ -92,9 +92,61 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
+    public CreateCheckoutResponse createOneTimePayment(User user, double amountInEgp) {
+        log.info(
+                "Creating one-time payment for user: {}, amount: {} EGP",
+                user.getId(),
+                amountInEgp);
+
+        int amountInCents = (int) (amountInEgp * 100);
+
+        Map<String, Object> intentionRequest = buildOneTimeIntentionRequest(user, amountInCents);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Token " + secretKey);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(intentionRequest, headers);
+
+        String url = paymobBaseUrl + "/v1/intention/";
+        log.info("Calling Paymob Create Intention API: {}", url);
+
+        String response = restTemplate.postForObject(url, request, String.class);
+
+        return parseIntentionResponse(response);
+    }
+
+    private Map<String, Object> buildOneTimeIntentionRequest(User user, int amountInCents) {
+        Map<String, Object> billingData = new HashMap<>();
+        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
+        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
+        billingData.put("email", user.getEmail());
+        billingData.put(
+                "phone_number",
+                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+
+        Map<String, Object> item = new HashMap<>();
+        item.put("name", "One-time Payment");
+        item.put("amount", amountInCents);
+        item.put("description", "Payment for order");
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("amount", amountInCents);
+        request.put("currency", "EGP");
+        request.put("payment_methods", List.of(Integer.parseInt(integrationId)));
+        request.put("items", List.of(item));
+        request.put("billing_data", billingData);
+        request.put("notification_url", notificationUrl);
+        request.put("redirection_url", redirectionUrl);
+
+        return request;
+    }
+
+    @Override
+    @Transactional
     public PayWithSavedCardResponse payWithSavedCard(
             User user, double amountInEgp, Long savedCardId) {
-        log.info("Pay with saved card for user: {}, amount: {} EGP", user.getId(), amountInEgp);
+        log.info("CIT payment for user: {}, amount: {} EGP", user.getId(), amountInEgp);
 
         SavedCard savedCard;
         if (savedCardId != null) {
@@ -132,7 +184,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public ChargeSavedCardDirectResponse chargeSavedCardDirectly(
             User user, double amountInEgp, Long savedCardId) {
-        log.info("MIT Direct charge for user: {}, amount: {} EGP", user.getId(), amountInEgp);
+        log.info("MIT direct charge for user: {}, amount: {} EGP", user.getId(), amountInEgp);
 
         SavedCard savedCard;
         if (savedCardId != null) {

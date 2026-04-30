@@ -5,6 +5,7 @@ import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 import com.yaquodorg.yaquod.dtos.payment.ChargeSavedCardDirectRequest;
 import com.yaquodorg.yaquod.dtos.payment.ChargeSavedCardDirectResponse;
 import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
+import com.yaquodorg.yaquod.dtos.payment.OneTimePaymentRequest;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardRequest;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
 import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
@@ -47,6 +48,20 @@ public class PaymentController {
 
         CreateCheckoutResponse response =
                 paymentService.createCardTokenizationCheckout(user.getId());
+        return ResponseEntity.ok(createSuccessResponse(response));
+    }
+
+    @PostMapping("/one-time")
+    @Operation(
+            summary = "One-time payment",
+            description = "Creates a payment intention with variable amount for one-time payment")
+    public ResponseEntity<ApiResponse<CreateCheckoutResponse>> createOneTimePayment(
+            @AuthenticationPrincipal User user, @RequestBody OneTimePaymentRequest request) {
+        log.info(
+                "One-time payment for user: {}, amount: {} EGP", user.getId(), request.getAmount());
+
+        CreateCheckoutResponse response =
+                paymentService.createOneTimePayment(user, request.getAmount());
         return ResponseEntity.ok(createSuccessResponse(response));
     }
 
