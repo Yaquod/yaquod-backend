@@ -442,18 +442,12 @@ public class PaymentServiceImpl implements PaymentService {
 
         try {
             JsonNode root = objectMapper.readTree(payload);
-
             String type = root.path("type").asText();
-            // TODO: The orderId is extracted assuming it's a transaction callback not a token
-            // callback.
-            String orderId = root.path("obj").path("order").path("id").asText();
-            String transactionId = root.path("obj").path("id").asText();
-            int amountCents = root.path("obj").path("amount_cents").asInt();
 
             if ("TOKEN".equals(type)) {
-                processCardTokenCallback(root.path("obj"), orderId);
+                processCardTokenCallback(root.path("obj"));
             } else if ("TRANSACTION".equals(type)) {
-                processTransactionCallback(root.path("obj"), orderId, transactionId, amountCents);
+                processTransactionCallback(root.path("obj"));
             }
 
         } catch (Exception e) {
@@ -462,20 +456,27 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private void processCardTokenCallback(JsonNode obj, String orderId) {
-        log.info("Processing card token callback, orderId: {}", orderId);
-
+    private void processCardTokenCallback(JsonNode obj) {
+        String orderId = obj.path("order_id").asText();
         String token = obj.path("token").asText();
         String maskedPan = obj.path("masked_pan").asText();
         String cardSubtype = obj.path("card_subtype").asText();
         String email = obj.path("email").asText();
+
+        log.info("Processing card token callback, orderId: {}", orderId);
 
         if (token == null || token.isEmpty()) {
             log.warn("No token found in callback");
             return;
         }
 
+        // TODO: The card holder name is not real but extracted from the user
+        // email itself
         User user = userService.getUserByEmail(email);
+        String firstName = user.getFirstName().toUpperCase();
+        String lastName = user.getLastName().toUpperCase();
+        String fullName =
+                new StringBuilder().append(firstName).append(" ").append(lastName).toString();
 
         if (savedCardRepository.existsByUserIdAndToken(user.getId(), token)) {
             log.info("Card token already exists for user: {}", user.getId());
@@ -486,6 +487,7 @@ public class PaymentServiceImpl implements PaymentService {
                 SavedCard.builder()
                         .token(token)
                         .maskedPan(maskedPan)
+                        .cardholderName(fullName)
                         .cardSubtype(cardSubtype)
                         .paymobOrderId(orderId)
                         .user(user)
@@ -495,20 +497,24 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Saved card token for user: {}, orderId: {}", user.getId(), orderId);
     }
 
-    private void processTransactionCallback(
-            JsonNode obj, String orderId, String transactionId, int amountCents) {
+    private void processTransactionCallback(JsonNode obj) {
+        String email = obj.path("payment_key_claims").path("billing_data").path("email").asText();
+        String orderId = obj.path("order").path("id").asText();
+        String transactionId = obj.path("id").asText();
+        int amountCents = obj.path("amount_cents").asInt();
+
         log.info(
                 "Processing transaction callback, orderId: {}, transactionId: {}",
                 orderId,
                 transactionId);
-
-        String email = obj.path("payment_key_claims").path("billing_data").path("email").asText();
 
         User user = userService.getUserByEmail(email);
 
         Payment payment = paymentRepository.findByPaymobOrderId(orderId).orElse(null);
 
         if (payment == null) {
+            // TODO: This logic always assume that the transaction was completed
+            // using the user's main card and not the actual card the user used
             SavedCard savedCard = null;
             if (!user.getSavedCards().isEmpty()) {
                 savedCard = user.getSavedCards().get(0);
