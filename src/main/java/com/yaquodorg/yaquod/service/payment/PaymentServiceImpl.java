@@ -90,6 +90,32 @@ public class PaymentServiceImpl implements PaymentService {
         return parseIntentionResponse(response);
     }
 
+    private Map<String, Object> buildIntentionRequest(User user) {
+        Map<String, Object> billingData = new HashMap<>();
+        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
+        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
+        billingData.put("email", user.getEmail());
+        billingData.put(
+                "phone_number",
+                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+
+        Map<String, Object> item = new HashMap<>();
+        item.put("name", "Card Registration");
+        item.put("amount", 100);
+        item.put("description", "Card tokenization for future payments");
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("amount", 100);
+        request.put("currency", "EGP");
+        request.put("payment_methods", List.of(Integer.parseInt(integrationId)));
+        request.put("items", List.of(item));
+        request.put("billing_data", billingData);
+        request.put("notification_url", notificationUrl);
+        request.put("redirection_url", redirectionUrl);
+
+        return request;
+    }
+
     @Override
     @Transactional
     public CreateCheckoutResponse createOneTimePayment(User user, double amountInEgp) {
@@ -142,6 +168,32 @@ public class PaymentServiceImpl implements PaymentService {
         return request;
     }
 
+    private CreateCheckoutResponse parseIntentionResponse(String responseBody) {
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+
+            String clientSecret = root.path("client_secret").asText();
+            String orderId = root.path("intention_order_id").asText();
+
+            String checkoutUrl =
+                    UNIFIED_CHECKOUT_URL
+                            + "?publicKey="
+                            + publicKey
+                            + "&clientSecret="
+                            + clientSecret;
+
+            return CreateCheckoutResponse.builder()
+                    .checkoutUrl(checkoutUrl)
+                    .clientSecret(clientSecret)
+                    .publicKey(publicKey)
+                    .orderId(orderId)
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to parse Paymob intention response", e);
+            throw new RuntimeException("Failed to create checkout URL", e);
+        }
+    }
+
     @Override
     @Transactional
     public PayWithSavedCardResponse payWithSavedCard(
@@ -178,6 +230,59 @@ public class PaymentServiceImpl implements PaymentService {
         String response = restTemplate.postForObject(url, request, String.class);
 
         return parseCitIntentionResponse(response);
+    }
+
+    private Map<String, Object> buildCitIntentionRequest(
+            User user, SavedCard savedCard, int amountInCents) {
+        Map<String, Object> billingData = new HashMap<>();
+        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
+        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
+        billingData.put("email", user.getEmail());
+        billingData.put(
+                "phone_number",
+                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+
+        Map<String, Object> item = new HashMap<>();
+        item.put("name", "Trip Payment");
+        item.put("amount", amountInCents);
+        item.put("description", "Payment for trip");
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("amount", amountInCents);
+        request.put("currency", "EGP");
+        request.put("payment_methods", List.of(Integer.parseInt(integrationId)));
+        request.put("items", List.of(item));
+        request.put("billing_data", billingData);
+        request.put("card_tokens", List.of(savedCard.getToken()));
+        request.put("notification_url", notificationUrl);
+        request.put("redirection_url", redirectionUrl);
+
+        return request;
+    }
+
+    private PayWithSavedCardResponse parseCitIntentionResponse(String responseBody) {
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+
+            String clientSecret = root.path("client_secret").asText();
+            String orderId = root.path("intention_order_id").asText();
+
+            String checkoutUrl =
+                    UNIFIED_CHECKOUT_URL
+                            + "?publicKey="
+                            + publicKey
+                            + "&clientSecret="
+                            + clientSecret;
+
+            return PayWithSavedCardResponse.builder()
+                    .checkoutUrl(checkoutUrl)
+                    .clientSecret(clientSecret)
+                    .orderId(orderId)
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to parse Paymob CIT intention response", e);
+            throw new RuntimeException("Failed to create checkout URL", e);
+        }
     }
 
     @Override
@@ -327,111 +432,6 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (Exception e) {
             log.error("Failed to parse MIT pay response", e);
             throw new RuntimeException("Failed to parse MIT pay response", e);
-        }
-    }
-
-    private Map<String, Object> buildCitIntentionRequest(
-            User user, SavedCard savedCard, int amountInCents) {
-        Map<String, Object> billingData = new HashMap<>();
-        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
-        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
-        billingData.put("email", user.getEmail());
-        billingData.put(
-                "phone_number",
-                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
-
-        Map<String, Object> item = new HashMap<>();
-        item.put("name", "Trip Payment");
-        item.put("amount", amountInCents);
-        item.put("description", "Payment for trip");
-
-        Map<String, Object> request = new HashMap<>();
-        request.put("amount", amountInCents);
-        request.put("currency", "EGP");
-        request.put("payment_methods", List.of(Integer.parseInt(integrationId)));
-        request.put("items", List.of(item));
-        request.put("billing_data", billingData);
-        request.put("card_tokens", List.of(savedCard.getToken()));
-        request.put("notification_url", notificationUrl);
-        request.put("redirection_url", redirectionUrl);
-
-        return request;
-    }
-
-    private PayWithSavedCardResponse parseCitIntentionResponse(String responseBody) {
-        try {
-            JsonNode root = objectMapper.readTree(responseBody);
-
-            String clientSecret = root.path("client_secret").asText();
-            String orderId = root.path("intention_order_id").asText();
-
-            String checkoutUrl =
-                    UNIFIED_CHECKOUT_URL
-                            + "?publicKey="
-                            + publicKey
-                            + "&clientSecret="
-                            + clientSecret;
-
-            return PayWithSavedCardResponse.builder()
-                    .checkoutUrl(checkoutUrl)
-                    .clientSecret(clientSecret)
-                    .orderId(orderId)
-                    .build();
-        } catch (Exception e) {
-            log.error("Failed to parse Paymob CIT intention response", e);
-            throw new RuntimeException("Failed to create checkout URL", e);
-        }
-    }
-
-    private Map<String, Object> buildIntentionRequest(User user) {
-        Map<String, Object> billingData = new HashMap<>();
-        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
-        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
-        billingData.put("email", user.getEmail());
-        billingData.put(
-                "phone_number",
-                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
-
-        Map<String, Object> item = new HashMap<>();
-        item.put("name", "Card Registration");
-        item.put("amount", 100);
-        item.put("description", "Card tokenization for future payments");
-
-        Map<String, Object> request = new HashMap<>();
-        request.put("amount", 100);
-        request.put("currency", "EGP");
-        request.put("payment_methods", List.of(Integer.parseInt(integrationId)));
-        request.put("items", List.of(item));
-        request.put("billing_data", billingData);
-        request.put("notification_url", notificationUrl);
-        request.put("redirection_url", redirectionUrl);
-
-        return request;
-    }
-
-    private CreateCheckoutResponse parseIntentionResponse(String responseBody) {
-        try {
-            JsonNode root = objectMapper.readTree(responseBody);
-
-            String clientSecret = root.path("client_secret").asText();
-            String orderId = root.path("intention_order_id").asText();
-
-            String checkoutUrl =
-                    UNIFIED_CHECKOUT_URL
-                            + "?publicKey="
-                            + publicKey
-                            + "&clientSecret="
-                            + clientSecret;
-
-            return CreateCheckoutResponse.builder()
-                    .checkoutUrl(checkoutUrl)
-                    .clientSecret(clientSecret)
-                    .publicKey(publicKey)
-                    .orderId(orderId)
-                    .build();
-        } catch (Exception e) {
-            log.error("Failed to parse Paymob intention response", e);
-            throw new RuntimeException("Failed to create checkout URL", e);
         }
     }
 
