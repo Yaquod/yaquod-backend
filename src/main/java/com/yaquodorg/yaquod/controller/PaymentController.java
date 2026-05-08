@@ -14,6 +14,7 @@ import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.service.payment.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,8 +47,7 @@ public class PaymentController {
             @AuthenticationPrincipal User user) {
         log.info("Received add card request for user: {}", user.getId());
 
-        CreateCheckoutResponse response =
-                paymentService.createCardTokenizationCheckout(user.getId());
+        CreateCheckoutResponse response = paymentService.createCardTokenizationCheckout(user);
         return ResponseEntity.ok(createSuccessResponse(response));
     }
 
@@ -56,7 +56,7 @@ public class PaymentController {
             summary = "One-time payment",
             description = "Creates a payment intention with variable amount for one-time payment")
     public ResponseEntity<ApiResponse<CreateCheckoutResponse>> createOneTimePayment(
-            @AuthenticationPrincipal User user, @RequestBody OneTimePaymentRequest request) {
+            @AuthenticationPrincipal User user, @Valid @RequestBody OneTimePaymentRequest request) {
         log.info(
                 "One-time payment for user: {}, amount: {} EGP", user.getId(), request.getAmount());
 
@@ -70,7 +70,8 @@ public class PaymentController {
             summary = "Pay with saved card (CIT)",
             description = "Customer Initiated Transaction - requires 3DS verification")
     public ResponseEntity<ApiResponse<PayWithSavedCardResponse>> payWithSavedCard(
-            @AuthenticationPrincipal User user, @RequestBody PayWithSavedCardRequest request) {
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody PayWithSavedCardRequest request) {
         log.info("CIT payment for user: {}, amount: {} EGP", user.getId(), request.getAmount());
 
         PayWithSavedCardResponse response =
@@ -84,7 +85,8 @@ public class PaymentController {
             summary = "Direct charge (MIT)",
             description = "Merchant Initiated Transaction - no 3DS required")
     public ResponseEntity<ApiResponse<ChargeSavedCardDirectResponse>> chargeSavedCardDirectly(
-            @AuthenticationPrincipal User user, @RequestBody ChargeSavedCardDirectRequest request) {
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody ChargeSavedCardDirectRequest request) {
         log.info(
                 "MIT direct charge for user: {}, amount: {} EGP",
                 user.getId(),

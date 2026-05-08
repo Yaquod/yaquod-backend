@@ -14,6 +14,8 @@ import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.PaymentRepository;
 import com.yaquodorg.yaquod.repository.SavedCardRepository;
 import com.yaquodorg.yaquod.service.user.UserService;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -43,9 +46,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Value("${payment.paymob.base-url}")
     private String paymobBaseUrl;
-
-    @Value("${payment.paymob.api-key}")
-    private String apiKey;
 
     @Value("${payment.paymob.secret-key}")
     private String secretKey;
@@ -69,10 +69,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public CreateCheckoutResponse createCardTokenizationCheckout(Long userId) {
-        log.info("Creating checkout URL for user: {}", userId);
-
-        User user = userService.getUserById(userId);
+    public CreateCheckoutResponse createCardTokenizationCheckout(User user) {
+        log.info("Creating checkout URL for user: {}", user.getId());
 
         Map<String, Object> intentionRequest = buildIntentionRequest(user);
 
@@ -91,13 +89,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private Map<String, Object> buildIntentionRequest(User user) {
-        Map<String, Object> billingData = new HashMap<>();
-        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
-        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
-        billingData.put("email", user.getEmail());
-        billingData.put(
-                "phone_number",
-                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+        Map<String, Object> billingData = buildBillingData(user);
 
         Map<String, Object> item = new HashMap<>();
         item.put("name", "Card Registration");
@@ -118,13 +110,17 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public CreateCheckoutResponse createOneTimePayment(User user, double amountInEgp) {
+    public CreateCheckoutResponse createOneTimePayment(User user, BigDecimal amountInEgp) {
         log.info(
                 "Creating one-time payment for user: {}, amount: {} EGP",
                 user.getId(),
                 amountInEgp);
 
-        int amountInCents = (int) (amountInEgp * 100);
+        int amountInCents =
+                amountInEgp
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(0, RoundingMode.HALF_UP)
+                        .intValue();
 
         Map<String, Object> intentionRequest = buildOneTimeIntentionRequest(user, amountInCents);
 
@@ -143,13 +139,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private Map<String, Object> buildOneTimeIntentionRequest(User user, int amountInCents) {
-        Map<String, Object> billingData = new HashMap<>();
-        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
-        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
-        billingData.put("email", user.getEmail());
-        billingData.put(
-                "phone_number",
-                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+        Map<String, Object> billingData = buildBillingData(user);
 
         Map<String, Object> item = new HashMap<>();
         item.put("name", "One-time Payment");
@@ -197,7 +187,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public PayWithSavedCardResponse payWithSavedCard(
-            User user, double amountInEgp, Long savedCardId) {
+            User user, BigDecimal amountInEgp, Long savedCardId) {
         log.info("CIT payment for user: {}, amount: {} EGP", user.getId(), amountInEgp);
 
         SavedCard savedCard;
@@ -214,7 +204,11 @@ public class PaymentServiceImpl implements PaymentService {
             savedCard = savedCards.get(0);
         }
 
-        int amountInCents = (int) (amountInEgp * 100);
+        int amountInCents =
+                amountInEgp
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(0, RoundingMode.HALF_UP)
+                        .intValue();
 
         Map<String, Object> intentionRequest =
                 buildCitIntentionRequest(user, savedCard, amountInCents);
@@ -235,13 +229,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private Map<String, Object> buildCitIntentionRequest(
             User user, SavedCard savedCard, int amountInCents) {
-        Map<String, Object> billingData = new HashMap<>();
-        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
-        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
-        billingData.put("email", user.getEmail());
-        billingData.put(
-                "phone_number",
-                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+        Map<String, Object> billingData = buildBillingData(user);
 
         Map<String, Object> item = new HashMap<>();
         item.put("name", "Trip Payment");
@@ -289,7 +277,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public ChargeSavedCardDirectResponse chargeSavedCardDirectly(
-            User user, double amountInEgp, Long savedCardId) {
+            User user, BigDecimal amountInEgp, Long savedCardId) {
         log.info("MIT direct charge for user: {}, amount: {} EGP", user.getId(), amountInEgp);
 
         SavedCard savedCard;
@@ -305,7 +293,11 @@ public class PaymentServiceImpl implements PaymentService {
             savedCard = user.getSavedCards().get(0);
         }
 
-        int amountInCents = (int) (amountInEgp * 100);
+        int amountInCents =
+                amountInEgp
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(0, RoundingMode.HALF_UP)
+                        .intValue();
 
         Map<String, Object> intentionRequest =
                 buildMitIntentionRequest(user, savedCard, amountInCents);
@@ -343,13 +335,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private Map<String, Object> buildMitIntentionRequest(
             User user, SavedCard savedCard, int amountInCents) {
-        Map<String, Object> billingData = new HashMap<>();
-        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
-        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
-        billingData.put("email", user.getEmail());
-        billingData.put(
-                "phone_number",
-                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+        Map<String, Object> billingData = buildBillingData(user);
 
         Map<String, Object> item = new HashMap<>();
         item.put("name", "Trip Payment");
@@ -365,6 +351,17 @@ public class PaymentServiceImpl implements PaymentService {
         request.put("card_tokens", List.of(savedCard.getToken()));
 
         return request;
+    }
+
+    private Map<String, Object> buildBillingData(User user) {
+        Map<String, Object> billingData = new HashMap<>();
+        billingData.put("first_name", user.getFirstName() != null ? user.getFirstName() : "User");
+        billingData.put("last_name", user.getLastName() != null ? user.getLastName() : "Name");
+        billingData.put("email", user.getEmail());
+        billingData.put(
+                "phone_number",
+                user.getPhoneNumber() != null ? user.getPhoneNumber() : "+20000000000");
+        return billingData;
     }
 
     private String extractPaymentToken(String responseBody) {
@@ -525,8 +522,11 @@ public class PaymentServiceImpl implements PaymentService {
             payment =
                     Payment.builder()
                             .amount(
-                                    new java.math.BigDecimal(amountCents)
-                                            .divide(new java.math.BigDecimal(100)))
+                                    java.math.BigDecimal.valueOf(amountCents)
+                                            .divide(
+                                                    java.math.BigDecimal.valueOf(100),
+                                                    2,
+                                                    java.math.RoundingMode.HALF_UP))
                             .currency("EGP")
                             .status(status)
                             .paymobOrderId(orderId)
@@ -581,7 +581,7 @@ public class PaymentServiceImpl implements PaymentService {
                                                 "Saved card not found with id: " + cardId));
 
         if (!card.getUser().getId().equals(userId)) {
-            throw new ResourceNotFoundException("Card does not belong to user");
+            throw new AccessDeniedException("Card does not belong to user");
         }
 
         savedCardRepository.delete(card);

@@ -2,6 +2,7 @@ package com.yaquodorg.yaquod.dtos.payment;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +16,7 @@ public class ChargeSavedCardDirectRequest {
 
     @NotNull(message = "Amount cannot be null")
     @Positive(message = "Amount must be positive")
-    private double amount;
+    private BigDecimal amount;
 
     private Long savedCardId;
 }
