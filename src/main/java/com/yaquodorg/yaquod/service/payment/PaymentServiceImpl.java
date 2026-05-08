@@ -287,10 +287,11 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new ResourceNotFoundException("Saved card not found");
             }
         } else {
-            if (user.getSavedCards().isEmpty()) {
+            List<SavedCard> savedCards = savedCardRepository.findByUserId(user.getId());
+            if (savedCards.isEmpty()) {
                 throw new ResourceNotFoundException("No saved cards found for user");
             }
-            savedCard = user.getSavedCards().get(0);
+            savedCard = savedCards.get(0);
         }
 
         int amountInCents =

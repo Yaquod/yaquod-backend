@@ -43,7 +43,7 @@ services:
       - OAUTH2_GOOGLE_IOS_CLIENT_ID
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=  # leave empty if no password is set for Redis
+      - REDIS_PASSWORD= # leave empty if no password is set for Redis
       #- MQTT_BROKER_URL=tcp://<your linux ip>:1883  #for Linux with extra setup
     ports:
       - "8000:8000"

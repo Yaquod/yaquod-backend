@@ -1,6 +1,5 @@
 package com.yaquodorg.yaquod.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
@@ -131,10 +130,5 @@ public class ApplicationConfig {
         factory.setConnectTimeout(30000);
         factory.setReadTimeout(30000);
         return new RestTemplate(factory);
-    }
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
     }
 }

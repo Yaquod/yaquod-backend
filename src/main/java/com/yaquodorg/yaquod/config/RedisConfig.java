@@ -39,7 +39,7 @@ public class RedisConfig {
         Map<String, RedisCacheConfiguration> cacheConfigs = Map.of();
 
         return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(defaultConfig.entryTtl(Duration.ofHours(1))) // fallback TTL
+                .cacheDefaults(defaultConfig.entryTtl(Duration.ofMinutes(10))) // fallback TTL
                 .withInitialCacheConfigurations(cacheConfigs)
                 .build();
     }
