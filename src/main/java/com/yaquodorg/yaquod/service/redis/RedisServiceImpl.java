@@ -1,16 +1,17 @@
-package com.yaquodorg.yaquod.service.idempotency;
+package com.yaquodorg.yaquod.service.redis;
 
 import com.yaquodorg.yaquod.exception.DuplicateKeyException;
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class IdempotencyServiceImpl implements IdempotencyService {
+public class RedisServiceImpl implements RedisService {
     private final RedisTemplate<String, String> redisTemplate;
     private static final Duration TTL = Duration.ofMinutes(5);
 
@@ -37,5 +38,14 @@ public class IdempotencyServiceImpl implements IdempotencyService {
             log.info("Existing idempotency key found: {}", redisKey);
         }
         return value;
+    }
+
+    @Override
+    public void setValue(String key, String value, long ttlSeconds) {
+        Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, value, Duration.ofSeconds(ttlSeconds));
+        if (Boolean.FALSE.equals(isNew)) {
+            log.warn("Key {} already exists in Redis. Overwriting with new value.", key);
+            redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(ttlSeconds));
+        }
     }
 }
