@@ -1,21 +1,13 @@
 package com.yaquodorg.yaquod.service.request;
 
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.entity.Trip;
-import com.yaquodorg.yaquod.entity.TripStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.RequestRepository;
+import com.yaquodorg.yaquod.service.redis.RedisService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
@@ -26,6 +18,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +36,9 @@ public class RequestServiceImpl implements RequestService {
     private final UserService userService;
     private final TripService tripService;
     private final VehicleService vehicleService;
+    private final RedisService redisService;
+    final String REQUEST_TIMEOUT_PREFIX = "request:timeout:";
+    final long REQUEST_TIMEOUT_SECONDS = 50;
 
     @Transactional
     @Override
@@ -71,6 +70,8 @@ public class RequestServiceImpl implements RequestService {
 
         tripService.createTrip(savedRequest, startLong, startLat, endLong, endLat);
         log.debug("Trip created for request id: {}", savedRequest.getId());
+
+        redisService.setValue(REQUEST_TIMEOUT_PREFIX + savedRequest.getId(), "pending", REQUEST_TIMEOUT_SECONDS);
 
         return savedRequest;
     }
