@@ -1,6 +1,8 @@
 package com.yaquodorg.yaquod.config;
 
 import com.yaquodorg.yaquod.utils.RedisExpiryListener;
+import java.time.Duration;
+import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,9 +16,6 @@ import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-import java.time.Duration;
-import java.util.Map;
 
 @Configuration
 public class RedisConfig {
@@ -49,17 +48,16 @@ public class RedisConfig {
                 .withInitialCacheConfigurations(cacheConfigs)
                 .build();
     }
+
     @Bean
     @ConditionalOnProperty(value = "app.redis.expiry-listener.enabled", havingValue = "true")
     public RedisMessageListenerContainer listenerContainer(
-            RedisConnectionFactory factory,
-            MessageListenerAdapter listenerAdapter) {
+            RedisConnectionFactory factory, MessageListenerAdapter listenerAdapter) {
 
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(factory);
         // Listen to all expired key events in Redis DB 0
-        container.addMessageListener(listenerAdapter,
-                new PatternTopic("__keyevent@0__:expired"));
+        container.addMessageListener(listenerAdapter, new PatternTopic("__keyevent@0__:expired"));
         return container;
     }
 

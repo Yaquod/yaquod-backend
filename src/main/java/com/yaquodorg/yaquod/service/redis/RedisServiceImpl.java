@@ -1,12 +1,11 @@
 package com.yaquodorg.yaquod.service.redis;
 
 import com.yaquodorg.yaquod.exception.DuplicateKeyException;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +41,8 @@ public class RedisServiceImpl implements RedisService {
 
     @Override
     public void setValue(String key, String value, long ttlSeconds) {
-        Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, value, Duration.ofSeconds(ttlSeconds));
+        Boolean isNew =
+                redisTemplate.opsForValue().setIfAbsent(key, value, Duration.ofSeconds(ttlSeconds));
         if (Boolean.FALSE.equals(isNew)) {
             log.warn("Key {} already exists in Redis. Overwriting with new value.", key);
             redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(ttlSeconds));

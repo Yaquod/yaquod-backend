@@ -28,18 +28,21 @@ public class RedisExpiryListener implements MessageListener {
             Long requestId = Long.parseLong(expiredKey.replace("request:timeout:", ""));
             Request request = requestService.getRequest(requestId);
             Trip trip = tripService.getTripByRequestId(requestId);
-            if (request != null && request.getStatus() == com.yaquodorg.yaquod.entity.RequestStatus.PENDING) {
+            if (request != null
+                    && request.getStatus() == com.yaquodorg.yaquod.entity.RequestStatus.PENDING) {
                 requestService.updateRequestStatus(requestId, RequestStatus.TIMEOUT);
                 tripService.updateTripStatus(trip.getId(), TripStatus.CANCELLED_BY_SYSTEM);
-                log.info("Request {} has expired and was pending. Updated status to TIMEOUT and cancelled associated trip.",
+                log.info(
+                        "Request {} has expired and was pending. Updated status to TIMEOUT and"
+                                + " cancelled associated trip.",
                         requestId);
 
             } else {
-                log.info("Request {} has expired but is not pending (status: {}). No action taken.",
-                        requestId, request != null ? request.getStatus() : "null");
+                log.info(
+                        "Request {} has expired but is not pending (status: {}). No action taken.",
+                        requestId,
+                        request != null ? request.getStatus() : "null");
             }
-
         }
-
     }
 }
