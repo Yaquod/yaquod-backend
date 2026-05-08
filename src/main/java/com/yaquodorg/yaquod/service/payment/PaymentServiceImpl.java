@@ -207,10 +207,11 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new ResourceNotFoundException("Saved card not found");
             }
         } else {
-            if (user.getSavedCards().isEmpty()) {
+            List<SavedCard> savedCards = savedCardRepository.findByUserId(user.getId());
+            if (savedCards.isEmpty()) {
                 throw new ResourceNotFoundException("No saved cards found for user");
             }
-            savedCard = user.getSavedCards().get(0);
+            savedCard = savedCards.get(0);
         }
 
         int amountInCents = (int) (amountInEgp * 100);
@@ -396,32 +397,30 @@ public class PaymentServiceImpl implements PaymentService {
             JsonNode root = objectMapper.readTree(responseBody);
 
             String transactionId = root.path("id").asText();
-            boolean success = root.path("success").asBoolean();
             String message = root.path("data").path("message").asText();
+            boolean success = root.path("success").asBoolean();
+            PaymentStatus status = (success) ? PaymentStatus.PAID : PaymentStatus.FAILED;
 
-            if (success) {
-                Payment payment =
-                        Payment.builder()
-                                .amount(
-                                        new java.math.BigDecimal(amountInCents)
-                                                .divide(new java.math.BigDecimal(100)))
-                                .currency("EGP")
-                                .status(PaymentStatus.PAID)
-                                .paymobOrderId(orderId)
-                                .paymobTransactionId(transactionId)
-                                .user(user)
-                                .savedCard(savedCard)
-                                .paidAt(new java.sql.Timestamp(System.currentTimeMillis()))
-                                .build();
+            Payment payment =
+                    Payment.builder()
+                            .amount(
+                                    new java.math.BigDecimal(amountInCents)
+                                            .divide(new java.math.BigDecimal(100)))
+                            .currency("EGP")
+                            .status(status)
+                            .paymobOrderId(orderId)
+                            .paymobTransactionId(transactionId)
+                            .user(user)
+                            .savedCard(savedCard)
+                            .paidAt(new java.sql.Timestamp(System.currentTimeMillis()))
+                            .build();
 
-                paymentRepository.save(payment);
-                log.info(
-                        "MIT payment successful, orderId: {}, transactionId: {}",
-                        orderId,
-                        transactionId);
-            } else {
-                log.warn("MIT payment failed: {}", message);
-            }
+            paymentRepository.save(payment);
+            log.info(
+                    "MIT payment status: {}, orderId: {}, transactionId: {}",
+                    status,
+                    orderId,
+                    transactionId);
 
             return ChargeSavedCardDirectResponse.builder()
                     .orderId(orderId)
@@ -435,6 +434,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    // TODO: No HMAC webhook signature verification logic in this function
     @Override
     @Transactional
     public void processPaymentCallback(String payload) {
@@ -502,6 +502,8 @@ public class PaymentServiceImpl implements PaymentService {
         String orderId = obj.path("order").path("id").asText();
         String transactionId = obj.path("id").asText();
         int amountCents = obj.path("amount_cents").asInt();
+        boolean success = obj.path("success").asBoolean();
+        PaymentStatus status = (success) ? PaymentStatus.PAID : PaymentStatus.FAILED;
 
         log.info(
                 "Processing transaction callback, orderId: {}, transactionId: {}",
@@ -526,7 +528,7 @@ public class PaymentServiceImpl implements PaymentService {
                                     new java.math.BigDecimal(amountCents)
                                             .divide(new java.math.BigDecimal(100)))
                             .currency("EGP")
-                            .status(PaymentStatus.PAID)
+                            .status(status)
                             .paymobOrderId(orderId)
                             .paymobTransactionId(transactionId)
                             .user(user)
@@ -535,14 +537,14 @@ public class PaymentServiceImpl implements PaymentService {
                             .build();
 
             paymentRepository.save(payment);
-            log.info("Created new payment record for orderId: {}", orderId);
+            log.info("Created new payment record for orderId: {} with status: {}", orderId, status);
         } else {
             payment.setPaymobOrderId(orderId);
             payment.setPaymobTransactionId(transactionId);
-            payment.setStatus(PaymentStatus.PAID);
+            payment.setStatus(status);
             payment.setPaidAt(new java.sql.Timestamp(System.currentTimeMillis()));
             paymentRepository.save(payment);
-            log.info("Updated payment status to PAID for orderId: {}", orderId);
+            log.info("Updated payment status to {} for orderId: {}", status, orderId);
         }
     }
 
