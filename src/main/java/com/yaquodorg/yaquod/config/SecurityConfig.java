@@ -58,6 +58,8 @@ public class SecurityConfig {
                         req ->
                                 req.requestMatchers("/api/auth/**")
                                         .permitAll()
+                                        .requestMatchers("/api/payments/webhook")
+                                        .permitAll()
                                         .requestMatchers("/swagger-ui/**", "/v3/api-docs*/**")
                                         .permitAll()
                                         // NOTE: This is uncommented only in the case of manual

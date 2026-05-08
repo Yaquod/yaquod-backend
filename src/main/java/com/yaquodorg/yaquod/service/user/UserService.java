@@ -18,6 +18,8 @@ public interface UserService {
 
     User getUserById(Long id);
 
+    User getUserByEmail(String email);
+
     List<User> getUsers();
 
     User updateUser(String authHeader, UpdateUserDto updateUserDto) throws ParseException;
