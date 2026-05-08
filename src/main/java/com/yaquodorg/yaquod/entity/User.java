@@ -100,6 +100,15 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Vehicle> managedVehicles = new ArrayList<>();
 
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    @OrderBy("createdAt DESC")
+    private List<SavedCard> savedCards = new ArrayList<>();
+
     @Override
     public String getUsername() {
         return email;

@@ -40,26 +40,6 @@ jobs:
           # Start the broker as a background daemon
           mosquitto -d
 
-      - name: Verify Broker is running on localhost:1883
-        run: |
-          echo "Waiting for broker to start..."
-          sleep 2 # Give the broker a moment to initialize
-          
-          echo "Subscribing to topic 'github/action'..."
-          # Subscribe in the background, wait for 1 message (-C 1), then exit
-          # We pipe to 'grep' to check if the message is correct
-          mosquitto_sub -h localhost -p 1883 -t 'github/action' -C 1 | grep -q 'it works!' &
-          
-          echo "Publishing test message..."
-          # Publish a test message
-          mosquitto_pub -h localhost -p 1883 -t 'github/action' -m 'it works!'
-          
-          # 'wait' ensures the background 'mosquitto_sub' process finishes
-          # If grep found the message, it exits with 0 (success)
-          # If not, it exits with 1 (failure), failing the workflow step
-          wait
-          echo "✅ Test message received successfully!"
-
       # Verify MQTT broker is running
       - name: Verify MQTT Broker
         run: |
@@ -71,14 +51,14 @@ jobs:
         run: |
           echo "${{ secrets.FIREBASE_CONFIG_JSON }}" | base64 --decode > src/main/resources/firebase-service-account.json
 
+      - name: Spotless Check
+        run: mvn spotless:check
+
       - name: Build JAR with Maven
         run: mvn -B clean package -DskipTests
 
       - name: Run Unit & Integration Tests
-        run: mvn test
-
-      - name: Spotless Check
-        run: mvn spotless:check
+        run: mvn test -DforkCount=1 -DreuseForks=false
 
       - name: Upload test reports on failure
         if: failure()

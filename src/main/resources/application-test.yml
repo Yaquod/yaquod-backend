@@ -2,6 +2,15 @@ spring:
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ""
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -71,3 +80,20 @@ google:
     client-id: google-client-id-for-android.apps.googleusercontent.com
   ios:
     client-id: google-client-id-for-ios.apps.googleusercontent.com
+
+payment:
+  gateway:
+    provider: paymob-egypt
+    mode: sandbox
+    mock-enabled: true
+    free-testing-tier: true
+    currency: EGP
+  paymob:
+    base-url: https://accept.paymob.com
+    api-key: ${PAYMOB_API_KEY:test-api-key}
+    secret-key: ${PAYMOB_SECRET_KEY:test-secret-key}
+    public-key: ${PAYMOB_PUBLIC_KEY:test-public-key}
+    integration-id: ${PAYMOB_INTEGRATION_ID:test-integration-id}
+    moto-integration-id: ${PAYMOB_MOTO_INTEGRATION_ID:test-moto-integration-id}
+    notification-url: ${PAYMOB_NOTIFICATION_URL:test-notification-url}
+    redirection-url: ${PAYMOB_REDIRECT_URL:https://www.google.com/}
