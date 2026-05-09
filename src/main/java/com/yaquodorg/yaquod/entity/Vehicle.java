@@ -21,6 +21,7 @@ public class Vehicle {
     private Long id;
 
     @Column(unique = true)
+    // @Column(unique = true, length = 17, columnDefinition = "CHAR(17)")     slightly more efficient for storage and comparison
     private String vinNumber;
 
     @Column private String plateNo;
