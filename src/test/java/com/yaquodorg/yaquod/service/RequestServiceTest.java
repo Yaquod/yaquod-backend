@@ -37,7 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
-
+import   com.yaquodorg.yaquod.service.redis.RedisService;
 /** NOTE: ALL THOSE TESTS ARE AI-GENERATED AND REVIEWED MANUALLY */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RequestService Unit Tests")
@@ -53,7 +53,7 @@ class RequestServiceTest {
 
     @Mock private ApplicationEventPublisher eventPublisher;
 
-    @Mock private com.yaquodorg.yaquod.service.redis.RedisService redisService;
+    @Mock private RedisService redisService;
 
     @InjectMocks private RequestServiceImpl requestService;
 
