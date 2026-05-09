@@ -3,7 +3,6 @@
 echo "Running Spotless..."
 ./mvnw spotless:apply
 
-# stage the files spotless just reformatted
 git add -u
 
 exit 0
