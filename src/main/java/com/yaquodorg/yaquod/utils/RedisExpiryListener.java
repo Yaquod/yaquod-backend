@@ -1,11 +1,9 @@
 package com.yaquodorg.yaquod.utils;
 
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.entity.Trip;
-import com.yaquodorg.yaquod.entity.TripStatus;
+import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
+import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -18,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class RedisExpiryListener implements MessageListener {
     private final RequestService requestService;
     private final TripService tripService;
+    private final VehicleService vehicleService;
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
@@ -25,13 +24,36 @@ public class RedisExpiryListener implements MessageListener {
         log.info("Received expired key event for key: {}", expiredKey);
 
         if (expiredKey.startsWith("request:timeout:")) {
-            Long requestId = Long.parseLong(expiredKey.replace("request:timeout:", ""));
-            Request request = requestService.getRequest(requestId);
-            Trip trip = tripService.getTripByRequestId(requestId);
+            String requestIdValue = expiredKey.replace("request:timeout:", "");
+            Long requestId;
+            try {
+                requestId = Long.parseLong(requestIdValue);
+            } catch (NumberFormatException ex) {
+                log.warn("Ignoring expired key with invalid request id format: {}", expiredKey, ex);
+                return;
+            }
+            Request request;
+            Trip trip;
+            Vehicle vehicle;
+            try {
+                request = requestService.getRequest(requestId);
+                trip = tripService.getTripByRequestId(requestId);
+                vehicle = trip.getVehicle();
+            } catch (RuntimeException ex) {
+                log.warn(
+                        "Ignoring expired key for unknown or deleted request/trip. key: {},"
+                                + " requestId: {}",
+                        expiredKey,
+                        requestId,
+                        ex);
+                return;
+            }
             if (request != null
                     && request.getStatus() == com.yaquodorg.yaquod.entity.RequestStatus.PENDING) {
                 requestService.updateRequestStatus(requestId, RequestStatus.TIMEOUT);
                 tripService.updateTripStatus(trip.getId(), TripStatus.CANCELLED_BY_SYSTEM);
+                vehicleService.updateVehicleStatus(vehicle.getVinNumber(), VehicleStatus.IDLE);
+
                 log.info(
                         "Request {} has expired and was pending. Updated status to TIMEOUT and"
                                 + " cancelled associated trip.",
