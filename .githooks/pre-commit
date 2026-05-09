@@ -1,0 +1,9 @@
+#!/bin/sh
+
+echo "Running Spotless..."
+mvn spotless:apply
+
+# stage the files spotless just reformatted
+git add -u
+
+exit 0
