@@ -18,8 +18,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public void validate(String key) {
         try {
-            Boolean isNew =
-                    redisTemplate.opsForValue().setIfAbsent(key, "pending", TTL);
+            Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, "pending", TTL);
 
             if (Boolean.FALSE.equals(isNew)) {
                 throw new DuplicateKeyException("Duplicate request detected for key: " + key);
@@ -59,7 +58,9 @@ public class RedisServiceImpl implements RedisService {
     public void setValue(String key, String value, long ttlSeconds) {
         try {
             Boolean isNew =
-                    redisTemplate.opsForValue().setIfAbsent(key, value, Duration.ofSeconds(ttlSeconds));
+                    redisTemplate
+                            .opsForValue()
+                            .setIfAbsent(key, value, Duration.ofSeconds(ttlSeconds));
             if (Boolean.FALSE.equals(isNew)) {
                 log.warn("Key {} already exists in Redis. Overwriting with new value.", key);
                 redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(ttlSeconds));
