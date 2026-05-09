@@ -53,6 +53,8 @@ class RequestServiceTest {
 
     @Mock private ApplicationEventPublisher eventPublisher;
 
+    @Mock private com.yaquodorg.yaquod.service.redis.RedisService redisService;
+
     @InjectMocks private RequestServiceImpl requestService;
 
     private GeometryFactory geometryFactory;
