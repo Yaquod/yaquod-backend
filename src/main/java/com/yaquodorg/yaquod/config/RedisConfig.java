@@ -1,8 +1,10 @@
 package com.yaquodorg.yaquod.config;
 
 import com.yaquodorg.yaquod.utils.RedisExpiryListener;
+import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +21,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 public class RedisConfig {
+
+    @Autowired private RedisConnectionFactory connectionFactory;
+
     @Bean
     public RedisTemplate<String, String> redisTemplate(
             RedisConnectionFactory redisConnectionFactory) {
@@ -47,6 +52,14 @@ public class RedisConfig {
                 .cacheDefaults(defaultConfig.entryTtl(Duration.ofMinutes(10))) // fallback TTL
                 .withInitialCacheConfigurations(cacheConfigs)
                 .build();
+    }
+
+    @PostConstruct
+    public void enableKeyspaceNotifications() {
+        connectionFactory
+                .getConnection()
+                .serverCommands()
+                .setConfig("notify-keyspace-events", "KEx");
     }
 
     @Bean
