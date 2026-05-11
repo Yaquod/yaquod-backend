@@ -54,6 +54,7 @@ public class RedisConfig {
                 .build();
     }
 
+    @ConditionalOnProperty(value = "app.redis.expiry-listener.enabled", havingValue = "true")
     @PostConstruct
     public void enableKeyspaceNotifications() {
         connectionFactory
