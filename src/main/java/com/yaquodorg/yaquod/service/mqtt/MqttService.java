@@ -139,7 +139,7 @@ public class MqttService {
                     dto.getEstimatedTime(),
                     dto.getEstimatedFare());
             vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.ON_HOLD);
-            redisService.setValue(
+            redisService.setValueWithTTL(
                     REQUEST_TIMEOUT_PREFIX + dto.getRequestId(),
                     "pending",
                     REQUEST_TIMEOUT_SECONDS);

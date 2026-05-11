@@ -262,7 +262,9 @@ public class RequestServiceImpl implements RequestService {
                     vehicle.getStatus());
             throw new IllegalStateException("Vehicle is not in ON_HOLD state");
         }
+
         redisService.delete(REQUEST_TIMEOUT_PREFIX + id);
+
         // publish to broker
         MoveVehicleDto moveVehicleDto =
                 generateVehicleMovementDto(startLocation, tripId, vinNumber);
