@@ -8,7 +8,9 @@ spring:
       port: 6379
       password: ""
   cache:
-    type: none
+    type: redis
+    redis:
+      time-to-live: 600000
   jpa:
     hibernate:
       ddl-auto: create-drop
