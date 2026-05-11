@@ -12,62 +12,102 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class RedisServiceImpl implements RedisService {
+    public static final String REQUEST_TIMEOUT_PREFIX = "request:timeout:";
+
+    private static final Duration DEFAULT_TTL = Duration.ofMinutes(5);
+
     private final RedisTemplate<String, String> redisTemplate;
-    private static final Duration TTL = Duration.ofMinutes(5);
 
+    /**
+     * Sets a value in Redis with the default TTL (5 minutes). Throws an exception if the key
+     * already exists to prevent duplicate requests.
+     *
+     * @param key the cache key
+     * @param value the value to cache
+     * @throws DuplicateKeyException if the key already exists
+     * @throws RedisConnectionFailureException caught and logged if Redis is unavailable
+     */
     @Override
-    public void validate(String key) {
+    public void set(String key, String value) {
         try {
-            Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, "pending", TTL);
-
+            Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, value, DEFAULT_TTL);
             if (Boolean.FALSE.equals(isNew)) {
                 throw new DuplicateKeyException("Duplicate request detected for key: " + key);
             }
+            log.debug("Successfully set cache key: {}", key);
         } catch (RedisConnectionFailureException e) {
-            // Redis is unavailable (e.g., in tests), log warning and continue
-            log.warn("Redis is unavailable for validation, skipping check", e);
+            log.warn("Redis is unavailable for cache set operation, skipping check", e);
         }
     }
 
+    /**
+     * Sets a value in Redis with a custom TTL. Overwrites the value if the key already exists.
+     *
+     * @param key the cache key
+     * @param value the value to cache
+     * @param ttlSeconds the time-to-live in seconds
+     * @throws RedisConnectionFailureException caught and logged if Redis is unavailable
+     */
     @Override
-    public void invalidate(String key) {
+    public void setWithTtl(String key, String value, long ttlSeconds) {
         try {
-            redisTemplate.delete(key);
+            Duration duration = Duration.ofSeconds(ttlSeconds);
+            Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, value, duration);
+
+            if (Boolean.FALSE.equals(isNew)) {
+                log.debug(
+                        "Cache key {} already exists. Overwriting with new value and TTL of {}"
+                                + " seconds.",
+                        key,
+                        ttlSeconds);
+                redisTemplate.opsForValue().set(key, value, duration);
+            } else {
+                log.debug("Successfully set cache key: {} with TTL of {} seconds", key, ttlSeconds);
+            }
         } catch (RedisConnectionFailureException e) {
-            // Redis is unavailable (e.g., in tests), log warning and continue
-            log.warn("Redis is unavailable for invalidation, skipping", e);
+            log.warn("Redis is unavailable for cache set operation, skipping", e);
         }
     }
 
+    /**
+     * Retrieves a value from Redis cache.
+     *
+     * @param key the cache key
+     * @return the cached value, or null if the key doesn't exist or Redis is unavailable
+     */
     @Override
-    public String findExistingKey(String key) {
+    public String get(String key) {
         try {
             String value = redisTemplate.opsForValue().get(key);
             if (value != null) {
-                log.info("Existing idempotency key found: {}", key);
+                log.debug("Cache hit for key: {}", key);
+            } else {
+                log.debug("Cache miss for key: {}", key);
             }
             return value;
         } catch (RedisConnectionFailureException e) {
-            // Redis is unavailable (e.g., in tests), return null
-            log.warn("Redis is unavailable for idempotency key lookup, assuming new request", e);
+            log.warn("Redis is unavailable for cache get operation, returning null", e);
             return null;
         }
     }
 
+    /**
+     * Removes a key from Redis cache.
+     *
+     * @param key the cache key to invalidate
+     * @throws RedisConnectionFailureException caught and logged if Redis is unavailable
+     */
     @Override
-    public void setValue(String key, String value, long ttlSeconds) {
+    public void invalidate(String key) {
         try {
-            Boolean isNew =
-                    redisTemplate
-                            .opsForValue()
-                            .setIfAbsent(key, value, Duration.ofSeconds(ttlSeconds));
-            if (Boolean.FALSE.equals(isNew)) {
-                log.warn("Key {} already exists in Redis. Overwriting with new value.", key);
-                redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(ttlSeconds));
+            Boolean deleted = redisTemplate.delete(key);
+            if (Boolean.TRUE.equals(deleted)) {
+                log.debug("Successfully invalidated cache key: {}", key);
+            } else {
+                log.debug("Cache key not found for invalidation: {}", key);
             }
         } catch (RedisConnectionFailureException e) {
-            // Redis is unavailable (e.g., in tests), log warning and continue
-            log.warn("Redis is unavailable for setting value, skipping cache operation", e);
+            log.warn("Redis is unavailable for cache invalidation, skipping", e);
         }
     }
 }

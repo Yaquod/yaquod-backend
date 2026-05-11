@@ -1,10 +1,13 @@
 package com.yaquodorg.yaquod.service.mqtt;
 
+import static com.yaquodorg.yaquod.service.redis.RedisServiceImpl.REQUEST_TIMEOUT_PREFIX;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.*;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.service.messaging.FirebaseMessagingService;
+import com.yaquodorg.yaquod.service.redis.RedisService;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
@@ -34,6 +37,7 @@ public class MqttService {
     private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private static final String TOPIC_TRIP_ARRIVE = "topic/trip/arrive";
     private static final String TOPIC_TRIP_STATUS = "topic/trip/status";
+    private static final long REQUEST_TIMEOUT_SECONDS = 50;
 
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
@@ -42,6 +46,7 @@ public class MqttService {
     private final RequestService requestService;
     private final TripService tripService;
     private final FirebaseMessagingService firebaseMessagingService;
+    private final RedisService redisService;
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleIncomingMessage(Message<?> message) {
@@ -130,6 +135,10 @@ public class MqttService {
                     dto.getEstimatedTime(),
                     dto.getEstimatedFare());
             vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.ON_HOLD);
+            redisService.setWithTtl(
+                    REQUEST_TIMEOUT_PREFIX + dto.getRequestId(),
+                    "pending",
+                    REQUEST_TIMEOUT_SECONDS);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse request status update payload: {}", payload, e);
         }

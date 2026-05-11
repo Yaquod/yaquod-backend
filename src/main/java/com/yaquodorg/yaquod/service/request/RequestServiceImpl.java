@@ -36,8 +36,6 @@ public class RequestServiceImpl implements RequestService {
     private final TripService tripService;
     private final VehicleService vehicleService;
     private final RedisService redisService;
-    final String REQUEST_TIMEOUT_PREFIX = "request:timeout:";
-    final long REQUEST_TIMEOUT_SECONDS = 50;
 
     @Transactional
     @Override
@@ -69,10 +67,6 @@ public class RequestServiceImpl implements RequestService {
 
         tripService.createTrip(savedRequest, startLong, startLat, endLong, endLat);
         log.debug("Trip created for request id: {}", savedRequest.getId());
-
-        redisService.setValue(
-                REQUEST_TIMEOUT_PREFIX + savedRequest.getId(), "pending", REQUEST_TIMEOUT_SECONDS);
-
         return savedRequest;
     }
 

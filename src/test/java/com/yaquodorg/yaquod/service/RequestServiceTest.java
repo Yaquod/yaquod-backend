@@ -14,7 +14,6 @@ import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.RequestRepository;
-import com.yaquodorg.yaquod.service.redis.RedisService;
 import com.yaquodorg.yaquod.service.request.RequestServiceImpl;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
@@ -54,7 +53,7 @@ class RequestServiceTest {
 
     @Mock private ApplicationEventPublisher eventPublisher;
 
-    @Mock private RedisService redisService;
+    @Mock private com.yaquodorg.yaquod.service.redis.RedisService redisService;
 
     @InjectMocks private RequestServiceImpl requestService;
 
