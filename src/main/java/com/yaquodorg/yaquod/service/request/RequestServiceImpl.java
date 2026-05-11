@@ -163,50 +163,17 @@ public class RequestServiceImpl implements RequestService {
             throw new AccessDeniedException("Unauthorized to decline this request");
         }
 
-        Trip trip = request.getTrip();
-        if (trip == null) {
-            log.error("No trip associated with request id: {}", id);
-            throw new IllegalStateException("No trip associated with request " + id);
-        }
-        long tripId = trip.getId();
+        ValidatedRequestData validatedData = validateAndExtractRequestData(request, id);
 
-        Vehicle vehicle = trip.getVehicle();
-        if (vehicle == null) {
-            log.error("No vehicle associated with trip of request id: {}", id);
-            throw new IllegalStateException("No vehicle associated with trip of request " + id);
-        }
-        String vinNumber = vehicle.getVinNumber();
-
-        if (request.getStatus() != RequestStatus.COMPLETED) {
-            log.warn(
-                    "Request id: {} is not in COMPLETED state, current status: {}",
-                    id,
-                    request.getStatus());
-            throw new IllegalStateException("Request is not in COMPLETED state");
-        }
-        if (trip.getStatus() != TripStatus.INITIATED) {
-            log.warn(
-                    "Trip id: {} is not in INITIATED state, current status: {}",
-                    tripId,
-                    trip.getStatus());
-            throw new IllegalStateException("Trip is not in INITIATED state");
-        }
-        if (vehicle.getStatus() != VehicleStatus.ON_HOLD) {
-            log.warn(
-                    "Vehicle VIN: {} is not in ON_HOLD state, current status: {}",
-                    vinNumber,
-                    vehicle.getStatus());
-            throw new IllegalStateException("Vehicle is not in ON_HOLD state");
-        }
         redisService.invalidate(REQUEST_TIMEOUT_PREFIX + id);
         updateRequestStatus(id, RequestStatus.DECLINED);
         log.info("Request with id {} has changed to DECLINED.", id);
 
-        tripService.updateTripStatus(tripId, TripStatus.CANCELLED_BY_PASSENGER);
-        log.info("Trip with id {} has changed to CANCELLED_BY_PASSENGER", tripId);
+        tripService.updateTripStatus(validatedData.tripId, TripStatus.CANCELLED_BY_PASSENGER);
+        log.info("Trip with id {} has changed to CANCELLED_BY_PASSENGER", validatedData.tripId);
 
-        vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IDLE);
-        log.info("Vehicle with vinNumber {} has been changed to IDLE", vinNumber);
+        vehicleService.updateVehicleStatus(validatedData.vinNumber, VehicleStatus.IDLE);
+        log.info("Vehicle with vinNumber {} has been changed to IDLE", validatedData.vinNumber);
     }
 
     @Override
@@ -219,26 +186,59 @@ public class RequestServiceImpl implements RequestService {
             throw new AccessDeniedException("Unauthorized to accept this request");
         }
 
+        ValidatedRequestData validatedData = validateAndExtractRequestData(request, id);
+        Point startLocation = request.getStartLocation();
+
+        redisService.invalidate(REQUEST_TIMEOUT_PREFIX + id);
+        // publish to broker
+        MoveVehicleDto moveVehicleDto =
+                generateVehicleMovementDto(
+                        startLocation, validatedData.tripId, validatedData.vinNumber);
+        eventPublisher.publishEvent(moveVehicleDto);
+        log.debug("Published MoveVehicleDto event for trip id: {}", validatedData.tripId);
+
+        // Update statuses
+        updateRequestStatus(id, RequestStatus.ACCEPTED);
+        log.info("Request with id {} has changed to ACCEPTED.", id);
+
+        tripService.updateTripStatus(validatedData.tripId, TripStatus.VEHICLE_ON_WAY);
+        log.info("Trip with id {} has changed to VEHICLE_ON_WAY", validatedData.tripId);
+
+        vehicleService.updateVehicleStatus(validatedData.vinNumber, VehicleStatus.ON_WAY);
+        log.info("Vehicle with vinNumber {} has been changed to ON_WAY", validatedData.vinNumber);
+
+        return request;
+    }
+
+    /**
+     * Validates request, trip, and vehicle states and extracts required data. Ensures request is in
+     * COMPLETED state, trip is INITIATED, and vehicle is ON_HOLD.
+     *
+     * @param request the request to validate
+     * @param requestId the request ID for logging
+     * @return validated data containing trip ID and vehicle VIN
+     * @throws IllegalStateException if any validation fails
+     */
+    private ValidatedRequestData validateAndExtractRequestData(Request request, Long requestId) {
         Trip trip = request.getTrip();
         if (trip == null) {
-            log.error("No trip associated with request id: {}", id);
-            throw new IllegalStateException("No trip associated with request " + id);
+            log.error("No trip associated with request id: {}", requestId);
+            throw new IllegalStateException("No trip associated with request " + requestId);
         }
         long tripId = trip.getId();
 
         Vehicle vehicle = trip.getVehicle();
         if (vehicle == null) {
-            log.error("No vehicle associated with trip of request id: {}", id);
-            throw new IllegalStateException("No vehicle associated with trip of request " + id);
+            log.error("No vehicle associated with trip of request id: {}", requestId);
+            throw new IllegalStateException(
+                    "No vehicle associated with trip of request " + requestId);
         }
         String vinNumber = vehicle.getVinNumber();
-
-        Point startLocation = request.getStartLocation();
 
         if (request.getStatus() != RequestStatus.COMPLETED) {
             log.warn(
                     "Request id: {} is not in COMPLETED state, current status: {}",
-                    id,
+                    requestId,
                     request.getStatus());
             throw new IllegalStateException("Request is not in COMPLETED state");
         }
@@ -256,24 +256,8 @@ public class RequestServiceImpl implements RequestService {
                     vehicle.getStatus());
             throw new IllegalStateException("Vehicle is not in ON_HOLD state");
         }
-        redisService.invalidate(REQUEST_TIMEOUT_PREFIX + id);
-        // publish to broker
-        MoveVehicleDto moveVehicleDto =
-                generateVehicleMovementDto(startLocation, tripId, vinNumber);
-        eventPublisher.publishEvent(moveVehicleDto);
-        log.debug("Published MoveVehicleDto event for trip id: {}", tripId);
 
-        // Update statuses
-        updateRequestStatus(id, RequestStatus.ACCEPTED);
-        log.info("Request with id {} has changed to ACCEPTED.", id);
-
-        tripService.updateTripStatus(tripId, TripStatus.VEHICLE_ON_WAY);
-        log.info("Trip with id {} has changed to VEHICLE_ON_WAY", tripId);
-
-        vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.ON_WAY);
-        log.info("Vehicle with vinNumber {} has been changed to ON_WAY", vinNumber);
-
-        return request;
+        return new ValidatedRequestData(tripId, vinNumber);
     }
 
     private MoveVehicleDto generateVehicleMovementDto(
@@ -288,5 +272,16 @@ public class RequestServiceImpl implements RequestService {
                 .latitude(startLat)
                 .longitude(startLong)
                 .build();
+    }
+
+    /** Data class for storing validated request data. */
+    private static class ValidatedRequestData {
+        final long tripId;
+        final String vinNumber;
+
+        ValidatedRequestData(long tripId, String vinNumber) {
+            this.tripId = tripId;
+            this.vinNumber = vinNumber;
+        }
     }
 }
