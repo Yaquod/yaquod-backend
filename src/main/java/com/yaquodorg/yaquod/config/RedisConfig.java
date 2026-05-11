@@ -2,6 +2,8 @@ package com.yaquodorg.yaquod.config;
 
 import com.yaquodorg.yaquod.utils.RedisExpiryListener;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.Duration;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@Slf4j
 public class RedisConfig {
 
     @Autowired private RedisConnectionFactory connectionFactory;
@@ -57,10 +60,12 @@ public class RedisConfig {
     @ConditionalOnProperty(value = "app.redis.expiry-listener.enabled", havingValue = "true")
     @PostConstruct
     public void enableKeyspaceNotifications() {
-        connectionFactory
-                .getConnection()
-                .serverCommands()
-                .setConfig("notify-keyspace-events", "KEx");
+        try {
+            connectionFactory.getConnection().serverCommands()
+                    .setConfig("notify-keyspace-events", "KEx");
+        } catch (Exception ex) {
+            log.warn("Could not enable Redis keyspace notifications: {}", ex.getMessage());
+        }
     }
 
     @Bean
