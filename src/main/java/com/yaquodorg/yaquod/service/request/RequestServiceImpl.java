@@ -17,6 +17,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -36,8 +37,12 @@ public class RequestServiceImpl implements RequestService {
     private final TripService tripService;
     private final VehicleService vehicleService;
     private final RedisService redisService;
-    final String REQUEST_TIMEOUT_PREFIX = "request:timeout:";
-    final long REQUEST_TIMEOUT_SECONDS = 50;
+
+    @Value("${app.request.timeout-prefix}")
+    private String REQUEST_TIMEOUT_PREFIX;
+
+    @Value("${app.request.timeout-seconds}")
+    private long REQUEST_TIMEOUT_SECONDS;
 
     @Transactional
     @Override
@@ -69,9 +74,6 @@ public class RequestServiceImpl implements RequestService {
 
         tripService.createTrip(savedRequest, startLong, startLat, endLong, endLat);
         log.debug("Trip created for request id: {}", savedRequest.getId());
-
-        redisService.setValue(
-                REQUEST_TIMEOUT_PREFIX + savedRequest.getId(), "pending", REQUEST_TIMEOUT_SECONDS);
 
         return savedRequest;
     }
@@ -160,7 +162,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public void declineRequestById(Long id, Long userId) {
-        log.info("Declining request id: {} by user id: {}", id, userId);
+        log.info("Attempting to decline request id: {} by user id: {}", id, userId);
         Request request = getRequest(id);
         if (!request.getUser().getId().equals(userId)) {
             log.warn("Unauthorized attempt to decline request id: {} by user id: {}", id, userId);
@@ -202,7 +204,7 @@ public class RequestServiceImpl implements RequestService {
                     vehicle.getStatus());
             throw new IllegalStateException("Vehicle is not in ON_HOLD state");
         }
-        redisService.invalidate(REQUEST_TIMEOUT_PREFIX + id);
+        redisService.delete(REQUEST_TIMEOUT_PREFIX + id);
         updateRequestStatus(id, RequestStatus.DECLINED);
         log.info("Request with id {} has changed to DECLINED.", id);
 
@@ -216,7 +218,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public Request acceptRequestById(Long id, Long userId) {
-        log.info("Accepting request id: {} by user id: {}", id, userId);
+        log.info("Attempting to accept request id: {} by user id: {}", id, userId);
         Request request = getRequest(id);
         if (!request.getUser().getId().equals(userId)) {
             log.warn("Unauthorized attempt to accept request id: {} by user id: {}", id, userId);
@@ -260,7 +262,7 @@ public class RequestServiceImpl implements RequestService {
                     vehicle.getStatus());
             throw new IllegalStateException("Vehicle is not in ON_HOLD state");
         }
-        redisService.invalidate(REQUEST_TIMEOUT_PREFIX + id);
+        redisService.delete(REQUEST_TIMEOUT_PREFIX + id);
         // publish to broker
         MoveVehicleDto moveVehicleDto =
                 generateVehicleMovementDto(startLocation, tripId, vinNumber);
