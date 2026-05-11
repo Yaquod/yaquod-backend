@@ -56,17 +56,13 @@ public class RedisConfig {
                 .build();
     }
 
-    @ConditionalOnProperty(value = "app.redis.expiry-listener.enabled", havingValue = "true")
     @PostConstruct
+    @ConditionalOnProperty(value = "app.redis.expiry-listener.enabled", havingValue = "true")
     public void enableKeyspaceNotifications() {
-        try {
-            connectionFactory
-                    .getConnection()
-                    .serverCommands()
-                    .setConfig("notify-keyspace-events", "KEx");
-        } catch (Exception ex) {
-            log.warn("Could not enable Redis keyspace notifications: {}", ex.getMessage());
-        }
+        connectionFactory
+                .getConnection()
+                .serverCommands()
+                .setConfig("notify-keyspace-events", "KEx");
     }
 
     @Bean
