@@ -1,5 +1,7 @@
 package com.yaquodorg.yaquod.service.request;
 
+import static com.yaquodorg.yaquod.service.redis.RedisServiceImpl.REQUEST_TIMEOUT_PREFIX;
+
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
