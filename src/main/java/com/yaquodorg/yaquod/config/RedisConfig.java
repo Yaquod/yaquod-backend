@@ -2,10 +2,9 @@ package com.yaquodorg.yaquod.config;
 
 import com.yaquodorg.yaquod.utils.RedisExpiryListener;
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -61,7 +60,9 @@ public class RedisConfig {
     @PostConstruct
     public void enableKeyspaceNotifications() {
         try {
-            connectionFactory.getConnection().serverCommands()
+            connectionFactory
+                    .getConnection()
+                    .serverCommands()
                     .setConfig("notify-keyspace-events", "KEx");
         } catch (Exception ex) {
             log.warn("Could not enable Redis keyspace notifications: {}", ex.getMessage());
