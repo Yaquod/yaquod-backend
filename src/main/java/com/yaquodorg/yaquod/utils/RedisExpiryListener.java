@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Slf4j
@@ -26,19 +28,34 @@ public class RedisExpiryListener implements MessageListener {
         if (expiredKey.startsWith("request:timeout:")) {
             String requestIdValue = expiredKey.replace("request:timeout:", "");
             Long requestId;
+
             try {
                 requestId = Long.parseLong(requestIdValue);
             } catch (NumberFormatException ex) {
                 log.warn("Ignoring expired key with invalid request id format: {}", expiredKey, ex);
                 return;
             }
-            Request request;
-            Trip trip;
-            Vehicle vehicle;
+
             try {
-                request = requestService.getRequest(requestId);
-                trip = tripService.getTripByRequestId(requestId);
-                vehicle = trip.getVehicle();
+                Request request = requestService.getRequest(requestId);
+
+                if (request != null && request.getStatus() == RequestStatus.COMPLETED) {
+                    Trip trip = tripService.getTripByRequestId(requestId);
+                    Vehicle vehicle = trip.getVehicle();
+
+                    handleTimeout(requestId, trip, vehicle);
+
+                    log.info(
+                            "Request {} has expired and was pending. Updated status to TIMEOUT and"
+                                    + " cancelled associated trip.",
+                            requestId);
+                } else {
+                    log.info(
+                            "Request {} has expired but is not completed (status: {}). No action"
+                                    + " taken.",
+                            requestId,
+                            request != null ? request.getStatus() : "null");
+                }
             } catch (RuntimeException ex) {
                 log.warn(
                         "Ignoring expired key for unknown or deleted request/trip. key: {},"
@@ -48,23 +65,13 @@ public class RedisExpiryListener implements MessageListener {
                         ex);
                 return;
             }
-            if (request != null
-                    && request.getStatus() == com.yaquodorg.yaquod.entity.RequestStatus.PENDING) {
-                requestService.updateRequestStatus(requestId, RequestStatus.TIMEOUT);
-                tripService.updateTripStatus(trip.getId(), TripStatus.CANCELLED_BY_SYSTEM);
-                vehicleService.updateVehicleStatus(vehicle.getVinNumber(), VehicleStatus.IDLE);
-
-                log.info(
-                        "Request {} has expired and was pending. Updated status to TIMEOUT and"
-                                + " cancelled associated trip.",
-                        requestId);
-
-            } else {
-                log.info(
-                        "Request {} has expired but is not pending (status: {}). No action taken.",
-                        requestId,
-                        request != null ? request.getStatus() : "null");
-            }
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleTimeout(Long requestId, Trip trip, Vehicle vehicle) {
+        requestService.updateRequestStatus(requestId, RequestStatus.TIMEOUT);
+        tripService.updateTripStatus(trip.getId(), TripStatus.CANCELLED_BY_SYSTEM);
+        vehicleService.updateVehicleStatus(vehicle.getVinNumber(), VehicleStatus.IDLE);
     }
 }
