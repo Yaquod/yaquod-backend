@@ -17,7 +17,8 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public void setValue(String key, String value) {
         try {
-            Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, value, Duration.ofMinutes(5));
+            Boolean isNew =
+                    redisTemplate.opsForValue().setIfAbsent(key, value, Duration.ofMinutes(5));
             if (Boolean.FALSE.equals(isNew)) {
                 throw new DuplicateKeyException("Duplicate request detected for key: " + key);
             }
