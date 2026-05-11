@@ -116,3 +116,6 @@ app:
   redis:
     expiry-listener:
       enabled: true
+  request:
+    timeout-prefix: "request:timeout:"
+    timeout-seconds: 50

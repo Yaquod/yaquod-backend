@@ -99,4 +99,7 @@ payment:
 app:
   redis:
     expiry-listener:
-      enabled: false
+      enabled: true
+  request:
+    timeout-prefix: "request:timeout:"
+    timeout-seconds: 50
