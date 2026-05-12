@@ -97,3 +97,11 @@ payment:
     moto-integration-id: ${PAYMOB_MOTO_INTEGRATION_ID:test-moto-integration-id}
     notification-url: ${PAYMOB_NOTIFICATION_URL:test-notification-url}
     redirection-url: ${PAYMOB_REDIRECT_URL:https://www.google.com/}
+
+app:
+  redis:
+    expiry-listener:
+      enabled: true
+  request:
+    timeout-prefix: "request:timeout:"
+    timeout-seconds: 50

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+echo "Running Spotless..."
+./mvnw spotless:apply
+
+git add -u
+
+exit 0

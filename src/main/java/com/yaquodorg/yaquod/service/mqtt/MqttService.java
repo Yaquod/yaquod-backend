@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.*;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.service.messaging.FirebaseMessagingService;
+import com.yaquodorg.yaquod.service.redis.RedisService;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
@@ -42,6 +44,13 @@ public class MqttService {
     private final RequestService requestService;
     private final TripService tripService;
     private final FirebaseMessagingService firebaseMessagingService;
+    private final RedisService redisService;
+
+    @Value("${app.request.timeout-prefix}")
+    private String REQUEST_TIMEOUT_PREFIX;
+
+    @Value("${app.request.timeout-seconds}")
+    private long REQUEST_TIMEOUT_SECONDS;
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleIncomingMessage(Message<?> message) {
@@ -130,6 +139,10 @@ public class MqttService {
                     dto.getEstimatedTime(),
                     dto.getEstimatedFare());
             vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.ON_HOLD);
+            redisService.setValueWithTTL(
+                    REQUEST_TIMEOUT_PREFIX + dto.getRequestId(),
+                    "pending",
+                    REQUEST_TIMEOUT_SECONDS);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse request status update payload: {}", payload, e);
         }

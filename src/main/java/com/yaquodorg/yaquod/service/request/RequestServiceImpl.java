@@ -1,15 +1,10 @@
 package com.yaquodorg.yaquod.service.request;
 
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
-import com.yaquodorg.yaquod.entity.Request;
-import com.yaquodorg.yaquod.entity.RequestStatus;
-import com.yaquodorg.yaquod.entity.Trip;
-import com.yaquodorg.yaquod.entity.TripStatus;
-import com.yaquodorg.yaquod.entity.User;
-import com.yaquodorg.yaquod.entity.Vehicle;
-import com.yaquodorg.yaquod.entity.VehicleStatus;
+import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.RequestRepository;
+import com.yaquodorg.yaquod.service.redis.RedisService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
@@ -22,6 +17,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -40,6 +36,13 @@ public class RequestServiceImpl implements RequestService {
     private final UserService userService;
     private final TripService tripService;
     private final VehicleService vehicleService;
+    private final RedisService redisService;
+
+    @Value("${app.request.timeout-prefix}")
+    private String REQUEST_TIMEOUT_PREFIX;
+
+    @Value("${app.request.timeout-seconds}")
+    private long REQUEST_TIMEOUT_SECONDS;
 
     @Transactional
     @Override
@@ -159,7 +162,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public void declineRequestById(Long id, Long userId) {
-        log.info("Declining request id: {} by user id: {}", id, userId);
+        log.info("Attempting to decline request id: {} by user id: {}", id, userId);
         Request request = getRequest(id);
         if (!request.getUser().getId().equals(userId)) {
             log.warn("Unauthorized attempt to decline request id: {} by user id: {}", id, userId);
@@ -201,7 +204,7 @@ public class RequestServiceImpl implements RequestService {
                     vehicle.getStatus());
             throw new IllegalStateException("Vehicle is not in ON_HOLD state");
         }
-
+        redisService.delete(REQUEST_TIMEOUT_PREFIX + id);
         updateRequestStatus(id, RequestStatus.DECLINED);
         log.info("Request with id {} has changed to DECLINED.", id);
 
@@ -215,7 +218,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public Request acceptRequestById(Long id, Long userId) {
-        log.info("Accepting request id: {} by user id: {}", id, userId);
+        log.info("Attempting to accept request id: {} by user id: {}", id, userId);
         Request request = getRequest(id);
         if (!request.getUser().getId().equals(userId)) {
             log.warn("Unauthorized attempt to accept request id: {} by user id: {}", id, userId);
@@ -259,6 +262,8 @@ public class RequestServiceImpl implements RequestService {
                     vehicle.getStatus());
             throw new IllegalStateException("Vehicle is not in ON_HOLD state");
         }
+
+        redisService.delete(REQUEST_TIMEOUT_PREFIX + id);
 
         // publish to broker
         MoveVehicleDto moveVehicleDto =
