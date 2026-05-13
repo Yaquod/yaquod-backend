@@ -18,7 +18,10 @@ public class ChargeSavedCardDirectRequest {
     @Positive(message = "Amount must be positive")
     private BigDecimal amount;
 
+    @Positive(message = "Saved Card ID must be positive")
     private Long savedCardId;
 
+    @NotNull(message = "Request ID cannot be null")
+    @Positive(message = "Request ID must be positive")
     private Long requestId;
 }

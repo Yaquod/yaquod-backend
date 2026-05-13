@@ -303,6 +303,11 @@ public class PaymentServiceImpl implements PaymentService {
                         .setScale(0, RoundingMode.HALF_UP)
                         .intValue();
 
+        Trip trip = tripService.getTripByRequestId(requestId);
+        if (trip.getUser().getId() != user.getId()) {
+            throw new AccessDeniedException("Cannot pay for another user's trip.");
+        }
+
         Map<String, Object> intentionRequest =
                 buildMitIntentionRequest(user, savedCard, amountInCents);
 
@@ -334,7 +339,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         String payResponse = restTemplate.postForObject(payUrl, payHttpRequest, String.class);
 
-        return parseMitPayResponse(payResponse, orderId, user, savedCard, requestId, amountInCents);
+        return parseMitPayResponse(payResponse, orderId, user, savedCard, trip, amountInCents);
     }
 
     private Map<String, Object> buildMitIntentionRequest(
@@ -393,7 +398,7 @@ public class PaymentServiceImpl implements PaymentService {
             String orderId,
             User user,
             SavedCard savedCard,
-            Long requestId,
+            Trip trip,
             int amountInCents) {
         try {
             JsonNode root = objectMapper.readTree(responseBody);
@@ -402,12 +407,6 @@ public class PaymentServiceImpl implements PaymentService {
             String message = root.path("data").path("message").asText();
             boolean success = root.path("success").asBoolean();
             PaymentStatus status = (success) ? PaymentStatus.PAID : PaymentStatus.FAILED;
-
-            // NOTE: If the trip service fails to get the trip from the passed request id,
-            // it throws a ResourceNotFoundException which is a correct behaviour.
-            // However, this exception is swallowed by the try-catch statement
-            // which this logic is called inside and throws RuntimeException instead.
-            Trip trip = tripService.getTripByRequestId(requestId);
 
             Payment payment =
                     Payment.builder()
