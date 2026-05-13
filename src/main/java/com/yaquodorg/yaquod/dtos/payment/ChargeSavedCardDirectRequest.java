@@ -19,4 +19,6 @@ public class ChargeSavedCardDirectRequest {
     private BigDecimal amount;
 
     private Long savedCardId;
+
+    private Long requestId;
 }

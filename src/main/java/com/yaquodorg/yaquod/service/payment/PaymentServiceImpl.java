@@ -9,10 +9,12 @@ import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.PaymentStatus;
 import com.yaquodorg.yaquod.entity.SavedCard;
+import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.PaymentRepository;
 import com.yaquodorg.yaquod.repository.SavedCardRepository;
+import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,6 +39,7 @@ import org.springframework.web.client.RestTemplate;
 public class PaymentServiceImpl implements PaymentService {
 
     private final UserService userService;
+    private final TripService tripService;
 
     private final SavedCardRepository savedCardRepository;
     private final PaymentRepository paymentRepository;
@@ -277,7 +280,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public ChargeSavedCardDirectResponse chargeSavedCardDirectly(
-            User user, BigDecimal amountInEgp, Long savedCardId) {
+            User user, BigDecimal amountInEgp, Long savedCardId, Long requestId) {
         log.info("MIT direct charge for user: {}, amount: {} EGP", user.getId(), amountInEgp);
 
         SavedCard savedCard;
@@ -331,7 +334,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         String payResponse = restTemplate.postForObject(payUrl, payHttpRequest, String.class);
 
-        return parseMitPayResponse(payResponse, orderId, user, savedCard, amountInCents);
+        return parseMitPayResponse(payResponse, orderId, user, savedCard, requestId, amountInCents);
     }
 
     private Map<String, Object> buildMitIntentionRequest(
@@ -390,6 +393,7 @@ public class PaymentServiceImpl implements PaymentService {
             String orderId,
             User user,
             SavedCard savedCard,
+            Long requestId,
             int amountInCents) {
         try {
             JsonNode root = objectMapper.readTree(responseBody);
@@ -398,6 +402,12 @@ public class PaymentServiceImpl implements PaymentService {
             String message = root.path("data").path("message").asText();
             boolean success = root.path("success").asBoolean();
             PaymentStatus status = (success) ? PaymentStatus.PAID : PaymentStatus.FAILED;
+
+            // NOTE: If the trip service fails to get the trip from the passed request id,
+            // it throws a ResourceNotFoundException which is a correct behaviour.
+            // However, this exception is swallowed by the try-catch statement
+            // which this logic is called inside and throws RuntimeException instead.
+            Trip trip = tripService.getTripByRequestId(requestId);
 
             Payment payment =
                     Payment.builder()
@@ -410,6 +420,7 @@ public class PaymentServiceImpl implements PaymentService {
                             .paymobTransactionId(transactionId)
                             .user(user)
                             .savedCard(savedCard)
+                            .trip(trip)
                             .paidAt(new java.sql.Timestamp(System.currentTimeMillis()))
                             .build();
 

@@ -16,7 +16,7 @@ public interface PaymentService {
     PayWithSavedCardResponse payWithSavedCard(User user, BigDecimal amountInEgp, Long savedCardId);
 
     ChargeSavedCardDirectResponse chargeSavedCardDirectly(
-            User user, BigDecimal amountInEgp, Long savedCardId);
+            User user, BigDecimal amountInEgp, Long savedCardIdm, Long requestId);
 
     void processPaymentCallback(String payload);
 
