@@ -94,7 +94,10 @@ public class PaymentController {
 
         ChargeSavedCardDirectResponse response =
                 paymentService.chargeSavedCardDirectly(
-                        user, request.getAmount(), request.getSavedCardId());
+                        user,
+                        request.getAmount(),
+                        request.getSavedCardId(),
+                        request.getRequestId());
         return ResponseEntity.ok(createSuccessResponse(response));
     }
 
