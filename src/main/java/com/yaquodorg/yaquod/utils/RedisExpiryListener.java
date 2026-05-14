@@ -21,6 +21,7 @@ public class RedisExpiryListener implements MessageListener {
     private final VehicleService vehicleService;
 
     @Override
+    @Transactional
     public void onMessage(Message message, byte[] pattern) {
         String expiredKey = message.toString();
         log.info("Received expired key event for key: {}", expiredKey);
@@ -63,7 +64,6 @@ public class RedisExpiryListener implements MessageListener {
                         expiredKey,
                         requestId,
                         ex);
-                return;
             }
         }
     }
