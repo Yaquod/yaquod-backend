@@ -49,6 +49,12 @@ public class MqttService {
     @Value("${app.request.timeout-prefix}")
     private String REQUEST_TIMEOUT_PREFIX;
 
+    @Value("${app.eta.timeout-prefix}")
+    private String ETA_TIMEOUT_PREFIX;
+
+    @Value("${app.eta.timeout-seconds}")
+    private Long ETA_TIMEOUT_SECONDS;
+
     @Value("${app.request.timeout-seconds}")
     private long REQUEST_TIMEOUT_SECONDS;
 
@@ -129,6 +135,15 @@ public class MqttService {
     private void handleVehicleUpdateEta(String payload) {
         try {
             EtaStatusDto dto = objectMapper.readValue(payload, EtaStatusDto.class);
+            Long requestId = dto.getRequestId();
+            redisService.getValue(REQUEST_TIMEOUT_PREFIX + requestId);
+            if (redisService.getValue(REQUEST_TIMEOUT_PREFIX + requestId) == null) {
+                log.warn(
+                        "Received ETA update for request ID: {} which has already timed out."
+                                + " Ignoring update.",
+                        requestId);
+                return;
+            }
             log.info(
                     "Request with ID: {}, status updated to {}",
                     dto.getRequestId(),
@@ -247,6 +262,8 @@ public class MqttService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleTripInitiated(InitTripDto event) {
         publish(TOPIC_TRIP_INIT, event);
+        redisService.setValueWithTTL(
+                ETA_TIMEOUT_PREFIX + event.getRequestId(), "pending", ETA_TIMEOUT_SECONDS);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
