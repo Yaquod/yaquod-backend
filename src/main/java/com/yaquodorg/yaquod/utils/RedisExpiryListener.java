@@ -6,6 +6,7 @@ import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
@@ -20,14 +21,20 @@ public class RedisExpiryListener implements MessageListener {
     private final TripService tripService;
     private final VehicleService vehicleService;
 
+    @Value("${app.request.timeout-prefix}")
+    private String REQUEST_TIMEOUT_PREFIX;
+
+    @Value("${app.eta.timeout-prefix}")
+    private String ETA_TIMEOUT_PREFIX;
+
     @Override
     @Transactional
     public void onMessage(Message message, byte[] pattern) {
         String expiredKey = message.toString();
         log.info("Received expired key event for key: {}", expiredKey);
 
-        if (expiredKey.startsWith("request:timeout:")) {
-            String requestIdValue = expiredKey.replace("request:timeout:", "");
+        if (expiredKey.startsWith(REQUEST_TIMEOUT_PREFIX)) {
+            String requestIdValue = expiredKey.replace(REQUEST_TIMEOUT_PREFIX, "");
             Long requestId;
 
             try {
@@ -65,8 +72,8 @@ public class RedisExpiryListener implements MessageListener {
                         requestId,
                         ex);
             }
-        } else if (expiredKey.startsWith("eta:timeout:")) {
-            String requestIdValue = expiredKey.replace("eta:timeout:", "");
+        } else if (expiredKey.startsWith(ETA_TIMEOUT_PREFIX)) {
+            String requestIdValue = expiredKey.replace(ETA_TIMEOUT_PREFIX, "");
             Long requestId;
             try {
                 requestId = Long.parseLong(requestIdValue);
