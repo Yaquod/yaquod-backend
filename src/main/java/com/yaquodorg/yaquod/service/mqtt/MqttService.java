@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.*;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.service.messaging.FirebaseMessagingService;
+import com.yaquodorg.yaquod.service.redis.RedisService;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.Message;
@@ -42,6 +44,19 @@ public class MqttService {
     private final RequestService requestService;
     private final TripService tripService;
     private final FirebaseMessagingService firebaseMessagingService;
+    private final RedisService redisService;
+
+    @Value("${app.request.timeout-prefix}")
+    private String REQUEST_TIMEOUT_PREFIX;
+
+    @Value("${app.eta.timeout-prefix}")
+    private String ETA_TIMEOUT_PREFIX;
+
+    @Value("${app.eta.timeout-seconds}")
+    private Long ETA_TIMEOUT_SECONDS;
+
+    @Value("${app.request.timeout-seconds}")
+    private long REQUEST_TIMEOUT_SECONDS;
 
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleIncomingMessage(Message<?> message) {
@@ -120,16 +135,33 @@ public class MqttService {
     private void handleVehicleUpdateEta(String payload) {
         try {
             EtaStatusDto dto = objectMapper.readValue(payload, EtaStatusDto.class);
-            log.info(
-                    "Request with ID: {}, status updated to {}",
-                    dto.getRequestId(),
-                    dto.getStatus());
+            Long requestId = dto.getRequestId();
+
+            if (redisService.getValue(ETA_TIMEOUT_PREFIX + requestId) == null) {
+                log.warn(
+                        "Received ETA update for request ID: {} which has already timed out."
+                                + " Ignoring update.",
+                        requestId);
+                return;
+            }
+
             requestService.updateRequest(
                     dto.getRequestId(),
                     dto.getStatus(),
                     dto.getEstimatedTime(),
                     dto.getEstimatedFare());
             vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.ON_HOLD);
+            // TODO: Introduce a new trip status indicating that the ETA was sent to the user
+            log.info(
+                    "Request with ID: {}, status updated to {}",
+                    dto.getRequestId(),
+                    dto.getStatus());
+
+            redisService.delete(ETA_TIMEOUT_PREFIX + requestId);
+            redisService.setValueWithTTL(
+                    REQUEST_TIMEOUT_PREFIX + dto.getRequestId(),
+                    "pending",
+                    REQUEST_TIMEOUT_SECONDS);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse request status update payload: {}", payload, e);
         }
@@ -234,6 +266,8 @@ public class MqttService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleTripInitiated(InitTripDto event) {
         publish(TOPIC_TRIP_INIT, event);
+        redisService.setValueWithTTL(
+                ETA_TIMEOUT_PREFIX + event.getRequestId(), "pending", ETA_TIMEOUT_SECONDS);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

@@ -66,7 +66,6 @@ public class MqttConfig {
         options.setKeepAliveInterval(keepAliveInterval);
         options.setCleanSession(true);
         options.setAutomaticReconnect(true);
-
         factory.setConnectionOptions(options);
         return factory;
     }
