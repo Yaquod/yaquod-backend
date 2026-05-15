@@ -154,6 +154,7 @@ public class MqttService {
                     dto.getEstimatedTime(),
                     dto.getEstimatedFare());
             vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.ON_HOLD);
+            redisService.delete(ETA_TIMEOUT_PREFIX + requestId);
             redisService.setValueWithTTL(
                     REQUEST_TIMEOUT_PREFIX + dto.getRequestId(),
                     "pending",
