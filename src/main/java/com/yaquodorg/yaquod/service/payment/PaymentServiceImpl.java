@@ -304,7 +304,7 @@ public class PaymentServiceImpl implements PaymentService {
                         .intValue();
 
         Trip trip = tripService.getTripByRequestId(requestId);
-        if (trip.getUser().getId() != user.getId()) {
+        if (!trip.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("Cannot pay for another user's trip.");
         }
 

@@ -41,9 +41,6 @@ public class RequestServiceImpl implements RequestService {
     @Value("${app.request.timeout-prefix}")
     private String REQUEST_TIMEOUT_PREFIX;
 
-    @Value("${app.request.timeout-seconds}")
-    private long REQUEST_TIMEOUT_SECONDS;
-
     @Transactional
     @Override
     public Request createRequest(
