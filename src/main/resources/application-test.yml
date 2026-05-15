@@ -104,4 +104,7 @@ app:
       enabled: true
   request:
     timeout-prefix: "request:timeout:"
-    timeout-seconds: 50
+    timeout-seconds: 50 # seconds before request timeout
+  eta:
+    timeout-prefix: "eta:timeout:"
+    timeout-seconds: 150 # seconds before the estimated time of arrival (ETA) to trigger a timeout event

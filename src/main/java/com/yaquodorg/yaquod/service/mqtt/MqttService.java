@@ -49,6 +49,12 @@ public class MqttService {
     @Value("${app.request.timeout-prefix}")
     private String REQUEST_TIMEOUT_PREFIX;
 
+    @Value("${app.eta.timeout-prefix}")
+    private String ETA_TIMEOUT_PREFIX;
+
+    @Value("${app.eta.timeout-seconds}")
+    private Long ETA_TIMEOUT_SECONDS;
+
     @Value("${app.request.timeout-seconds}")
     private long REQUEST_TIMEOUT_SECONDS;
 
@@ -129,16 +135,29 @@ public class MqttService {
     private void handleVehicleUpdateEta(String payload) {
         try {
             EtaStatusDto dto = objectMapper.readValue(payload, EtaStatusDto.class);
-            log.info(
-                    "Request with ID: {}, status updated to {}",
-                    dto.getRequestId(),
-                    dto.getStatus());
+            Long requestId = dto.getRequestId();
+
+            if (redisService.getValue(ETA_TIMEOUT_PREFIX + requestId) == null) {
+                log.warn(
+                        "Received ETA update for request ID: {} which has already timed out."
+                                + " Ignoring update.",
+                        requestId);
+                return;
+            }
+
             requestService.updateRequest(
                     dto.getRequestId(),
                     dto.getStatus(),
                     dto.getEstimatedTime(),
                     dto.getEstimatedFare());
             vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.ON_HOLD);
+            // TODO: Introduce a new trip status indicating that the ETA was sent to the user
+            log.info(
+                    "Request with ID: {}, status updated to {}",
+                    dto.getRequestId(),
+                    dto.getStatus());
+
+            redisService.delete(ETA_TIMEOUT_PREFIX + requestId);
             redisService.setValueWithTTL(
                     REQUEST_TIMEOUT_PREFIX + dto.getRequestId(),
                     "pending",
@@ -247,6 +266,8 @@ public class MqttService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleTripInitiated(InitTripDto event) {
         publish(TOPIC_TRIP_INIT, event);
+        redisService.setValueWithTTL(
+                ETA_TIMEOUT_PREFIX + event.getRequestId(), "pending", ETA_TIMEOUT_SECONDS);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
