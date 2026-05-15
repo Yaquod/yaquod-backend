@@ -136,24 +136,27 @@ public class MqttService {
         try {
             EtaStatusDto dto = objectMapper.readValue(payload, EtaStatusDto.class);
             Long requestId = dto.getRequestId();
-            redisService.getValue(REQUEST_TIMEOUT_PREFIX + requestId);
-            if (redisService.getValue(REQUEST_TIMEOUT_PREFIX + requestId) == null) {
+
+            if (redisService.getValue(ETA_TIMEOUT_PREFIX + requestId) == null) {
                 log.warn(
                         "Received ETA update for request ID: {} which has already timed out."
                                 + " Ignoring update.",
                         requestId);
                 return;
             }
-            log.info(
-                    "Request with ID: {}, status updated to {}",
-                    dto.getRequestId(),
-                    dto.getStatus());
+
             requestService.updateRequest(
                     dto.getRequestId(),
                     dto.getStatus(),
                     dto.getEstimatedTime(),
                     dto.getEstimatedFare());
             vehicleService.updateVehicleStatus(dto.getVinNumber(), VehicleStatus.ON_HOLD);
+            // TODO: Introduce a new trip status indicating that the ETA was sent to the user
+            log.info(
+                    "Request with ID: {}, status updated to {}",
+                    dto.getRequestId(),
+                    dto.getStatus());
+
             redisService.delete(ETA_TIMEOUT_PREFIX + requestId);
             redisService.setValueWithTTL(
                     REQUEST_TIMEOUT_PREFIX + dto.getRequestId(),
