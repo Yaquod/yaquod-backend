@@ -93,7 +93,7 @@ public class TripController {
 
     @Operation(
             summary = "Cancel Request",
-            description = "Cancels the current request and order vehicle to stop ETA calculations")
+            description = "Cancels the current request and orders vehicle to stop ETA calculations")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

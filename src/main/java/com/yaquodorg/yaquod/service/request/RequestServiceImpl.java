@@ -165,7 +165,8 @@ public class RequestServiceImpl implements RequestService {
     public void cancelRequest(Long id, Long userId) {
         log.info("Attempting to cancel request id: {} by user id: {}", id, userId);
         Request request = getRequest(id);
-        if (!request.getUser().getId().equals(userId)) {
+        User actor = userService.getUserById(userId);
+        if (actor.getRole() != Role.ADMIN && !request.getUser().getId().equals(userId)) {
             log.warn("Unauthorized attempt to cancel request id: {} by user id: {}", id, userId);
             throw new AccessDeniedException("Unauthorized to cancel this request");
         }
