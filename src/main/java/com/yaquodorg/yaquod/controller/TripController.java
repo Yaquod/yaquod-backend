@@ -92,6 +92,29 @@ public class TripController {
     }
 
     @Operation(
+            summary = "Cancel Request",
+            description = "Cancels the current request and orders vehicle to stop ETA calculations")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Request canceled successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "Request not found")
+            })
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
+    @DeleteMapping("/request/{requestId}")
+    public ResponseEntity<ApiResponse<MessageResponse>> cancelRequest(
+            @Parameter(description = "The unique ID of the request", required = true) @PathVariable
+                    Long requestId,
+            @AuthenticationPrincipal User user) {
+        requestService.cancelRequest(requestId, user.getId());
+        return ResponseEntity.ok(
+                createSuccessResponse(new MessageResponse("Request canceled successfully!")));
+    }
+
+    @Operation(
             summary = "Get trip by request ID",
             description = "Retrieves a trip associated with a specific request ID")
     @ApiResponses(
