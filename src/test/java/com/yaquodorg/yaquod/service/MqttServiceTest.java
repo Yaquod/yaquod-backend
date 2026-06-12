@@ -210,6 +210,25 @@ class MqttServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw exception when publish fails")
+    void shouldThrowExceptionWhenPublishFails() throws Exception {
+        // Arrange
+        String topic = "test/topic";
+        Object data = new Object();
+
+        when(objectMapper.writeValueAsString(data))
+                .thenThrow(new RuntimeException("Publishing error") {});
+
+        // Act & Assert
+        assertThatThrownBy(() -> mqttService.publish(topic, data))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to publish to topic: test/topic");
+
+        verify(objectMapper).writeValueAsString(data);
+        verify(mqttGateway, never()).sendToMqtt(anyString(), anyString());
+    }
+
+    @Test
     @DisplayName("Should throw exception when publish fails due to JSON error")
     void shouldThrowExceptionWhenPublishFailsDueToJsonError() throws Exception {
         // Arrange
@@ -222,7 +241,7 @@ class MqttServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> mqttService.publish(topic, data))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to publish to topic: test/topic")
+                .hasMessageContaining("JSON processing failed to topic: test/topic")
                 .hasCauseInstanceOf(JsonProcessingException.class);
 
         verify(objectMapper).writeValueAsString(data);
