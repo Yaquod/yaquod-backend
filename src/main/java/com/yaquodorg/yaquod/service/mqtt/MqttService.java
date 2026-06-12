@@ -262,24 +262,27 @@ public class MqttService {
             mqttGateway.sendToMqtt(payload, topic);
             log.info("Published message to topic {}", topic);
         } catch (JsonProcessingException e) {
-            log.error("Error publishing to topic {}", topic, e);
-            throw new RuntimeException("Failed to publish to topic: " + topic, e);
+            log.error("JSON processing failed to topic {}", topic, e);
+            throw new RuntimeException("JSON processing failed to topic: " + topic, e);
+        } catch (Exception ex) {
+            log.error("Error publishing to topic: {}", topic, ex);
+            throw new RuntimeException("Failed to publish to topic: " + topic, ex);
         }
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleTripInitiated(InitTripDto event) {
         publish(TOPIC_TRIP_INIT, event);
         redisService.setValueWithTTL(
                 ETA_TIMEOUT_PREFIX + event.getRequestId(), "pending", ETA_TIMEOUT_SECONDS);
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleTripCanceled(TripCancelDto event) {
         publish(TOPIC_TRIP_CANCEL, event);
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleMoveVehicleOrder(MoveVehicleDto event) {
         publish(TOPIC_TRIP_MOVE, event);
     }

@@ -2,7 +2,7 @@ package com.yaquodorg.yaquod.entity;
 
 public enum RequestStatus {
     PENDING,
-    CANCELED,
+    CANCELLED,
     COMPLETED,
     TIMEOUT,
     FAILED,

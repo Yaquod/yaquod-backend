@@ -215,11 +215,15 @@ public class RequestServiceImpl implements RequestService {
         eventPublisher.publishEvent(tripCancelDto);
         log.info("Published TripCancelDto event for request id: {}", id);
 
-        updateRequestStatus(id, RequestStatus.CANCELED);
-        log.info("Request with id {} has changed to CANCELED.", id);
+        updateRequestStatus(id, RequestStatus.CANCELLED);
+        log.info("Request with id {} has changed to CANCELLED.", id);
 
-        tripService.updateTripStatus(tripId, TripStatus.CANCELLED_BY_PASSENGER);
-        log.info("Trip with id {} has changed to CANCELLED_BY_PASSENGER", tripId);
+        TripStatus status =
+                actor.getRole() == Role.ADMIN
+                        ? TripStatus.CANCELLED_BY_SYSTEM
+                        : TripStatus.CANCELLED_BY_PASSENGER;
+        tripService.updateTripStatus(tripId, status);
+        log.info("Trip with id {} has changed to {}", tripId, status);
 
         vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IDLE);
         log.info("Vehicle with vinNumber {} has been changed to IDLE", vinNumber);
