@@ -32,6 +32,7 @@ public class MqttService {
             "topic/vehicle/update/status/order";
     private static final String TOPIC_VEHICLE_UPDATE_STATUS = "topic/vehicle/update/status";
     private static final String TOPIC_TRIP_INIT = "topic/trip/init";
+    private static final String TOPIC_TRIP_CANCEL = "topic/trip/cancel";
     private static final String TOPIC_TRIP_ETA = "topic/trip/eta";
     private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private static final String TOPIC_TRIP_ARRIVE = "topic/trip/arrive";
@@ -87,6 +88,9 @@ public class MqttService {
                 break;
             case TOPIC_TRIP_INIT:
                 log.info("Sent trip init order successfully!");
+                break;
+            case TOPIC_TRIP_CANCEL:
+                log.info("Sent trip cancel order successfully!");
                 break;
             case TOPIC_TRIP_MOVE:
                 log.info("Sent trip move order successfully!");
@@ -258,19 +262,27 @@ public class MqttService {
             mqttGateway.sendToMqtt(payload, topic);
             log.info("Published message to topic {}", topic);
         } catch (JsonProcessingException e) {
-            log.error("Error publishing to topic {}", topic, e);
-            throw new RuntimeException("Failed to publish to topic: " + topic, e);
+            log.error("JSON processing failed to topic {}", topic, e);
+            throw new RuntimeException("JSON processing failed to topic: " + topic, e);
+        } catch (Exception ex) {
+            log.error("Error publishing to topic: {}", topic, ex);
+            throw new RuntimeException("Failed to publish to topic: " + topic, ex);
         }
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleTripInitiated(InitTripDto event) {
         publish(TOPIC_TRIP_INIT, event);
         redisService.setValueWithTTL(
                 ETA_TIMEOUT_PREFIX + event.getRequestId(), "pending", ETA_TIMEOUT_SECONDS);
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    public void handleTripCanceled(TripCancelDto event) {
+        publish(TOPIC_TRIP_CANCEL, event);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleMoveVehicleOrder(MoveVehicleDto event) {
         publish(TOPIC_TRIP_MOVE, event);
     }

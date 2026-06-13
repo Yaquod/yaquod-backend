@@ -24,6 +24,8 @@ public interface RequestService {
 
     void deleteRequest(Long requestId);
 
+    void cancelRequest(Long id, Long userId);
+
     void declineRequestById(Long id, Long userId);
 
     Request acceptRequestById(Long id, Long userId);

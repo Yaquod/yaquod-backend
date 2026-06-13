@@ -1,6 +1,7 @@
 package com.yaquodorg.yaquod.service.request;
 
 import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
+import com.yaquodorg.yaquod.dtos.TripCancelDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.RequestRepository;
@@ -37,6 +38,9 @@ public class RequestServiceImpl implements RequestService {
     private final TripService tripService;
     private final VehicleService vehicleService;
     private final RedisService redisService;
+
+    @Value("${app.eta.timeout-prefix}")
+    private String ETA_TIMEOUT_PREFIX;
 
     @Value("${app.request.timeout-prefix}")
     private String REQUEST_TIMEOUT_PREFIX;
@@ -158,6 +162,75 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional
+    public void cancelRequest(Long id, Long userId) {
+        log.info("Attempting to cancel request id: {} by user id: {}", id, userId);
+        Request request = getRequest(id);
+        User actor = userService.getUserById(userId);
+        if (actor.getRole() != Role.ADMIN && !request.getUser().getId().equals(userId)) {
+            log.warn("Unauthorized attempt to cancel request id: {} by user id: {}", id, userId);
+            throw new AccessDeniedException("Unauthorized to cancel this request");
+        }
+
+        Trip trip = request.getTrip();
+        if (trip == null) {
+            log.error("No trip associated with request id: {}", id);
+            throw new IllegalStateException("No trip associated with request " + id);
+        }
+        long tripId = trip.getId();
+
+        Vehicle vehicle = trip.getVehicle();
+        if (vehicle == null) {
+            log.error("No vehicle associated with trip of request id: {}", id);
+            throw new IllegalStateException("No vehicle associated with trip of request " + id);
+        }
+        String vinNumber = vehicle.getVinNumber();
+
+        if (request.getStatus() != RequestStatus.PENDING) {
+            log.warn(
+                    "Request id: {} is not in PENDING state, current status: {}",
+                    id,
+                    request.getStatus());
+            throw new IllegalStateException("Request is not in PENDING state");
+        }
+        if (trip.getStatus() != TripStatus.INITIATED) {
+            log.warn(
+                    "Trip id: {} is not in INITIATED state, current status: {}",
+                    tripId,
+                    trip.getStatus());
+            throw new IllegalStateException("Trip is not in INITIATED state");
+        }
+        if (vehicle.getStatus() != VehicleStatus.PROCESSING) {
+            log.warn(
+                    "Vehicle VIN: {} is not in PROCESSING state, current status: {}",
+                    vinNumber,
+                    vehicle.getStatus());
+            throw new IllegalStateException("Vehicle is not in PROCESSING state");
+        }
+
+        redisService.delete(ETA_TIMEOUT_PREFIX + id);
+
+        TripCancelDto tripCancelDto =
+                TripCancelDto.builder().vinNumber(vinNumber).requestId(id).build();
+
+        eventPublisher.publishEvent(tripCancelDto);
+        log.info("Published TripCancelDto event for request id: {}", id);
+
+        updateRequestStatus(id, RequestStatus.CANCELLED);
+        log.info("Request with id {} has changed to CANCELLED.", id);
+
+        TripStatus status =
+                actor.getRole() == Role.ADMIN
+                        ? TripStatus.CANCELLED_BY_SYSTEM
+                        : TripStatus.CANCELLED_BY_PASSENGER;
+        tripService.updateTripStatus(tripId, status);
+        log.info("Trip with id {} has changed to {}", tripId, status);
+
+        vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IDLE);
+        log.info("Vehicle with vinNumber {} has been changed to IDLE", vinNumber);
+    }
+
+    @Override
+    @Transactional
     public void declineRequestById(Long id, Long userId) {
         log.info("Attempting to decline request id: {} by user id: {}", id, userId);
         Request request = getRequest(id);
@@ -201,7 +274,9 @@ public class RequestServiceImpl implements RequestService {
                     vehicle.getStatus());
             throw new IllegalStateException("Vehicle is not in ON_HOLD state");
         }
+
         redisService.delete(REQUEST_TIMEOUT_PREFIX + id);
+
         updateRequestStatus(id, RequestStatus.DECLINED);
         log.info("Request with id {} has changed to DECLINED.", id);
 
