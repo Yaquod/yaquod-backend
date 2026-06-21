@@ -11,9 +11,11 @@ import com.yaquodorg.yaquod.entity.PaymentStatus;
 import com.yaquodorg.yaquod.entity.SavedCard;
 import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.User;
+import com.yaquodorg.yaquod.exception.DuplicateKeyException;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.PaymentRepository;
 import com.yaquodorg.yaquod.repository.SavedCardRepository;
+import com.yaquodorg.yaquod.service.redis.RedisService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
 import java.math.BigDecimal;
@@ -21,6 +23,7 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +43,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final UserService userService;
     private final TripService tripService;
+    private final RedisService redisService;
 
     private final SavedCardRepository savedCardRepository;
     private final PaymentRepository paymentRepository;
@@ -67,6 +71,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Value("${payment.paymob.redirection-url}")
     private String redirectionUrl;
+
+    @Value("${app.payment.idempotency-prefix}")
+    private String IDEMPOTENCY_PREFIX;
 
     private static final String UNIFIED_CHECKOUT_URL = "https://accept.paymob.com/unifiedcheckout/";
 
@@ -283,6 +290,15 @@ public class PaymentServiceImpl implements PaymentService {
             User user, BigDecimal amountInEgp, Long savedCardId, Long requestId) {
         log.info("MIT direct charge for user: {}, amount: {} EGP", user.getId(), amountInEgp);
 
+        // TODO: Other payment ways and functions do not have idempotency checks yet.
+        String idempotencyKey = redisService.getValue(IDEMPOTENCY_PREFIX + requestId);
+
+        if (idempotencyKey != null) {
+            log.warn("Duplicate payment request for the same trip requestId: {}", requestId);
+            throw new DuplicateKeyException(
+                    "Duplicate payment request for the same trip requestId: " + requestId);
+        }
+
         SavedCard savedCard;
         if (savedCardId != null) {
             savedCard = savedCardRepository.findById(savedCardId).orElse(null);
@@ -307,6 +323,24 @@ public class PaymentServiceImpl implements PaymentService {
         if (!trip.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("Cannot pay for another user's trip.");
         }
+
+        Optional<Payment> payment = paymentRepository.findByTripId(trip.getId());
+        if (payment.isPresent()) {
+            PaymentStatus status = payment.get().getStatus();
+
+            log.warn(
+                    "Payment for the trip with requestId: {} has already been processed with"
+                            + " status: {}.",
+                    requestId,
+                    status);
+            throw new DuplicateKeyException(
+                    "Payment for the trip with requestId: "
+                            + requestId
+                            + " has already been processed with status: "
+                            + status);
+        }
+
+        redisService.setValue(IDEMPOTENCY_PREFIX + requestId, "PENDING");
 
         Map<String, Object> intentionRequest =
                 buildMitIntentionRequest(user, savedCard, amountInCents);
@@ -338,8 +372,12 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Calling Paymob Pay API: {}", payUrl);
 
         String payResponse = restTemplate.postForObject(payUrl, payHttpRequest, String.class);
+        ChargeSavedCardDirectResponse response =
+                parseMitPayResponse(payResponse, orderId, user, savedCard, trip, amountInCents);
 
-        return parseMitPayResponse(payResponse, orderId, user, savedCard, trip, amountInCents);
+        redisService.delete(IDEMPOTENCY_PREFIX + requestId);
+
+        return response;
     }
 
     private Map<String, Object> buildMitIntentionRequest(
