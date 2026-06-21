@@ -110,4 +110,3 @@ app:
     timeout-seconds: 150 # seconds before the estimated time of arrival (ETA) to trigger a timeout event
   payment:
     idempotency-prefix: "payment:idempotency:"
-    timeout-seconds: 180

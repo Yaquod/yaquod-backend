@@ -34,6 +34,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -289,15 +291,7 @@ public class PaymentServiceImpl implements PaymentService {
     public ChargeSavedCardDirectResponse chargeSavedCardDirectly(
             User user, BigDecimal amountInEgp, Long savedCardId, Long requestId) {
         log.info("MIT direct charge for user: {}, amount: {} EGP", user.getId(), amountInEgp);
-
         // TODO: Other payment ways and functions do not have idempotency checks yet.
-        String idempotencyKey = redisService.getValue(IDEMPOTENCY_PREFIX + requestId);
-
-        if (idempotencyKey != null) {
-            log.warn("Duplicate payment request for the same trip requestId: {}", requestId);
-            throw new DuplicateKeyException(
-                    "Duplicate payment request for the same trip requestId: " + requestId);
-        }
 
         SavedCard savedCard;
         if (savedCardId != null) {
@@ -375,7 +369,13 @@ public class PaymentServiceImpl implements PaymentService {
         ChargeSavedCardDirectResponse response =
                 parseMitPayResponse(payResponse, orderId, user, savedCard, trip, amountInCents);
 
-        redisService.delete(IDEMPOTENCY_PREFIX + requestId);
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        redisService.delete(IDEMPOTENCY_PREFIX + requestId);
+                    }
+                });
 
         return response;
     }
