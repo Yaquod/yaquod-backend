@@ -61,4 +61,8 @@ public class Trip {
     @JsonIgnore
     @OneToOne(mappedBy = "trip", cascade = CascadeType.ALL)
     private Payment payment;
+
+    @JsonIgnore
+    @OneToOne(mappedBy = "trip", cascade = CascadeType.ALL)
+    private Rating rating;
 }
