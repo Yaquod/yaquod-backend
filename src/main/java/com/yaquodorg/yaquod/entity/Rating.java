@@ -31,7 +31,6 @@ public class Rating {
     private User user;
 
     @OneToOne
-    @JsonIgnore
     @JoinColumn(name = "trip_id", referencedColumnName = "id")
     private Trip trip;
 
