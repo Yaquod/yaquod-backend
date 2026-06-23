@@ -1,6 +1,7 @@
 package com.yaquodorg.yaquod.controller;
 
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
+import static com.yaquodorg.yaquod.service.rating.RatingServiceImpl.toRatingResponse;
 
 import com.yaquodorg.yaquod.dtos.CreateRatingDto;
 import com.yaquodorg.yaquod.dtos.UpdateRatingCommentDto;
@@ -8,7 +9,9 @@ import com.yaquodorg.yaquod.dtos.UpdateRatingValueDto;
 import com.yaquodorg.yaquod.entity.Rating;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
+import com.yaquodorg.yaquod.response.RatingResponse;
 import com.yaquodorg.yaquod.service.rating.RatingService;
+import com.yaquodorg.yaquod.service.rating.RatingServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,31 +48,31 @@ public class RatingController {
             })
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @PostMapping
-    public ResponseEntity<ApiResponse<Rating>> createRating(
-            @Valid @RequestBody CreateRatingDto createRatingDto,
-            @AuthenticationPrincipal User user) {
+    public ResponseEntity<ApiResponse<RatingResponse>> createRating(
+            @Valid @RequestBody CreateRatingDto dto, @AuthenticationPrincipal User user) {
         Rating rating =
                 ratingService.createRating(
-                        user.getId(),
-                        createRatingDto.getTripId(),
-                        createRatingDto.getRatingValue(),
-                        createRatingDto.getComment());
-        return ResponseEntity.ok(createSuccessResponse(rating));
+                        user.getId(), dto.getTripId(), dto.getRatingValue(), dto.getComment());
+        return ResponseEntity.ok(createSuccessResponse(toRatingResponse(rating)));
     }
 
     @Operation(summary = "Get rating by ID", description = "Retrieves a rating by its ID")
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @GetMapping("/{ratingId}")
-    public ResponseEntity<ApiResponse<Rating>> getRatingById(@PathVariable Long ratingId) {
+    public ResponseEntity<ApiResponse<RatingResponse>> getRatingById(@PathVariable Long ratingId) {
         Rating rating = ratingService.getRatingById(ratingId);
-        return ResponseEntity.ok(createSuccessResponse(rating));
+        return ResponseEntity.ok(createSuccessResponse(toRatingResponse(rating)));
     }
 
     @Operation(summary = "Get all ratings", description = "Retrieves all ratings")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Rating>>> getAllRatings() {
-        return ResponseEntity.ok(createSuccessResponse(ratingService.getAllRatings()));
+    public ResponseEntity<ApiResponse<List<RatingResponse>>> getAllRatings() {
+        List<RatingResponse> ratings =
+                ratingService.getAllRatings().stream()
+                        .map(RatingServiceImpl::toRatingResponse)
+                        .toList();
+        return ResponseEntity.ok(createSuccessResponse(ratings));
     }
 
     @Operation(
@@ -77,17 +80,25 @@ public class RatingController {
             description = "Retrieves all ratings created by current authenticated user")
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<List<Rating>>> getMyRatings(
+    public ResponseEntity<ApiResponse<List<RatingResponse>>> getMyRatings(
             @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(
-                createSuccessResponse(ratingService.getRatingsByUserId(user.getId())));
+        List<RatingResponse> ratings =
+                ratingService.getRatingsByUserId(user.getId()).stream()
+                        .map(RatingServiceImpl::toRatingResponse)
+                        .toList();
+        return ResponseEntity.ok(createSuccessResponse(ratings));
     }
 
     @Operation(summary = "Get ratings by user ID", description = "Retrieves ratings by user ID")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<List<Rating>>> getRatingsByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(createSuccessResponse(ratingService.getRatingsByUserId(userId)));
+    public ResponseEntity<ApiResponse<List<RatingResponse>>> getRatingsByUserId(
+            @PathVariable Long userId) {
+        List<RatingResponse> ratings =
+                ratingService.getRatingsByUserId(userId).stream()
+                        .map(RatingServiceImpl::toRatingResponse)
+                        .toList();
+        return ResponseEntity.ok(createSuccessResponse(ratings));
     }
 
     @Operation(
@@ -95,36 +106,36 @@ public class RatingController {
             description = "Retrieves ratings for a specific vehicle")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/vehicle/{vehicleId}")
-    public ResponseEntity<ApiResponse<List<Rating>>> getRatingsByVehicleId(
+    public ResponseEntity<ApiResponse<List<RatingResponse>>> getRatingsByVehicleId(
             @PathVariable Long vehicleId) {
-        return ResponseEntity.ok(
-                createSuccessResponse(ratingService.getRatingsByVehicleId(vehicleId)));
+        List<RatingResponse> ratings =
+                ratingService.getRatingsByVehicleId(vehicleId).stream()
+                        .map(RatingServiceImpl::toRatingResponse)
+                        .toList();
+        return ResponseEntity.ok(createSuccessResponse(ratings));
     }
 
     @Operation(summary = "Update rating value", description = "Updates only the rating value")
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @PatchMapping("/{ratingId}/value")
-    public ResponseEntity<ApiResponse<Rating>> updateRatingValue(
+    public ResponseEntity<ApiResponse<RatingResponse>> updateRatingValue(
             @PathVariable Long ratingId,
-            @Valid @RequestBody UpdateRatingValueDto updateRatingValueDto,
+            @Valid @RequestBody UpdateRatingValueDto dto,
             @AuthenticationPrincipal User user) {
         Rating rating =
-                ratingService.updateRatingValue(
-                        ratingId, user.getId(), updateRatingValueDto.getRatingValue());
-        return ResponseEntity.ok(createSuccessResponse(rating));
+                ratingService.updateRatingValue(ratingId, user.getId(), dto.getRatingValue());
+        return ResponseEntity.ok(createSuccessResponse(toRatingResponse(rating)));
     }
 
     @Operation(summary = "Update rating comment", description = "Updates only the rating comment")
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @PatchMapping("/{ratingId}/comment")
-    public ResponseEntity<ApiResponse<Rating>> updateRatingComment(
+    public ResponseEntity<ApiResponse<RatingResponse>> updateRatingComment(
             @PathVariable Long ratingId,
-            @Valid @RequestBody UpdateRatingCommentDto updateRatingCommentDto,
+            @Valid @RequestBody UpdateRatingCommentDto dto,
             @AuthenticationPrincipal User user) {
-        Rating rating =
-                ratingService.updateRatingComment(
-                        ratingId, user.getId(), updateRatingCommentDto.getComment());
-        return ResponseEntity.ok(createSuccessResponse(rating));
+        Rating rating = ratingService.updateRatingComment(ratingId, user.getId(), dto.getComment());
+        return ResponseEntity.ok(createSuccessResponse(toRatingResponse(rating)));
     }
 
     @Operation(summary = "Delete a rating", description = "Deletes a rating by ID")

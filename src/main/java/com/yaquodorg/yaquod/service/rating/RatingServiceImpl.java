@@ -9,6 +9,7 @@ import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.exception.ResourceAlreadyExistsException;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.RatingRepository;
+import com.yaquodorg.yaquod.response.RatingResponse;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
@@ -125,5 +126,16 @@ public class RatingServiceImpl implements RatingService {
         if (!isOwner && actor.getRole() != Role.ADMIN) {
             throw new AccessDeniedException("Unauthorized to manage this rating");
         }
+    }
+
+    public static RatingResponse toRatingResponse(Rating rating) {
+        return RatingResponse.builder()
+                .id(rating.getId())
+                .ratingValue(rating.getRatingValue())
+                .comment(rating.getComment())
+                .userId(rating.getUser() != null ? rating.getUser().getId() : null)
+                .tripId(rating.getTrip() != null ? rating.getTrip().getId() : null)
+                .vehicleId(rating.getVehicle() != null ? rating.getVehicle().getId() : null)
+                .build();
     }
 }
