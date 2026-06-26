@@ -98,9 +98,11 @@ public class RatingServiceImpl implements RatingService {
     @Override
     @Transactional
     public void deleteRating(Long id, Long actorUserId) {
+        log.info("Deleting Rating with id: {} for user with id: {}", id, actorUserId);
         Rating rating = getRatingById(id);
         validateOwnershipOrAdmin(rating, actorUserId);
-        ratingRepository.deleteById(id);
+        ratingRepository.deleteRatingById(id);
+        log.debug("Rating deleted successfully with ID: {}", id);
     }
 
     @Override
