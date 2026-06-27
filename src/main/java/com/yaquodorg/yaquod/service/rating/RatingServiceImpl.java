@@ -12,7 +12,6 @@ import com.yaquodorg.yaquod.repository.RatingRepository;
 import com.yaquodorg.yaquod.response.RatingResponse;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
-import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,6 @@ public class RatingServiceImpl implements RatingService {
     private final RatingRepository ratingRepository;
     private final UserService userService;
     private final TripService tripService;
-    private final VehicleService vehicleService;
 
     @Override
     @Transactional
@@ -72,9 +70,12 @@ public class RatingServiceImpl implements RatingService {
 
     @Override
     public Rating getRatingById(Long id) {
-        return ratingRepository
-                .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Rating not found!"));
+        Rating rating =
+                ratingRepository
+                        .findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Rating not found!"));
+        log.info("Rating found with id: {}", id);
+        return rating;
     }
 
     @Override
@@ -83,6 +84,7 @@ public class RatingServiceImpl implements RatingService {
         Rating rating = getRatingById(id);
         validateOwnershipOrAdmin(rating, actorUserId);
         rating.setRatingValue(ratingValue);
+        log.info("Rating value updated for rating id: {} by user id: {}", id, actorUserId);
         return rating;
     }
 
@@ -92,6 +94,7 @@ public class RatingServiceImpl implements RatingService {
         Rating rating = getRatingById(id);
         validateOwnershipOrAdmin(rating, actorUserId);
         rating.setComment(comment);
+        log.info("Rating comment updated for rating id: {} by user id: {}", id, actorUserId);
         return rating;
     }
 
@@ -100,7 +103,8 @@ public class RatingServiceImpl implements RatingService {
     public void deleteRating(Long id, Long actorUserId) {
         Rating rating = getRatingById(id);
         validateOwnershipOrAdmin(rating, actorUserId);
-        ratingRepository.deleteById(id);
+        log.info("Rating deleted for rating id: {} by user id: {}", id, actorUserId);
+        ratingRepository.deleteRatingById(id);
     }
 
     @Override
@@ -110,13 +114,11 @@ public class RatingServiceImpl implements RatingService {
 
     @Override
     public List<Rating> getRatingsByUserId(Long userId) {
-        userService.getUserById(userId);
         return ratingRepository.findByUserId(userId);
     }
 
     @Override
     public List<Rating> getRatingsByVehicleId(Long vehicleId) {
-        vehicleService.getVehicle(vehicleId);
         return ratingRepository.findByVehicleId(vehicleId);
     }
 
@@ -126,6 +128,7 @@ public class RatingServiceImpl implements RatingService {
         if (!isOwner && actor.getRole() != Role.ADMIN) {
             throw new AccessDeniedException("Unauthorized to manage this rating");
         }
+        log.debug("User id: {} is authorized to manage this rating", actorUserId);
     }
 
     public static RatingResponse toRatingResponse(Rating rating) {
