@@ -29,4 +29,6 @@ public interface AuthenticationService {
     void regenerateOtp(String email);
 
     boolean resetPassword(ResetPasswordDto resetPasswordDto);
+
+    User getMe(String authHeader);
 }
