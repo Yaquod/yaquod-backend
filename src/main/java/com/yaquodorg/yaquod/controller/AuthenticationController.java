@@ -5,13 +5,7 @@ import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 
-import com.yaquodorg.yaquod.dtos.GoogleIdTokenDto;
-import com.yaquodorg.yaquod.dtos.LoginUserDto;
-import com.yaquodorg.yaquod.dtos.RegenerateCodeDto;
-import com.yaquodorg.yaquod.dtos.RegisterUserDto;
-import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
-import com.yaquodorg.yaquod.dtos.VehicleLoginDto;
-import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
+import com.yaquodorg.yaquod.dtos.*;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.LoginResponse;
@@ -28,12 +22,7 @@ import java.security.GeneralSecurityException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -256,6 +245,15 @@ public class AuthenticationController {
                             createFailureResponse(
                                     "Reset Failed," + " Code Might Be Invalid Or Expired!"));
         }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<User>> getMe(
+            @Parameter(description = "Bearer access token", required = true)
+                    @RequestHeader("Authorization")
+                    String authorizationHeader) {
+        User user = authenticationService.getMe(authorizationHeader);
+        return ResponseEntity.ok(createSuccessResponse(user));
     }
 
     @Operation(
