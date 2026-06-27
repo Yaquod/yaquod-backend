@@ -3,6 +3,9 @@ package com.yaquodorg.yaquod.repository;
 import com.yaquodorg.yaquod.entity.Rating;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -12,4 +15,8 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     List<Rating> findByVehicleId(Long vehicleId);
 
     boolean existsByTripId(Long tripId);
+
+    @Modifying
+    @Query("DELETE FROM Rating r WHERE r.id = :id")
+    void deleteRatingById(@Param("id") Long id);
 }
