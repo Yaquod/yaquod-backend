@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,13 +26,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/ratings")
 @Tag(name = "Ratings", description = "Trip rating management APIs")
+@RequiredArgsConstructor
 public class RatingController {
 
     private final RatingService ratingService;
-
-    public RatingController(RatingService ratingService) {
-        this.ratingService = ratingService;
-    }
 
     @Operation(summary = "Create a rating", description = "Creates a rating for a completed trip")
     @ApiResponses(
