@@ -193,6 +193,7 @@ public class TripServiceImpl implements TripService {
 
     @Override
     public SseEmitter subscribeToLocationStream(Long tripId) {
+        log.info("A user has subscribed to vehicle location stream assigned to trip: {}", tripId);
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         emitters.put(tripId, emitter);
         emitter.onCompletion(() -> emitters.remove(tripId));
@@ -201,13 +202,26 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public void unsubscribeToLocationStream(Long tripId) {
+        SseEmitter emitter = emitters.get(tripId);
+        if (emitter != null) {
+            emitter.complete();
+            emitters.remove(tripId);
+        }
+
+        log.info("A user has unsubscribed to vehicle location stream assigned to trip: {}", tripId);
+    }
+
+    @Override
     public void broadcastLocationStream(Long tripId, double latitude, double longitude) {
         SseEmitter emitter = emitters.get(tripId);
         if (emitter != null) {
             try {
                 emitter.send(Map.of("lat", latitude, "lon", longitude));
+                log.info("location streamed: {}, {} for trip: {} ", latitude, longitude, tripId);
             } catch (IOException e) {
                 emitters.remove(tripId);
+                log.error("Exception thrown while trying to stream location: {}", e);
             }
         }
     }

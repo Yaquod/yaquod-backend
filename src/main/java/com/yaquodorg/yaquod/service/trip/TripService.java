@@ -28,6 +28,8 @@ public interface TripService {
 
     SseEmitter subscribeToLocationStream(Long tripId);
 
+    void unsubscribeToLocationStream(Long tripId);
+
     void broadcastLocationStream(Long tripId, double latitude, double longitude);
 
     void startTrip(Long requestId);

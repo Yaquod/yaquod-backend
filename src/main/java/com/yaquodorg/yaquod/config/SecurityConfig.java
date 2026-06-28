@@ -7,6 +7,7 @@ import com.yaquodorg.yaquod.filter.CustomAccessDeniedFilter;
 import com.yaquodorg.yaquod.filter.JwtAuthenticationFilter;
 import com.yaquodorg.yaquod.security.OAuth2LoginSuccessHandler;
 import com.yaquodorg.yaquod.security.VehicleAuthenticationProvider;
+import jakarta.servlet.DispatcherType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -56,7 +57,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(
                         req ->
-                                req.requestMatchers("/api/auth/**")
+                                req.dispatcherTypeMatchers(DispatcherType.ASYNC)
+                                        .permitAll()
+                                        .requestMatchers("/api/auth/**")
                                         .permitAll()
                                         .requestMatchers("/api/payments/webhook")
                                         .permitAll()

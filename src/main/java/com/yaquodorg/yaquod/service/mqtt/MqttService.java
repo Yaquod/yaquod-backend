@@ -66,6 +66,8 @@ public class MqttService {
         String topic = (String) message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC);
         String payload = message.getPayload().toString();
 
+        log.info("Received message from topic '{}': {}", topic, payload);
+
         switch (topic) {
             case TOPIC_VEHICLE_UPDATE_LOCATION:
                 handleVehicleUpdateLocation(payload);
@@ -107,8 +109,6 @@ public class MqttService {
                 log.warn("Unhandled topic: {}", topic);
                 break;
         }
-
-        log.info("Received message from topic '{}': {}", topic, payload);
     }
 
     private void handleVehicleUpdateLocation(String payload) {
@@ -213,6 +213,8 @@ public class MqttService {
                 tripService.updateTripStatus(dto.getTripId(), TripStatus.ARRIVED_AT_PICKUP);
                 vehicleService.updateVehicleStatus(
                         dto.getVinNumber(), VehicleStatus.WAITING_PASSENGER);
+
+                tripService.unsubscribeToLocationStream(dto.getTripId());
             } else if (isNearLocation(
                     dto.getLatitude(), dto.getLongitude(), destinationLat, destinationLong)) {
                 message = carInfo + " has arrived at your destination.";
