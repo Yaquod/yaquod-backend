@@ -1,12 +1,6 @@
 package com.yaquodorg.yaquod.service.auth;
 
-import com.yaquodorg.yaquod.dtos.GoogleIdTokenDto;
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
-import com.yaquodorg.yaquod.dtos.LoginUserDto;
-import com.yaquodorg.yaquod.dtos.RegisterUserDto;
-import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
-import com.yaquodorg.yaquod.dtos.VehicleLoginDto;
-import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
+import com.yaquodorg.yaquod.dtos.*;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
@@ -313,6 +307,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         log.warn("Password reset failed for email: {} - invalid code or expired", email);
         return false;
+    }
+
+    @Override
+    public User getMe(String authHeader) {
+        log.info("Getting user details from token");
+        return userService.getUserByJwt(authHeader);
     }
 
     private boolean isCodeValid(Timestamp codeExpiredAt) {

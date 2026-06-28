@@ -77,4 +77,12 @@ public class Vehicle {
             fetch = FetchType.LAZY)
     @OrderBy("id ASC")
     private List<Trip> trips = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "vehicle",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    private List<Rating> ratings = new ArrayList<>();
 }

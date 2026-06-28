@@ -109,6 +109,13 @@ public class User implements UserDetails {
     @OrderBy("createdAt DESC")
     private List<SavedCard> savedCards = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    private List<Rating> ratings = new ArrayList<>();
+
     @Override
     public String getUsername() {
         return email;
