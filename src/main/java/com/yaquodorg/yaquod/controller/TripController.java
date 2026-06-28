@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -321,6 +322,27 @@ public class TripController {
             @AuthenticationPrincipal User user) {
         Request request = requestService.acceptRequestById(requestId, user.getId());
         return ResponseEntity.ok(createSuccessResponse(request));
+    }
+
+    @Operation(
+            summary = "Track vehicle location streaming",
+            description = "SSE endpoint to keep receiving the vehicle location update stream.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Ok"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "Access denied"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "Invalid request state for acceptance")
+            })
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
+    @GetMapping("/{tripId}/location/stream")
+    public SseEmitter streamLocation(@PathVariable Long tripId) {
+        return tripService.subscribeToLocationStream(tripId);
     }
 
     @Operation(summary = "Start a trip", description = "Moves vehicle and starts trip.")

@@ -4,6 +4,7 @@ import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.TripStatus;
 import java.util.List;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 public interface TripService {
     void createTrip(
@@ -24,6 +25,12 @@ public interface TripService {
     void updateTripStatus(Long id, TripStatus tripStatus);
 
     void deleteTripById(Long id);
+
+    SseEmitter subscribeToLocationStream(Long tripId);
+
+    void unsubscribeToLocationStream(Long tripId);
+
+    void broadcastLocationStream(Long tripId, double latitude, double longitude);
 
     void startTrip(Long requestId);
 

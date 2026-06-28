@@ -9,9 +9,12 @@ import com.yaquodorg.yaquod.exception.ServiceUnavailableException;
 import com.yaquodorg.yaquod.repository.TripRepository;
 import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
@@ -19,6 +22,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +36,8 @@ public class TripServiceImpl implements TripService {
     private final UserService userService;
 
     private final ApplicationEventPublisher eventPublisher;
+
+    private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
 
     @Transactional
     @Override
@@ -183,6 +189,41 @@ public class TripServiceImpl implements TripService {
         List<Trip> trips = tripRepository.findByVehicleVinNumber(vehicle.getVinNumber());
         log.debug("Found {} trips for vehicle VIN: {}", trips.size(), vinNumber);
         return trips;
+    }
+
+    @Override
+    public SseEmitter subscribeToLocationStream(Long tripId) {
+        log.info("A user has subscribed to vehicle location stream assigned to trip: {}", tripId);
+        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        emitters.put(tripId, emitter);
+        emitter.onCompletion(() -> emitters.remove(tripId));
+        emitter.onTimeout(() -> emitters.remove(tripId));
+        return emitter;
+    }
+
+    @Override
+    public void unsubscribeToLocationStream(Long tripId) {
+        SseEmitter emitter = emitters.get(tripId);
+        if (emitter != null) {
+            emitter.complete();
+            emitters.remove(tripId);
+        }
+
+        log.info("A user has unsubscribed to vehicle location stream assigned to trip: {}", tripId);
+    }
+
+    @Override
+    public void broadcastLocationStream(Long tripId, double latitude, double longitude) {
+        SseEmitter emitter = emitters.get(tripId);
+        if (emitter != null) {
+            try {
+                emitter.send(Map.of("lat", latitude, "lon", longitude));
+                log.info("location streamed: {}, {} for trip: {} ", latitude, longitude, tripId);
+            } catch (IOException e) {
+                emitters.remove(tripId);
+                log.error("Exception thrown while trying to stream location: {}", e);
+            }
+        }
     }
 
     @Transactional
