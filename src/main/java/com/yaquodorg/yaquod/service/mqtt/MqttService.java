@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.*;
 import com.yaquodorg.yaquod.entity.*;
+import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.service.messaging.FirebaseMessagingService;
 import com.yaquodorg.yaquod.service.redis.RedisService;
 import com.yaquodorg.yaquod.service.request.RequestService;
@@ -37,6 +38,7 @@ public class MqttService {
     private static final String TOPIC_TRIP_MOVE = "topic/trip/move";
     private static final String TOPIC_TRIP_ARRIVE = "topic/trip/arrive";
     private static final String TOPIC_TRIP_STATUS = "topic/trip/status";
+    private static final String TOPIC_TRIP_STREAM_LOCATION = "topic/trip/stream_location";
 
     private final MqttGateway mqttGateway;
     private final ObjectMapper objectMapper;
@@ -79,6 +81,9 @@ public class MqttService {
                 break;
             case TOPIC_TRIP_STATUS:
                 handleVehicleUpdateTripStatus(payload);
+                break;
+            case TOPIC_TRIP_STREAM_LOCATION:
+                handleVehicleStreamLocation(payload);
                 break;
             case TOPIC_VEHICLE_UPDATE_LOCATION_ORDER:
                 log.info("Sent vehicle update location order successfully!");
@@ -247,6 +252,38 @@ public class MqttService {
 
         } catch (Exception e) {
             log.error("Failed to parse vehicle update status payload: {}", payload, e);
+        }
+    }
+
+    private void handleVehicleStreamLocation(String payload) {
+        try {
+            VehicleStreamLocationDto dto =
+                    objectMapper.readValue(payload, VehicleStreamLocationDto.class);
+            log.info(
+                    "Vehicle with vin: {} streamed location at long, lat: {}, {} for trip with id:"
+                            + " {}",
+                    dto.getVinNumber(),
+                    dto.getLongitude(),
+                    dto.getLatitude(),
+                    dto.getTripId());
+
+            Trip trip = tripService.getTripById(dto.getTripId());
+            if (trip == null) {
+                throw new ResourceNotFoundException(
+                        "Trip with id: " + dto.getTripId() + "  not found");
+            }
+
+            Vehicle vehicle = trip.getVehicle();
+            if (vehicle.getStatus() != VehicleStatus.ON_WAY) {
+                throw new RuntimeException(
+                        "Vehicle status was not ON_WAY and instead: " + vehicle.getStatus());
+            }
+
+            tripService.broadcastLocationStream(
+                    dto.getTripId(), dto.getLatitude(), dto.getLongitude());
+
+        } catch (Exception e) {
+            log.error("Failed to parse vehicle stream location payload: {}", payload, e);
         }
     }
 

@@ -67,6 +67,7 @@ mqtt:
     - topic/trip/eta
     - topic/trip/arrive
     - topic/trip/status
+    - topic/trip/stream_location
   qos: 1
   connection-timeout: 60
   keep-alive-interval: 60
