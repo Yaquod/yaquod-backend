@@ -1,6 +1,7 @@
 package com.yaquodorg.yaquod.repository;
 
 import com.yaquodorg.yaquod.entity.Trip;
+import com.yaquodorg.yaquod.entity.TripStatus;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,6 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findByUserIdOrderByStartedAtDesc(Long userId, Pageable pageable);
 
     List<Trip> findByVehicleVinNumber(String vehicleVinNumber);
+
+    long countByStatusIn(List<TripStatus> statuses);
 }

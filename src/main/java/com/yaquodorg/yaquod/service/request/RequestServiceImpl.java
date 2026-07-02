@@ -154,6 +154,11 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    public long countRequestsByStatusIn(List<RequestStatus> statuses) {
+        return requestRepository.countByStatusIn(statuses);
+    }
+
+    @Override
     public void deleteRequest(Long requestId) {
         log.info("Deleting request with id: {}", requestId);
         requestRepository.deleteById(requestId);

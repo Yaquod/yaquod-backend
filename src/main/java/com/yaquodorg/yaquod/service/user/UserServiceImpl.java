@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -129,6 +131,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public long countUsers() {
+        return userRepository.count();
+    }
+
+    @Override
+    public long countUsersByRole(Role role) {
+        return userRepository.countByRole(role);
+    }
+
+    @Override
     @Transactional
     public User updateUser(String authHeader, UpdateUserDto updateUserDto) throws ParseException {
         log.info("Updating user profile");
@@ -170,5 +182,39 @@ public class UserServiceImpl implements UserService {
                                 });
         user.setFirebaseToken(fcmToken);
         log.info("FCM token updated successfully for user id: {}", user.getId());
+    }
+
+    @Override
+    public Page<User> getAllUsers(Pageable pageable) {
+        log.debug("Fetching all users with pagination");
+        return userRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<User> searchUsers(String query, Pageable pageable) {
+        log.debug("Searching users by email: {}", query);
+        return userRepository.findByEmailContainingIgnoreCase(query, pageable);
+    }
+
+    @Override
+    @Transactional
+    public User updateUserRole(Long userId, Role newRole) {
+        log.info("Updating role for user id: {} to {}", userId, newRole);
+        User user = getUserById(userId);
+        user.setRole(newRole);
+        User saved = userRepository.save(user);
+        log.info("Role updated successfully for user id: {}", userId);
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public User updateEmailVerified(Long userId, boolean verified) {
+        log.info("Updating emailVerified for user id: {} to {}", userId, verified);
+        User user = getUserById(userId);
+        user.setEmailVerified(verified);
+        User saved = userRepository.save(user);
+        log.info("emailVerified updated successfully for user id: {}", userId);
+        return saved;
     }
 }

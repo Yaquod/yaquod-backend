@@ -29,4 +29,6 @@ public interface RequestService {
     void declineRequestById(Long id, Long userId);
 
     Request acceptRequestById(Long id, Long userId);
+
+    long countRequestsByStatusIn(List<RequestStatus> statuses);
 }

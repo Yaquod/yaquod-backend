@@ -617,6 +617,22 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public long countPaymentsByStatus(PaymentStatus status) {
+        return paymentRepository.countByStatus(status);
+    }
+
+    @Override
+    public List<Payment> getAllPayments() {
+        return paymentRepository.findAll();
+    }
+
+    @Override
+    public double sumAmountByStatus(PaymentStatus status) {
+        BigDecimal sum = paymentRepository.sumAmountByStatus(status);
+        return sum != null ? sum.doubleValue() : 0.0;
+    }
+
+    @Override
     @Transactional
     public void deleteSavedCard(Long cardId, Long userId) {
         log.info("Deleting saved card: {} for user: {}", cardId, userId);

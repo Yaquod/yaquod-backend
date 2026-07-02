@@ -192,6 +192,16 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public long countTrips() {
+        return tripRepository.count();
+    }
+
+    @Override
+    public long countTripsByStatusIn(List<TripStatus> statuses) {
+        return tripRepository.countByStatusIn(statuses);
+    }
+
+    @Override
     public SseEmitter subscribeToLocationStream(Long tripId) {
         log.info("A user has subscribed to vehicle location stream assigned to trip: {}", tripId);
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
