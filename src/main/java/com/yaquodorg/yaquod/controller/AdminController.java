@@ -2,7 +2,7 @@ package com.yaquodorg.yaquod.controller;
 
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
-import com.yaquodorg.yaquod.dtos.DashboardDto;
+import com.yaquodorg.yaquod.dtos.admin.DashboardDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Role;

@@ -1,11 +1,11 @@
 package com.yaquodorg.yaquod.service.auth;
 
-import com.yaquodorg.yaquod.dtos.GoogleIdTokenDto;
-import com.yaquodorg.yaquod.dtos.LoginUserDto;
-import com.yaquodorg.yaquod.dtos.RegisterUserDto;
-import com.yaquodorg.yaquod.dtos.ResetPasswordDto;
-import com.yaquodorg.yaquod.dtos.VehicleLoginDto;
-import com.yaquodorg.yaquod.dtos.VerifyCodeDto;
+import com.yaquodorg.yaquod.dtos.auth.GoogleIdTokenDto;
+import com.yaquodorg.yaquod.dtos.auth.LoginUserDto;
+import com.yaquodorg.yaquod.dtos.auth.RegisterUserDto;
+import com.yaquodorg.yaquod.dtos.auth.ResetPasswordDto;
+import com.yaquodorg.yaquod.dtos.auth.VehicleLoginDto;
+import com.yaquodorg.yaquod.dtos.auth.VerifyCodeDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.LoginResponse;
 import com.yaquodorg.yaquod.response.VehicleLoginResponse;

@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.rating;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

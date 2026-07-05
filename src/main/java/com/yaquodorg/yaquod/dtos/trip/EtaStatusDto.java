@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.trip;
 
 import com.yaquodorg.yaquod.entity.RequestStatus;
 import jakarta.validation.constraints.NotNull;
@@ -10,7 +10,6 @@ import lombok.Data;
 public class EtaStatusDto {
     private RequestStatus status;
 
-    // @ValidVIN
     private String vinNumber;
 
     @NotNull(message = "Request ID cannot be null")

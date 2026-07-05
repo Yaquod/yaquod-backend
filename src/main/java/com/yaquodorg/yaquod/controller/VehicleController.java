@@ -3,8 +3,8 @@ package com.yaquodorg.yaquod.controller;
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 import static org.springframework.http.HttpStatus.CREATED;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.CreateVehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.VehicleDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;

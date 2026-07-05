@@ -1,7 +1,7 @@
 package com.yaquodorg.yaquod.service.user;
 
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
-import com.yaquodorg.yaquod.dtos.UpdateUserDto;
+import com.yaquodorg.yaquod.dtos.auth.GoogleLoginDto;
+import com.yaquodorg.yaquod.dtos.auth.UpdateUserDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import java.text.ParseException;

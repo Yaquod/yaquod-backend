@@ -2,7 +2,7 @@ package com.yaquodorg.yaquod.service.google;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
+import com.yaquodorg.yaquod.dtos.auth.GoogleLoginDto;
 import io.swagger.v3.oas.annotations.Operation;
 import java.io.IOException;
 import java.security.GeneralSecurityException;

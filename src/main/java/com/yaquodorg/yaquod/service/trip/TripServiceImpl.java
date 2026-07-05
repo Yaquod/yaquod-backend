@@ -1,8 +1,8 @@
 package com.yaquodorg.yaquod.service.trip;
 
-import com.yaquodorg.yaquod.dtos.InitTripDto;
-import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
-import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.dtos.trip.InitTripDto;
+import com.yaquodorg.yaquod.dtos.vehicle.MoveVehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.VehicleDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.exception.ServiceUnavailableException;
@@ -157,6 +157,7 @@ public class TripServiceImpl implements TripService {
     @Override
     public List<Trip> getTripsByUserId(Long userId) {
         log.debug("Fetching trips for user id: {}", userId);
+        User user = userService.getUserById(userId);
 
         List<Trip> trips = tripRepository.findByUserId(userId);
         log.debug("Found {} trips for user id: {}", trips.size(), userId);

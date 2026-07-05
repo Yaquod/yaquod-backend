@@ -1,7 +1,7 @@
 package com.yaquodorg.yaquod.service.request;
 
-import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
-import com.yaquodorg.yaquod.dtos.TripCancelDto;
+import com.yaquodorg.yaquod.dtos.trip.TripCancelDto;
+import com.yaquodorg.yaquod.dtos.vehicle.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.RequestRepository;

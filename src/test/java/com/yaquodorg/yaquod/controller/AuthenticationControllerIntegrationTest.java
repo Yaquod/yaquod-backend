@@ -12,11 +12,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.GoogleIdTokenDto;
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
-import com.yaquodorg.yaquod.dtos.LoginUserDto;
-import com.yaquodorg.yaquod.dtos.RegisterUserDto;
-import com.yaquodorg.yaquod.dtos.VehicleLoginDto;
+import com.yaquodorg.yaquod.dtos.auth.GoogleIdTokenDto;
+import com.yaquodorg.yaquod.dtos.auth.GoogleLoginDto;
+import com.yaquodorg.yaquod.dtos.auth.LoginUserDto;
+import com.yaquodorg.yaquod.dtos.auth.RegisterUserDto;
+import com.yaquodorg.yaquod.dtos.auth.VehicleLoginDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;

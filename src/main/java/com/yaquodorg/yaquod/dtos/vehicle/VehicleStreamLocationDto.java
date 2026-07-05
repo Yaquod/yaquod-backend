@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.vehicle;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -8,7 +8,6 @@ import lombok.Data;
 @Data
 @Builder
 public class VehicleStreamLocationDto {
-    // @ValidVIN
     private String vinNumber;
 
     private long tripId;

@@ -1,6 +1,6 @@
 package com.yaquodorg.yaquod.service.admin;
 
-import com.yaquodorg.yaquod.dtos.DashboardDto;
+import com.yaquodorg.yaquod.dtos.admin.DashboardDto;
 import com.yaquodorg.yaquod.entity.PaymentStatus;
 import com.yaquodorg.yaquod.entity.RequestStatus;
 import com.yaquodorg.yaquod.entity.Role;

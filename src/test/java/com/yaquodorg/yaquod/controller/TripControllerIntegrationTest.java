@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.TripRequestDto;
+import com.yaquodorg.yaquod.dtos.trip.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
 import com.yaquodorg.yaquod.entity.Role;
@@ -562,7 +562,8 @@ class TripControllerIntegrationTest {
     @WithMockUser(roles = "VEHICLE")
     void shouldStartTripSuccessfully() throws Exception {
         // Arrange - trip needs vehicle and request with destination
-        testTrip.setStatus(TripStatus.VEHICLE_ON_WAY);
+        testTrip.setStatus(TripStatus.ARRIVED_AT_PICKUP);
+        testVehicle.setStatus(VehicleStatus.WAITING_PASSENGER);
         testTrip = tripRepository.save(testTrip);
 
         // Act & Assert

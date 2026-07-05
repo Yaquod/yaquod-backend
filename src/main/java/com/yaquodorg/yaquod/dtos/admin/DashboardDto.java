@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

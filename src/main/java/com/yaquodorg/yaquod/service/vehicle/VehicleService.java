@@ -1,6 +1,6 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.CreateVehicleDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;

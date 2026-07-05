@@ -2,7 +2,8 @@ package com.yaquodorg.yaquod.service.mqtt;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.*;
+import com.yaquodorg.yaquod.dtos.trip.*;
+import com.yaquodorg.yaquod.dtos.vehicle.*;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.service.messaging.FirebaseMessagingService;
