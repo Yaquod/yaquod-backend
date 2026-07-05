@@ -109,6 +109,7 @@ public class User implements UserDetails {
     @OrderBy("createdAt DESC")
     private List<SavedCard> savedCards = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,
