@@ -3,6 +3,7 @@ package com.yaquodorg.yaquod.controller;
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
 import com.yaquodorg.yaquod.dtos.admin.DashboardDto;
+import com.yaquodorg.yaquod.dtos.admin.VehicleDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Role;
@@ -107,14 +108,22 @@ public class AdminController {
         return ResponseEntity.ok(createSuccessResponse(user));
     }
 
+    @Operation(summary = "List all vehicles")
+    @GetMapping("/vehicles")
+    public ResponseEntity<ApiResponse<List<VehicleDto>>> getVehicles() {
+        List<VehicleDto> vehicles =
+                vehicleService.getVehicles().stream().map(VehicleDto::fromEntity).toList();
+        return ResponseEntity.ok(createSuccessResponse(vehicles));
+    }
+
     @Operation(summary = "Update vehicle status")
     @PatchMapping("/vehicles/{vehicleId}/status")
-    public ResponseEntity<ApiResponse<Vehicle>> updateVehicleStatus(
+    public ResponseEntity<ApiResponse<VehicleDto>> updateVehicleStatus(
             @PathVariable Long vehicleId, @RequestParam VehicleStatus status) {
         Vehicle vehicle = vehicleService.getVehicle(vehicleId);
         vehicleService.updateVehicleStatus(vehicleId, status);
         vehicle.setStatus(status);
-        return ResponseEntity.ok(createSuccessResponse(vehicle));
+        return ResponseEntity.ok(createSuccessResponse(VehicleDto.fromEntity(vehicle)));
     }
 
     @Operation(summary = "List all requests")
