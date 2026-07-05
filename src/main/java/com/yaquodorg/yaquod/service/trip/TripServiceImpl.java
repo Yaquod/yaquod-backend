@@ -157,7 +157,6 @@ public class TripServiceImpl implements TripService {
     @Override
     public List<Trip> getTripsByUserId(Long userId) {
         log.debug("Fetching trips for user id: {}", userId);
-        User user = userService.getUserById(userId);
 
         List<Trip> trips = tripRepository.findByUserId(userId);
         log.debug("Found {} trips for user id: {}", trips.size(), userId);
@@ -241,6 +240,7 @@ public class TripServiceImpl implements TripService {
     public void startTrip(Long requestId) {
         log.info("Starting trip for request id: {}", requestId);
         Trip trip = getValidatedTrip(requestId);
+        Vehicle vehicle = trip.getVehicle();
         Long tripId = trip.getId();
         String vinNumber = trip.getVehicle().getVinNumber();
         Point destinationLocation = trip.getRequest().getDestinationLocation();
@@ -251,8 +251,12 @@ public class TripServiceImpl implements TripService {
                 destinationLocation.getX(),
                 destinationLocation.getY());
 
-        // TODO: I think we should validate the current states of both the trip and the
-        // vehicle before ordering the vehicle to move and update their statuses
+        if (trip.getStatus() != TripStatus.ARRIVED_AT_PICKUP
+                && vehicle.getStatus() != VehicleStatus.WAITING_PASSENGER) {
+            log.error("Trip id: {} status was not in ARRIVED_AT_PICKUP state.");
+            throw new RuntimeException(
+                    "Trip id: " + tripId + " status was not in ARRIVED_AT_PICKUP state.");
+        }
 
         // Send moving signal to the vehicle with the destination location
         MoveVehicleDto moveVehicleDto = buildMoveVehicleDto(vinNumber, tripId, destinationLocation);
