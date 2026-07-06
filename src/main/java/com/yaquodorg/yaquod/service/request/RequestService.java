@@ -10,6 +10,8 @@ public interface RequestService {
 
     List<Request> getRequests();
 
+    List<Request> getRequestsWithTripAndVehicle();
+
     List<Request> getUserRequests(Long userId);
 
     Request getRequest(Long requestId);

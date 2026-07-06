@@ -3,9 +3,9 @@ package com.yaquodorg.yaquod.controller;
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
 import com.yaquodorg.yaquod.dtos.admin.DashboardDto;
+import com.yaquodorg.yaquod.dtos.admin.RequestDto;
 import com.yaquodorg.yaquod.dtos.admin.VehicleDto;
 import com.yaquodorg.yaquod.entity.Payment;
-import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.User;
@@ -128,8 +128,11 @@ public class AdminController {
 
     @Operation(summary = "List all requests")
     @GetMapping("/requests")
-    public ResponseEntity<ApiResponse<List<Request>>> getRequests() {
-        List<Request> requests = requestService.getRequests();
+    public ResponseEntity<ApiResponse<List<RequestDto>>> getRequests() {
+        List<RequestDto> requests =
+                requestService.getRequestsWithTripAndVehicle().stream()
+                        .map(RequestDto::fromEntity)
+                        .toList();
         return ResponseEntity.ok(createSuccessResponse(requests));
     }
 

@@ -88,6 +88,14 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    public List<Request> getRequestsWithTripAndVehicle() {
+        log.debug("Fetching all requests with trip and vehicle");
+        List<Request> requests = requestRepository.findAllWithTripAndVehicle();
+        log.debug("Found {} requests", requests.size());
+        return requests;
+    }
+
+    @Override
     public List<Request> getUserRequests(Long userId) {
         log.debug("Fetching requests for user id: {}", userId);
         User user = userService.getUserById(userId);
