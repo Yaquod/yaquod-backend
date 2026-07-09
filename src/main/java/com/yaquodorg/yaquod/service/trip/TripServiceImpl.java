@@ -254,7 +254,7 @@ public class TripServiceImpl implements TripService {
 
         if (trip.getStatus() != TripStatus.ARRIVED_AT_PICKUP
                 && vehicle.getStatus() != VehicleStatus.WAITING_PASSENGER) {
-            log.error("Trip id: {} status was not in ARRIVED_AT_PICKUP state.");
+            log.error("Trip id: {} status was not in ARRIVED_AT_PICKUP state.", tripId);
             throw new RuntimeException(
                     "Trip id: " + tripId + " status was not in ARRIVED_AT_PICKUP state.");
         }
