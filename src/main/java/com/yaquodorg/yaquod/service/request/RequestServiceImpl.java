@@ -1,7 +1,7 @@
 package com.yaquodorg.yaquod.service.request;
 
-import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
-import com.yaquodorg.yaquod.dtos.TripCancelDto;
+import com.yaquodorg.yaquod.dtos.trip.TripCancelDto;
+import com.yaquodorg.yaquod.dtos.vehicle.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.RequestRepository;
@@ -88,6 +88,14 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    public List<Request> getRequestsWithTripAndVehicle() {
+        log.debug("Fetching all requests with trip and vehicle");
+        List<Request> requests = requestRepository.findAllWithTripAndVehicle();
+        log.debug("Found {} requests", requests.size());
+        return requests;
+    }
+
+    @Override
     public List<Request> getUserRequests(Long userId) {
         log.debug("Fetching requests for user id: {}", userId);
         User user = userService.getUserById(userId);
@@ -151,6 +159,11 @@ public class RequestServiceImpl implements RequestService {
 
         request.setStatus(requestStatus);
         log.debug("Request status updated successfully for id: {}", requestId);
+    }
+
+    @Override
+    public long countRequestsByStatusIn(List<RequestStatus> statuses) {
+        return requestRepository.countByStatusIn(statuses);
     }
 
     @Override
@@ -276,6 +289,12 @@ public class RequestServiceImpl implements RequestService {
         }
 
         redisService.delete(REQUEST_TIMEOUT_PREFIX + id);
+
+        TripCancelDto tripCancelDto =
+                TripCancelDto.builder().vinNumber(vinNumber).requestId(id).build();
+
+        eventPublisher.publishEvent(tripCancelDto);
+        log.info("Published TripCancelDto event for request id: {}", id);
 
         updateRequestStatus(id, RequestStatus.DECLINED);
         log.info("Request with id {} has changed to DECLINED.", id);

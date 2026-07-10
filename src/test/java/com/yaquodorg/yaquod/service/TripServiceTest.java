@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.yaquodorg.yaquod.dtos.InitTripDto;
+import com.yaquodorg.yaquod.dtos.trip.InitTripDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.TripRepository;
@@ -413,6 +413,8 @@ class TripServiceImplTest {
                         .createPoint(new org.locationtech.jts.geom.Coordinate(31.5, 30.5)));
         testTrip.setRequest(testRequest);
         testTrip.setVehicle(testVehicle);
+        testTrip.setStatus(TripStatus.ARRIVED_AT_PICKUP);
+        testVehicle.setStatus(VehicleStatus.WAITING_PASSENGER);
 
         when(tripRepository.findByRequestId(1L)).thenReturn(testTrip);
         when(tripRepository.findById(testTrip.getId())).thenReturn(Optional.of(testTrip));
@@ -423,7 +425,8 @@ class TripServiceImplTest {
         // Assert
         verify(vehicleService)
                 .updateVehicleStatus(testVehicle.getVinNumber(), VehicleStatus.IN_USE);
-        verify(eventPublisher).publishEvent(any(com.yaquodorg.yaquod.dtos.MoveVehicleDto.class));
+        verify(eventPublisher)
+                .publishEvent(any(com.yaquodorg.yaquod.dtos.vehicle.MoveVehicleDto.class));
     }
 
     @Test
@@ -441,7 +444,8 @@ class TripServiceImplTest {
 
         // Assert
         verify(vehicleService).updateVehicleStatus(testVehicle.getVinNumber(), VehicleStatus.IDLE);
-        verify(eventPublisher).publishEvent(any(com.yaquodorg.yaquod.dtos.VehicleDto.class));
+        verify(eventPublisher)
+                .publishEvent(any(com.yaquodorg.yaquod.dtos.vehicle.VehicleDto.class));
     }
 
     @Test

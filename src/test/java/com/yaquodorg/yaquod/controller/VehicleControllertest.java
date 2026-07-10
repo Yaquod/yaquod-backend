@@ -12,8 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
-import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.CreateVehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.VehicleDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;

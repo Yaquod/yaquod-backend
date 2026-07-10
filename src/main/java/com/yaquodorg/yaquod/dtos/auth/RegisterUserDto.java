@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/** DTO for user registration requests. Ensures all fields meet basic validation constraints. */
 @Data
 public class RegisterUserDto {
 

@@ -1,6 +1,6 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.CreateVehicleDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
@@ -25,10 +25,18 @@ public interface VehicleService {
 
     void updateVehicleStatus(String vinNumber, VehicleStatus status);
 
+    void updateVehicleStatus(Long id, VehicleStatus status);
+
     void deleteVehicle(Long id);
 
     List<Vehicle> findKNearestVehicles(double longitude, double latitude, int k);
 
     List<Vehicle> findKNearestVehiclesWithinDistance(
             double longitude, double latitude, double maxDistanceMeters, int k);
+
+    long countVehicles();
+
+    long countVehiclesByStatusIn(List<VehicleStatus> statuses);
+
+    boolean verifyVehicle(String vinNumber);
 }

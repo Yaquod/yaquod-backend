@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.trip;
 
 import lombok.Builder;
 import lombok.Data;
@@ -6,7 +6,6 @@ import lombok.Data;
 @Data
 @Builder
 public class UpdateTripStatusDto {
-    // @ValidVIN
     private String vinNumber;
 
     private long tripId;

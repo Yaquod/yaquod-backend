@@ -1,8 +1,8 @@
 package com.yaquodorg.yaquod.service.trip;
 
-import com.yaquodorg.yaquod.dtos.InitTripDto;
-import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
-import com.yaquodorg.yaquod.dtos.VehicleDto;
+import com.yaquodorg.yaquod.dtos.trip.InitTripDto;
+import com.yaquodorg.yaquod.dtos.vehicle.MoveVehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.VehicleDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.exception.ServiceUnavailableException;
@@ -192,6 +192,16 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public long countTrips() {
+        return tripRepository.count();
+    }
+
+    @Override
+    public long countTripsByStatusIn(List<TripStatus> statuses) {
+        return tripRepository.countByStatusIn(statuses);
+    }
+
+    @Override
     public SseEmitter subscribeToLocationStream(Long tripId) {
         log.info("A user has subscribed to vehicle location stream assigned to trip: {}", tripId);
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
@@ -231,6 +241,7 @@ public class TripServiceImpl implements TripService {
     public void startTrip(Long requestId) {
         log.info("Starting trip for request id: {}", requestId);
         Trip trip = getValidatedTrip(requestId);
+        Vehicle vehicle = trip.getVehicle();
         Long tripId = trip.getId();
         String vinNumber = trip.getVehicle().getVinNumber();
         Point destinationLocation = trip.getRequest().getDestinationLocation();
@@ -241,8 +252,24 @@ public class TripServiceImpl implements TripService {
                 destinationLocation.getX(),
                 destinationLocation.getY());
 
-        // TODO: I think we should validate the current states of both the trip and the
-        // vehicle before ordering the vehicle to move and update their statuses
+        if (trip.getStatus() != TripStatus.ARRIVED_AT_PICKUP
+                || vehicle.getStatus() != VehicleStatus.WAITING_PASSENGER) {
+            log.error(
+                    "Cannot start trip {}: expected tripStatus={}, vehicleStatus={}, but got"
+                            + " tripStatus={}, vehicleStatus={}",
+                    tripId,
+                    TripStatus.ARRIVED_AT_PICKUP,
+                    VehicleStatus.WAITING_PASSENGER,
+                    trip.getStatus(),
+                    vehicle.getStatus());
+            throw new IllegalStateException(
+                    "Cannot start trip "
+                            + tripId
+                            + " when tripStatus="
+                            + trip.getStatus()
+                            + " and vehicleStatus="
+                            + vehicle.getStatus());
+        }
 
         // Send moving signal to the vehicle with the destination location
         MoveVehicleDto moveVehicleDto = buildMoveVehicleDto(vinNumber, tripId, destinationLocation);

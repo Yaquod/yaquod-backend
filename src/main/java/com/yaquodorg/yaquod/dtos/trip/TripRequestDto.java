@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.trip;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;

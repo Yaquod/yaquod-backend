@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** DTO for Google login user info. Used when authenticating via Google OAuth. */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

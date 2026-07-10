@@ -1,6 +1,6 @@
 package com.yaquodorg.yaquod.service.vehicle;
 
-import com.yaquodorg.yaquod.dtos.CreateVehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.CreateVehicleDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
@@ -169,9 +169,37 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
+    @Transactional
+    public void updateVehicleStatus(Long id, VehicleStatus status) {
+        log.info("Updating status for vehicle id: {} to {}", id, status);
+        Vehicle vehicle =
+                vehicleRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> {
+                                    log.warn("Vehicle not found with id: {}", id);
+                                    return new ResourceNotFoundException(
+                                            "Vehicle not found with id: " + id);
+                                });
+        vehicle.setStatus(status);
+        vehicle.setLastUpdatedStatusAt(new Timestamp(new Date().getTime()));
+        log.debug("Status updated successfully for vehicle id: {}", id);
+    }
+
+    @Override
     public void deleteVehicle(Long id) {
         vehicleRepository.deleteById(id);
         log.debug("Vehicle deleted successfully with ID: {}", id);
+    }
+
+    @Override
+    public long countVehicles() {
+        return vehicleRepository.count();
+    }
+
+    @Override
+    public long countVehiclesByStatusIn(List<VehicleStatus> statuses) {
+        return vehicleRepository.countByStatusIn(statuses);
     }
 
     @Override
@@ -197,6 +225,14 @@ public class VehicleServiceImpl implements VehicleService {
                 vehicleRepository.findKNearestVehiclesWithinDistance(point, maxDistanceMeters, k);
         log.debug("Found {} vehicles within distance", vehicles.size());
         return vehicles;
+    }
+
+    @Override
+    public boolean verifyVehicle(String vinNumber) {
+        Optional<Vehicle> vehicleOptional = vehicleRepository.findByVinNumber(vinNumber);
+        log.info("Vehicle with vin: {} found: {}", vinNumber, vehicleOptional.isPresent());
+
+        return vehicleOptional.isPresent();
     }
 
     private Point createPoint(double longitude, double latitude) {

@@ -2,6 +2,7 @@ package com.yaquodorg.yaquod.repository;
 
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.locationtech.jts.geom.Point;
@@ -49,4 +50,6 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     Optional<Vehicle> findByPlateNo(String plateNo);
 
     Optional<Vehicle> findByApiKey(String apiKey);
+
+    long countByStatusIn(Collection<VehicleStatus> statuses);
 }

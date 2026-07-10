@@ -3,9 +3,9 @@ package com.yaquodorg.yaquod.controller;
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 import static com.yaquodorg.yaquod.service.rating.RatingServiceImpl.toRatingResponse;
 
-import com.yaquodorg.yaquod.dtos.CreateRatingDto;
-import com.yaquodorg.yaquod.dtos.UpdateRatingCommentDto;
-import com.yaquodorg.yaquod.dtos.UpdateRatingValueDto;
+import com.yaquodorg.yaquod.dtos.rating.CreateRatingDto;
+import com.yaquodorg.yaquod.dtos.rating.UpdateRatingCommentDto;
+import com.yaquodorg.yaquod.dtos.rating.UpdateRatingValueDto;
 import com.yaquodorg.yaquod.entity.Rating;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;

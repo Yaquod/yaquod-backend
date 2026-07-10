@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.yaquodorg.yaquod.dtos.MoveVehicleDto;
+import com.yaquodorg.yaquod.dtos.vehicle.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
 import com.yaquodorg.yaquod.entity.Trip;
