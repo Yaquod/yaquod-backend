@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.vehicle;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
@@ -7,7 +7,6 @@ import lombok.Data;
 
 @Data
 public class UpdateVehicleStatusDto {
-    // @ValidVIN
     private String vinNumber;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)

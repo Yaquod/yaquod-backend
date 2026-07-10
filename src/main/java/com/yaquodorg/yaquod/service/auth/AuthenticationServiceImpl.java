@@ -1,6 +1,6 @@
 package com.yaquodorg.yaquod.service.auth;
 
-import com.yaquodorg.yaquod.dtos.*;
+import com.yaquodorg.yaquod.dtos.auth.*;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;

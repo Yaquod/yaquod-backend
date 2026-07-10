@@ -1,5 +1,6 @@
 package com.yaquodorg.yaquod.utils;
 
+import com.yaquodorg.yaquod.dtos.trip.TripCancelDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
@@ -7,6 +8,7 @@ import com.yaquodorg.yaquod.service.vehicle.VehicleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,8 @@ public class RedisExpiryListener implements MessageListener {
     private final RequestService requestService;
     private final TripService tripService;
     private final VehicleService vehicleService;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${app.request.timeout-prefix}")
     private String REQUEST_TIMEOUT_PREFIX;
@@ -50,6 +54,16 @@ public class RedisExpiryListener implements MessageListener {
                 if (request != null && request.getStatus() == RequestStatus.COMPLETED) {
                     Trip trip = tripService.getTripByRequestId(requestId);
                     Vehicle vehicle = trip.getVehicle();
+                    String vinNumber = vehicle.getVinNumber();
+
+                    TripCancelDto tripCancelDto =
+                            TripCancelDto.builder()
+                                    .vinNumber(vinNumber)
+                                    .requestId(requestId)
+                                    .build();
+
+                    eventPublisher.publishEvent(tripCancelDto);
+                    log.info("Published TripCancelDto event for request id: {}", requestId);
 
                     handleRequestTimeout(requestId, trip, vehicle);
 
@@ -87,9 +101,19 @@ public class RedisExpiryListener implements MessageListener {
                 if (request != null && request.getStatus() == RequestStatus.PENDING) {
                     Trip trip = tripService.getTripByRequestId(requestId);
                     Vehicle vehicle = trip.getVehicle();
+                    String vinNumber = vehicle.getVinNumber();
+
+                    TripCancelDto tripCancelDto =
+                            TripCancelDto.builder()
+                                    .vinNumber(vinNumber)
+                                    .requestId(requestId)
+                                    .build();
+
+                    eventPublisher.publishEvent(tripCancelDto);
+                    log.info("Published TripCancelDto event for request id: {}", requestId);
 
                     handleEtaTimeout(requestId, trip, vehicle);
-                    log.warn(
+                    log.info(
                             "ETA for request {} has expired. Updated request status to TIMEOUT and"
                                     + " cancelled associated trip.",
                             requestId);

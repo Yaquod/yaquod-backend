@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
+import com.yaquodorg.yaquod.dtos.auth.GoogleLoginDto;
 import com.yaquodorg.yaquod.service.google.GoogleTokenServiceImpl;
 import java.io.IOException;
 import java.security.GeneralSecurityException;

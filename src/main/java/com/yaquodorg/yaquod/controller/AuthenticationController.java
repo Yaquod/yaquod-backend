@@ -5,7 +5,7 @@ import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 
-import com.yaquodorg.yaquod.dtos.*;
+import com.yaquodorg.yaquod.dtos.auth.*;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.LoginResponse;

@@ -35,4 +35,8 @@ public interface TripService {
     void startTrip(Long requestId);
 
     void endTrip(Long requestId);
+
+    long countTrips();
+
+    long countTripsByStatusIn(List<TripStatus> statuses);
 }

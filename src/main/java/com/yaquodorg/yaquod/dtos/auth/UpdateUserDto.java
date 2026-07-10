@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.auth;
 
 import jakarta.validation.constraints.Size;
 import lombok.Data;

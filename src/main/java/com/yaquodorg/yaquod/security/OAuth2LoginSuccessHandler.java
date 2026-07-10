@@ -1,7 +1,7 @@
 package com.yaquodorg.yaquod.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
+import com.yaquodorg.yaquod.dtos.auth.GoogleLoginDto;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.LoginResponse;

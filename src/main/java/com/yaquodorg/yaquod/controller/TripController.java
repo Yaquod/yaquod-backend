@@ -2,7 +2,7 @@ package com.yaquodorg.yaquod.controller;
 
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
-import com.yaquodorg.yaquod.dtos.TripRequestDto;
+import com.yaquodorg.yaquod.dtos.trip.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.User;

@@ -10,6 +10,8 @@ public interface RequestService {
 
     List<Request> getRequests();
 
+    List<Request> getRequestsWithTripAndVehicle();
+
     List<Request> getUserRequests(Long userId);
 
     Request getRequest(Long requestId);
@@ -29,4 +31,6 @@ public interface RequestService {
     void declineRequestById(Long id, Long userId);
 
     Request acceptRequestById(Long id, Long userId);
+
+    long countRequestsByStatusIn(List<RequestStatus> statuses);
 }

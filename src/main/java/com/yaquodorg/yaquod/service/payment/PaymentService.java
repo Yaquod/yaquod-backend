@@ -4,6 +4,8 @@ import com.yaquodorg.yaquod.dtos.payment.ChargeSavedCardDirectResponse;
 import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
 import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
+import com.yaquodorg.yaquod.entity.Payment;
+import com.yaquodorg.yaquod.entity.PaymentStatus;
 import com.yaquodorg.yaquod.entity.User;
 import java.math.BigDecimal;
 import java.util.List;
@@ -23,4 +25,10 @@ public interface PaymentService {
     List<SavedCardDto> getUserSavedCards(Long userId);
 
     void deleteSavedCard(Long cardId, Long userId);
+
+    List<Payment> getAllPayments();
+
+    long countPaymentsByStatus(PaymentStatus status);
+
+    double sumAmountByStatus(PaymentStatus status);
 }

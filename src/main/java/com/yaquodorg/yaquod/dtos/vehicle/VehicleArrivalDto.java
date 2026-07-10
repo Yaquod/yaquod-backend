@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.vehicle;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -7,8 +7,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class MoveVehicleDto {
-    // @ValidVIN
+public class VehicleArrivalDto {
     private String vinNumber;
 
     private long tripId;

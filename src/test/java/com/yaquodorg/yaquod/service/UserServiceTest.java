@@ -9,8 +9,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.yaquodorg.yaquod.dtos.GoogleLoginDto;
-import com.yaquodorg.yaquod.dtos.UpdateUserDto;
+import com.yaquodorg.yaquod.dtos.auth.GoogleLoginDto;
+import com.yaquodorg.yaquod.dtos.auth.UpdateUserDto;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.exception.ResourceAlreadyExistsException;

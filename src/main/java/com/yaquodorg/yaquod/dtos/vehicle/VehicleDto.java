@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos;
+package com.yaquodorg.yaquod.dtos.vehicle;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +8,5 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class VehicleDto {
-    // @ValidVIN
     private String vinNumber;
 }
