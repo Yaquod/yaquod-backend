@@ -227,6 +227,14 @@ public class VehicleServiceImpl implements VehicleService {
         return vehicles;
     }
 
+    @Override
+    public boolean verifyVehicle(String vinNumber) {
+        Optional<Vehicle> vehicleOptional = vehicleRepository.findByVinNumber(vinNumber);
+        log.info("Vehicle with vin: {} found: {}", vinNumber, vehicleOptional.isPresent());
+
+        return vehicleOptional.isPresent();
+    }
+
     private Point createPoint(double longitude, double latitude) {
         return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }

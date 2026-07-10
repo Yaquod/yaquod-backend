@@ -251,4 +251,28 @@ public class VehicleController {
         mqttService.publish(TOPIC_ORDER_UPDATE_STATUS, new VehicleDto(vinNumber));
         return ResponseEntity.ok(createSuccessResponse(new MessageResponse("Order signal sent!")));
     }
+
+    @Operation(summary = "Verify Vehicle", description = "Verify a vehicle exists or not.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Vehicles verified successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "Vehicle not found")
+            })
+    @PreAuthorize("hasAnyRole('VEHICLE', 'ADMIN')")
+    @GetMapping("/verify/{vinNumber}")
+    public ResponseEntity<ApiResponse<MessageResponse>> verifyVehicle(
+            @Parameter(description = "The vin number of the vehicle", required = true) @PathVariable
+                    String vinNumber) {
+        boolean isVehicleVerified = vehicleService.verifyVehicle(vinNumber);
+        if (isVehicleVerified) {
+            return ResponseEntity.ok(
+                    createSuccessResponse(new MessageResponse("Vehicle Verified Successfully!")));
+        } else {
+            throw new ResourceNotFoundException("Vehicle Not Found!");
+        }
+    }
 }

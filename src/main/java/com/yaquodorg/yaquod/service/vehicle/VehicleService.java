@@ -37,4 +37,6 @@ public interface VehicleService {
     long countVehicles();
 
     long countVehiclesByStatusIn(List<VehicleStatus> statuses);
+
+    boolean verifyVehicle(String vinNumber);
 }
