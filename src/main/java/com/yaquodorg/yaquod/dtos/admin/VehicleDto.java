@@ -25,7 +25,6 @@ public class VehicleDto {
     private Timestamp lastUpdatedLocationAt;
     private double lastUpdatedLong;
     private double lastUpdatedLat;
-    private String apiKey;
     private Timestamp createdAt;
     private Timestamp lastAuthenticatedAt;
     private Long createdByAdminId;
@@ -44,7 +43,6 @@ public class VehicleDto {
                 .lastUpdatedLocationAt(v.getLastUpdatedLocationAt())
                 .lastUpdatedLong(v.getLastUpdatedLong())
                 .lastUpdatedLat(v.getLastUpdatedLat())
-                .apiKey(v.getApiKey())
                 .createdAt(v.getCreatedAt())
                 .lastAuthenticatedAt(v.getLastAuthenticatedAt())
                 .createdByAdminId(

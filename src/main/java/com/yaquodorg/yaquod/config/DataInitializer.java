@@ -20,6 +20,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // NOTE:
+        // TODO:
+        // This should not be left in production for security.
         String email = "admin1@gmail.com";
         if (userRepository.findByEmail(email).isPresent()) {
             log.info("Admin user already exists: {}", email);

@@ -253,10 +253,22 @@ public class TripServiceImpl implements TripService {
                 destinationLocation.getY());
 
         if (trip.getStatus() != TripStatus.ARRIVED_AT_PICKUP
-                && vehicle.getStatus() != VehicleStatus.WAITING_PASSENGER) {
-            log.error("Trip id: {} status was not in ARRIVED_AT_PICKUP state.", tripId);
-            throw new RuntimeException(
-                    "Trip id: " + tripId + " status was not in ARRIVED_AT_PICKUP state.");
+                || vehicle.getStatus() != VehicleStatus.WAITING_PASSENGER) {
+            log.error(
+                    "Cannot start trip {}: expected tripStatus={}, vehicleStatus={}, but got"
+                            + " tripStatus={}, vehicleStatus={}",
+                    tripId,
+                    TripStatus.ARRIVED_AT_PICKUP,
+                    VehicleStatus.WAITING_PASSENGER,
+                    trip.getStatus(),
+                    vehicle.getStatus());
+            throw new IllegalStateException(
+                    "Cannot start trip "
+                            + tripId
+                            + " when tripStatus="
+                            + trip.getStatus()
+                            + " and vehicleStatus="
+                            + vehicle.getStatus());
         }
 
         // Send moving signal to the vehicle with the destination location

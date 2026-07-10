@@ -120,10 +120,9 @@ public class AdminController {
     @PatchMapping("/vehicles/{vehicleId}/status")
     public ResponseEntity<ApiResponse<VehicleDto>> updateVehicleStatus(
             @PathVariable Long vehicleId, @RequestParam VehicleStatus status) {
-        Vehicle vehicle = vehicleService.getVehicle(vehicleId);
         vehicleService.updateVehicleStatus(vehicleId, status);
-        vehicle.setStatus(status);
-        return ResponseEntity.ok(createSuccessResponse(VehicleDto.fromEntity(vehicle)));
+        Vehicle updatedVehicle = vehicleService.getVehicle(vehicleId);
+        return ResponseEntity.ok(createSuccessResponse(VehicleDto.fromEntity(updatedVehicle)));
     }
 
     @Operation(summary = "List all requests")
