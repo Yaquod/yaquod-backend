@@ -16,6 +16,7 @@ import com.yaquodorg.yaquod.response.RatingResponse;
 import com.yaquodorg.yaquod.service.admin.DashboardService;
 import com.yaquodorg.yaquod.service.payment.PaymentService;
 import com.yaquodorg.yaquod.service.rating.RatingService;
+import com.yaquodorg.yaquod.service.rating.RatingServiceImpl;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
@@ -162,7 +163,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse<List<RatingResponse>>> getRatings() {
         List<RatingResponse> ratings =
                 ratingService.getAllRatings().stream()
-                        .map(RatingService::toRatingResponse)
+                        .map(RatingServiceImpl::toRatingResponse)
                         .toList();
         return ResponseEntity.ok(createSuccessResponse(ratings));
     }

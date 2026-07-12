@@ -1,7 +1,7 @@
 package com.yaquodorg.yaquod.controller;
 
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
-import static com.yaquodorg.yaquod.service.rating.RatingService.toRatingResponse;
+import static com.yaquodorg.yaquod.service.rating.RatingServiceImpl.toRatingResponse;
 
 import com.yaquodorg.yaquod.dtos.rating.CreateRatingDto;
 import com.yaquodorg.yaquod.dtos.rating.UpdateRatingCommentDto;
@@ -11,6 +11,7 @@ import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.response.ApiResponse;
 import com.yaquodorg.yaquod.response.RatingResponse;
 import com.yaquodorg.yaquod.service.rating.RatingService;
+import com.yaquodorg.yaquod.service.rating.RatingServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -70,7 +71,7 @@ public class RatingController {
     public ResponseEntity<ApiResponse<List<RatingResponse>>> getAllRatings() {
         List<RatingResponse> ratings =
                 ratingService.getAllRatings().stream()
-                        .map(RatingService::toRatingResponse)
+                        .map(RatingServiceImpl::toRatingResponse)
                         .toList();
         return ResponseEntity.ok(createSuccessResponse(ratings));
     }
@@ -99,7 +100,7 @@ public class RatingController {
             @PathVariable Long userId) {
         List<RatingResponse> ratings =
                 ratingService.getRatingsByUserId(userId).stream()
-                        .map(RatingService::toRatingResponse)
+                        .map(RatingServiceImpl::toRatingResponse)
                         .toList();
         return ResponseEntity.ok(createSuccessResponse(ratings));
     }
@@ -113,7 +114,7 @@ public class RatingController {
             @PathVariable Long vehicleId) {
         List<RatingResponse> ratings =
                 ratingService.getRatingsByVehicleId(vehicleId).stream()
-                        .map(RatingService::toRatingResponse)
+                        .map(RatingServiceImpl::toRatingResponse)
                         .toList();
         return ResponseEntity.ok(createSuccessResponse(ratings));
     }
