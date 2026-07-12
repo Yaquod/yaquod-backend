@@ -1,9 +1,12 @@
 package com.yaquodorg.yaquod.service.trip;
 
+import com.yaquodorg.yaquod.dtos.trip.TripDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.TripStatus;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 public interface TripService {
@@ -18,7 +21,7 @@ public interface TripService {
 
     List<Trip> getTripsByUserId(Long userId);
 
-    List<Trip> getUserLastNTrips(int n, Long userId);
+    Page<TripDto> getUserTripsPaginated(Pageable pageable, Long userId);
 
     List<Trip> getTripsByVinNumber(String vinNumber);
 

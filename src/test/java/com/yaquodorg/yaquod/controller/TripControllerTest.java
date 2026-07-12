@@ -2,7 +2,6 @@ package com.yaquodorg.yaquod.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -15,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yaquodorg.yaquod.dtos.trip.TripDto;
 import com.yaquodorg.yaquod.dtos.trip.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
@@ -37,6 +37,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -359,33 +362,39 @@ class TripControllerTest {
     }
 
     @Test
-    @DisplayName("shouldGetLastNTrips")
+    @DisplayName("shouldGetPaginatedTrips")
     @WithMockUser
-    void shouldGetLastNTrips() throws Exception {
+    void shouldGetPaginatedTrips() throws Exception {
         // Arrange
-        List<Trip> lastTrips = Collections.singletonList(testTrip);
-        when(tripService.getUserLastNTrips(eq(5), any())).thenReturn(lastTrips);
+        TripDto tripDto = TripDto.builder().id(1L).status(TripStatus.COMPLETED).build();
+
+        Page<TripDto> tripPage =
+                new PageImpl<>(Collections.singletonList(tripDto), PageRequest.of(0, 10), 1);
+
+        when(tripService.getUserTripsPaginated(any(), any())).thenReturn(tripPage);
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/last/5"))
+        mockMvc.perform(get("/api/trips/last").param("page", "0").param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(1));
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].id").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
 
-        verify(tripService).getUserLastNTrips(eq(5), any());
+        verify(tripService).getUserTripsPaginated(any(), any());
     }
 
     @Test
-    @DisplayName("shouldReturn500WhenGetLastNTripsFails")
+    @DisplayName("shouldReturn500WhenGetPaginatedTripsFails")
     @WithMockUser
-    void shouldReturn500WhenGetLastNTripsFails() throws Exception {
+    void shouldReturn500WhenGetPaginatedTripsFails() throws Exception {
         // Arrange
-        when(tripService.getUserLastNTrips(anyInt(), any()))
+        when(tripService.getUserTripsPaginated(any(), any()))
                 .thenThrow(new RuntimeException("Query error"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/last/5"))
+        mockMvc.perform(get("/api/trips/last").param("page", "0").param("size", "10"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Internal server error: Query error"));

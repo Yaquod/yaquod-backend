@@ -1,8 +1,11 @@
 package com.yaquodorg.yaquod.service.request;
 
+import com.yaquodorg.yaquod.dtos.request.RequestDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface RequestService {
     Request createRequest(
@@ -11,6 +14,8 @@ public interface RequestService {
     List<Request> getRequests();
 
     List<Request> getRequestsWithTripAndVehicle();
+
+    Page<RequestDto> getUserRequestsPaginated(Pageable pageable, Long userId);
 
     List<Request> getUserRequests(Long userId);
 
