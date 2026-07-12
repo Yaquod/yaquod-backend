@@ -1,6 +1,7 @@
 package com.yaquodorg.yaquod.service.trip;
 
 import com.yaquodorg.yaquod.dtos.trip.InitTripDto;
+import com.yaquodorg.yaquod.dtos.trip.TripDto;
 import com.yaquodorg.yaquod.dtos.vehicle.MoveVehicleDto;
 import com.yaquodorg.yaquod.dtos.vehicle.VehicleDto;
 import com.yaquodorg.yaquod.entity.*;
@@ -19,7 +20,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -165,12 +167,48 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public List<Trip> getUserLastNTrips(int n, Long userId) {
-        log.debug("Fetching last {} trips for user id: {}", n, userId);
-        List<Trip> trips =
-                tripRepository.findByUserIdOrderByStartedAtDesc(userId, PageRequest.of(0, n));
-        log.debug("Found {} trips for user id: {}", trips.size(), userId);
-        return trips;
+    public Page<TripDto> getUserTripsPaginated(Pageable pageable, Long userId) {
+        log.debug("Fetching paginated trips for user id: {}", userId);
+        Page<Trip> tripPage = tripRepository.findByUserIdOrderByStartedAtDesc(userId, pageable);
+        return tripPage.map(
+                trip -> {
+                    var builder =
+                            TripDto.builder()
+                                    .id(trip.getId())
+                                    .status(trip.getStatus())
+                                    .startedAt(trip.getStartedAt())
+                                    .endedAt(trip.getEndedAt())
+                                    .updatedAt(trip.getUpdatedAt());
+
+                    Request request = trip.getRequest();
+                    if (request != null
+                            && request.getStartLocation() != null
+                            && request.getDestinationLocation() != null) {
+                        builder.startLong(request.getStartLocation().getX())
+                                .startLat(request.getStartLocation().getY())
+                                .endLong(request.getDestinationLocation().getX())
+                                .endLat(request.getDestinationLocation().getY());
+                    }
+
+                    Vehicle vehicle = trip.getVehicle();
+                    if (vehicle != null) {
+                        builder.carCompany(vehicle.getCarCompany())
+                                .model(vehicle.getModel())
+                                .color(vehicle.getColor());
+                    }
+
+                    Payment payment = trip.getPayment();
+                    if (payment != null) {
+                        builder.amount(payment.getAmount()).currency(payment.getCurrency());
+                    }
+
+                    Rating rating = trip.getRating();
+                    if (rating != null) {
+                        builder.ratingValue(rating.getRatingValue());
+                    }
+
+                    return builder.build();
+                });
     }
 
     @Override

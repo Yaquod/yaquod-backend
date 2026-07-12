@@ -2,6 +2,7 @@ package com.yaquodorg.yaquod.controller;
 
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
+import com.yaquodorg.yaquod.dtos.trip.TripDto;
 import com.yaquodorg.yaquod.dtos.trip.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.Trip;
@@ -17,6 +18,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,6 +30,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -217,25 +222,29 @@ public class TripController {
     }
 
     @Operation(
-            summary = "Get last N trips for current user",
-            description = "Retrieves the last N trips for the currently authenticated user")
+            summary = "Get paginated trips for current user",
+            description =
+                    "Retrieves paginated trips for the currently authenticated user, sorted by"
+                            + " started date descending")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
-                        description = "Last N trips retrieved successfully")
+                        description = "User trips retrieved successfully")
             })
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
-    @GetMapping("/last/{n}")
-    public ResponseEntity<ApiResponse<List<Trip>>> getLastNTrips(
-            @Parameter(
-                            description = "Number of recent trips to retrieve",
-                            required = true,
-                            example = "5")
-                    @PathVariable
-                    int n,
+    @GetMapping("/last")
+    public ResponseEntity<ApiResponse<Page<TripDto>>> getLastNTrips(
+            @Parameter(description = "Page number (zero-based)", example = "0")
+                    @RequestParam(defaultValue = "0")
+                    int page,
+            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10")
+                    int size,
             @AuthenticationPrincipal User user) {
-        List<Trip> trips = tripService.getUserLastNTrips(n, user.getId());
+        Page<TripDto> trips =
+                tripService.getUserTripsPaginated(
+                        PageRequest.of(page, size, Sort.by("startedAt").descending()),
+                        user.getId());
         return ResponseEntity.ok(createSuccessResponse(trips));
     }
 
