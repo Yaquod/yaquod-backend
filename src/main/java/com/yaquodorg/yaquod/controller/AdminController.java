@@ -3,10 +3,10 @@ package com.yaquodorg.yaquod.controller;
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
 import com.yaquodorg.yaquod.dtos.admin.DashboardDto;
+import com.yaquodorg.yaquod.dtos.admin.PaymentDto;
 import com.yaquodorg.yaquod.dtos.admin.RequestDto;
 import com.yaquodorg.yaquod.dtos.admin.TripDto;
 import com.yaquodorg.yaquod.dtos.admin.VehicleDto;
-import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
@@ -148,8 +148,9 @@ public class AdminController {
 
     @Operation(summary = "List all payments")
     @GetMapping("/payments")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPayments() {
-        List<Payment> payments = paymentService.getAllPayments();
+    public ResponseEntity<ApiResponse<List<PaymentDto>>> getPayments() {
+        List<PaymentDto> payments =
+                paymentService.getAllPayments().stream().map(PaymentDto::fromEntity).toList();
         return ResponseEntity.ok(createSuccessResponse(payments));
     }
 }
