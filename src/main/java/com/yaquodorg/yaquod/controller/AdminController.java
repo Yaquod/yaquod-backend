@@ -12,8 +12,10 @@ import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.response.ApiResponse;
+import com.yaquodorg.yaquod.response.RatingResponse;
 import com.yaquodorg.yaquod.service.admin.DashboardService;
 import com.yaquodorg.yaquod.service.payment.PaymentService;
+import com.yaquodorg.yaquod.service.rating.RatingService;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
@@ -50,6 +52,7 @@ public class AdminController {
     private final VehicleService vehicleService;
     private final RequestService requestService;
     private final PaymentService paymentService;
+    private final RatingService ratingService;
 
     @Operation(summary = "Get dashboard statistics")
     @GetMapping("/dashboard")
@@ -152,5 +155,15 @@ public class AdminController {
         List<PaymentDto> payments =
                 paymentService.getAllPayments().stream().map(PaymentDto::fromEntity).toList();
         return ResponseEntity.ok(createSuccessResponse(payments));
+    }
+
+    @Operation(summary = "List all ratings")
+    @GetMapping("/ratings")
+    public ResponseEntity<ApiResponse<List<RatingResponse>>> getRatings() {
+        List<RatingResponse> ratings =
+                ratingService.getAllRatings().stream()
+                        .map(RatingService::toRatingResponse)
+                        .toList();
+        return ResponseEntity.ok(createSuccessResponse(ratings));
     }
 }
