@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -19,4 +20,9 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findByVehicleVinNumber(String vehicleVinNumber);
 
     long countByStatusIn(List<TripStatus> statuses);
+
+    @Query(
+            "SELECT t FROM Trip t LEFT JOIN FETCH t.user LEFT JOIN FETCH t.vehicle LEFT JOIN FETCH"
+                    + " t.payment LEFT JOIN FETCH t.request")
+    List<Trip> findAllWithAssociations();
 }

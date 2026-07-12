@@ -7,6 +7,7 @@ import com.yaquodorg.yaquod.entity.Role;
 import com.yaquodorg.yaquod.entity.TripStatus;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.service.payment.PaymentService;
+import com.yaquodorg.yaquod.service.rating.RatingService;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
@@ -26,6 +27,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final TripService tripService;
     private final PaymentService paymentService;
     private final RequestService requestService;
+    private final RatingService ratingService;
 
     private static final List<VehicleStatus> BUSY_VEHICLE_STATUSES =
             List.of(
@@ -97,6 +99,8 @@ public class DashboardServiceImpl implements DashboardService {
         long failedRequests = requestService.countRequestsByStatusIn(FAILED_REQUEST_STATUSES);
         long totalPayments = paymentService.countPaymentsByStatus(PaymentStatus.PAID);
         double totalRevenue = paymentService.sumAmountByStatus(PaymentStatus.PAID);
+        long totalRatings = ratingService.countRatings();
+        double avgRating = ratingService.averageRating();
 
         return DashboardDto.builder()
                 .totalUsers(totalUsers)
@@ -118,6 +122,8 @@ public class DashboardServiceImpl implements DashboardService {
                 .failedRequests(failedRequests)
                 .totalPayments(totalPayments)
                 .totalRevenue(totalRevenue)
+                .totalRatings(totalRatings)
+                .avgRating(avgRating)
                 .build();
     }
 }

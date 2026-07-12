@@ -131,6 +131,16 @@ public class RatingServiceImpl implements RatingService {
         return ratingRepository.findByVehicleId(vehicleId);
     }
 
+    @Override
+    public long countRatings() {
+        return ratingRepository.count();
+    }
+
+    @Override
+    public double averageRating() {
+        return ratingRepository.avgRatingValue().orElse(0.0);
+    }
+
     private void validateOwnershipOrAdmin(Rating rating, Long actorUserId) {
         User actor = userService.getUserById(actorUserId);
         boolean isOwner = rating.getUser() != null && rating.getUser().getId().equals(actorUserId);

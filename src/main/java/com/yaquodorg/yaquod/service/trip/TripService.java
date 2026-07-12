@@ -19,6 +19,8 @@ public interface TripService {
 
     List<Trip> getAllTrips();
 
+    List<Trip> getAllTripsWithAssociations();
+
     List<Trip> getTripsByUserId(Long userId);
 
     Page<TripDto> getUserTripsPaginated(Pageable pageable, Long userId);

@@ -157,6 +157,14 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public List<Trip> getAllTripsWithAssociations() {
+        log.debug("Fetching all trips with associations");
+        List<Trip> trips = tripRepository.findAllWithAssociations();
+        log.debug("Found {} trips", trips.size());
+        return trips;
+    }
+
+    @Override
     public List<Trip> getTripsByUserId(Long userId) {
         log.debug("Fetching trips for user id: {}", userId);
         User user = userService.getUserById(userId);
@@ -339,6 +347,7 @@ public class TripServiceImpl implements TripService {
         // Update vehicle and trip statuses
         vehicleService.updateVehicleStatus(vinNumber, VehicleStatus.IDLE);
         updateTripStatus(tripId, TripStatus.COMPLETED);
+        trip.setEndedAt(new Timestamp(System.currentTimeMillis()));
         log.info("Trip ended successfully for request id: {}", requestId);
     }
 

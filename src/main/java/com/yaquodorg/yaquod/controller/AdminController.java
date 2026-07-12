@@ -3,17 +3,20 @@ package com.yaquodorg.yaquod.controller;
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
 import com.yaquodorg.yaquod.dtos.admin.DashboardDto;
+import com.yaquodorg.yaquod.dtos.admin.PaymentDto;
+import com.yaquodorg.yaquod.dtos.admin.TripDto;
 import com.yaquodorg.yaquod.dtos.admin.VehicleDto;
 import com.yaquodorg.yaquod.dtos.request.RequestDto;
-import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
 import com.yaquodorg.yaquod.response.ApiResponse;
+import com.yaquodorg.yaquod.response.RatingResponse;
 import com.yaquodorg.yaquod.service.admin.DashboardService;
 import com.yaquodorg.yaquod.service.payment.PaymentService;
+import com.yaquodorg.yaquod.service.rating.RatingService;
+import com.yaquodorg.yaquod.service.rating.RatingServiceImpl;
 import com.yaquodorg.yaquod.service.request.RequestService;
 import com.yaquodorg.yaquod.service.trip.TripService;
 import com.yaquodorg.yaquod.service.user.UserService;
@@ -50,6 +53,7 @@ public class AdminController {
     private final VehicleService vehicleService;
     private final RequestService requestService;
     private final PaymentService paymentService;
+    private final RatingService ratingService;
 
     @Operation(summary = "Get dashboard statistics")
     @GetMapping("/dashboard")
@@ -95,8 +99,19 @@ public class AdminController {
 
     @Operation(summary = "Get trips for a specific user")
     @GetMapping("/users/{userId}/trips")
-    public ResponseEntity<ApiResponse<List<Trip>>> getUserTrips(@PathVariable Long userId) {
-        List<Trip> trips = tripService.getTripsByUserId(userId);
+    public ResponseEntity<ApiResponse<List<TripDto>>> getUserTrips(@PathVariable Long userId) {
+        List<TripDto> trips =
+                tripService.getTripsByUserId(userId).stream().map(TripDto::fromEntity).toList();
+        return ResponseEntity.ok(createSuccessResponse(trips));
+    }
+
+    @Operation(summary = "List all trips")
+    @GetMapping("/trips")
+    public ResponseEntity<ApiResponse<List<TripDto>>> getTrips() {
+        List<TripDto> trips =
+                tripService.getAllTripsWithAssociations().stream()
+                        .map(TripDto::fromEntity)
+                        .toList();
         return ResponseEntity.ok(createSuccessResponse(trips));
     }
 
@@ -137,8 +152,19 @@ public class AdminController {
 
     @Operation(summary = "List all payments")
     @GetMapping("/payments")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPayments() {
-        List<Payment> payments = paymentService.getAllPayments();
+    public ResponseEntity<ApiResponse<List<PaymentDto>>> getPayments() {
+        List<PaymentDto> payments =
+                paymentService.getAllPayments().stream().map(PaymentDto::fromEntity).toList();
         return ResponseEntity.ok(createSuccessResponse(payments));
+    }
+
+    @Operation(summary = "List all ratings")
+    @GetMapping("/ratings")
+    public ResponseEntity<ApiResponse<List<RatingResponse>>> getRatings() {
+        List<RatingResponse> ratings =
+                ratingService.getAllRatings().stream()
+                        .map(RatingServiceImpl::toRatingResponse)
+                        .toList();
+        return ResponseEntity.ok(createSuccessResponse(ratings));
     }
 }
