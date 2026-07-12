@@ -24,4 +24,8 @@ public interface RatingService {
     Rating updateRatingComment(Long id, Long actorUserId, String comment);
 
     void deleteRating(Long id, Long actorUserId);
+
+    long countRatings();
+
+    double averageRating();
 }

@@ -29,4 +29,6 @@ public class DashboardDto {
     private long failedRequests;
     private long totalPayments;
     private double totalRevenue;
+    private long totalRatings;
+    private double avgRating;
 }
