@@ -19,10 +19,10 @@ public class TripDto {
     private Timestamp endedAt;
     private Timestamp updatedAt;
 
-    private double startLong;
-    private double startLat;
-    private double endLong;
-    private double endLat;
+    private Double startLong;
+    private Double startLat;
+    private Double endLong;
+    private Double endLat;
 
     private BigDecimal amount;
     private String currency;

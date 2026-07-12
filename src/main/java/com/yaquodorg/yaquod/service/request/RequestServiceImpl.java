@@ -1,6 +1,6 @@
 package com.yaquodorg.yaquod.service.request;
 
-import com.yaquodorg.yaquod.dtos.admin.RequestDto;
+import com.yaquodorg.yaquod.dtos.request.RequestDto;
 import com.yaquodorg.yaquod.dtos.trip.TripCancelDto;
 import com.yaquodorg.yaquod.dtos.vehicle.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.*;

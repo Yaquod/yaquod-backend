@@ -181,13 +181,15 @@ public class TripServiceImpl implements TripService {
                                     .updatedAt(trip.getUpdatedAt());
 
                     Request request = trip.getRequest();
-                    if (request != null
-                            && request.getStartLocation() != null
-                            && request.getDestinationLocation() != null) {
-                        builder.startLong(request.getStartLocation().getX())
-                                .startLat(request.getStartLocation().getY())
-                                .endLong(request.getDestinationLocation().getX())
-                                .endLat(request.getDestinationLocation().getY());
+                    if (request != null) {
+                        Point start = request.getStartLocation();
+                        if (start != null) {
+                            builder.startLong(start.getX()).startLat(start.getY());
+                        }
+                        Point destination = request.getDestinationLocation();
+                        if (destination != null) {
+                            builder.endLong(destination.getX()).endLat(destination.getY());
+                        }
                     }
 
                     Vehicle vehicle = trip.getVehicle();
