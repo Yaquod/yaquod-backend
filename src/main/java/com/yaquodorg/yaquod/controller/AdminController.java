@@ -4,10 +4,10 @@ import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
 import com.yaquodorg.yaquod.dtos.admin.DashboardDto;
 import com.yaquodorg.yaquod.dtos.admin.RequestDto;
+import com.yaquodorg.yaquod.dtos.admin.TripDto;
 import com.yaquodorg.yaquod.dtos.admin.VehicleDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.Role;
-import com.yaquodorg.yaquod.entity.Trip;
 import com.yaquodorg.yaquod.entity.User;
 import com.yaquodorg.yaquod.entity.Vehicle;
 import com.yaquodorg.yaquod.entity.VehicleStatus;
@@ -95,8 +95,19 @@ public class AdminController {
 
     @Operation(summary = "Get trips for a specific user")
     @GetMapping("/users/{userId}/trips")
-    public ResponseEntity<ApiResponse<List<Trip>>> getUserTrips(@PathVariable Long userId) {
-        List<Trip> trips = tripService.getTripsByUserId(userId);
+    public ResponseEntity<ApiResponse<List<TripDto>>> getUserTrips(@PathVariable Long userId) {
+        List<TripDto> trips =
+                tripService.getTripsByUserId(userId).stream().map(TripDto::fromEntity).toList();
+        return ResponseEntity.ok(createSuccessResponse(trips));
+    }
+
+    @Operation(summary = "List all trips")
+    @GetMapping("/trips")
+    public ResponseEntity<ApiResponse<List<TripDto>>> getTrips() {
+        List<TripDto> trips =
+                tripService.getAllTripsWithAssociations().stream()
+                        .map(TripDto::fromEntity)
+                        .toList();
         return ResponseEntity.ok(createSuccessResponse(trips));
     }
 

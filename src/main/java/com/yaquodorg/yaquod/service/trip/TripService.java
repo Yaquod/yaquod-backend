@@ -16,6 +16,8 @@ public interface TripService {
 
     List<Trip> getAllTrips();
 
+    List<Trip> getAllTripsWithAssociations();
+
     List<Trip> getTripsByUserId(Long userId);
 
     List<Trip> getUserLastNTrips(int n, Long userId);
