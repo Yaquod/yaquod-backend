@@ -17,6 +17,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -74,15 +77,18 @@ public class RatingController {
 
     @Operation(
             summary = "Get current user ratings",
-            description = "Retrieves all ratings created by current authenticated user")
+            description =
+                    "Retrieves paginated ratings created by current authenticated user, sorted by"
+                            + " newest first")
     @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<List<RatingResponse>>> getMyRatings(
+    public ResponseEntity<ApiResponse<Page<RatingResponse>>> getMyRatings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal User user) {
-        List<RatingResponse> ratings =
-                ratingService.getRatingsByUserId(user.getId()).stream()
-                        .map(RatingService::toRatingResponse)
-                        .toList();
+        Page<RatingResponse> ratings =
+                ratingService.getMyRatingsPaginated(
+                        PageRequest.of(page, size, Sort.by("id").descending()), user.getId());
         return ResponseEntity.ok(createSuccessResponse(ratings));
     }
 

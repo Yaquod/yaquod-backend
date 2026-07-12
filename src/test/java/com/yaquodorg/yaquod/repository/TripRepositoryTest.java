@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -282,15 +283,19 @@ class TripRepositoryTest {
         entityManager.flush();
 
         // Act
-        List<Trip> result =
+        Page<Trip> result =
                 tripRepository.findByUserIdOrderByStartedAtDesc(
                         testUser.getId(), PageRequest.of(0, 2));
 
         // Assert
-        assertEquals(2, result.size());
-        assertTrue(result.get(0).getStartedAt().after(result.get(1).getStartedAt()));
-        assertEquals(trip3.getId(), result.get(0).getId());
-        assertEquals(trip2.getId(), result.get(1).getId());
+        assertEquals(2, result.getNumberOfElements());
+        assertTrue(
+                result.getContent()
+                        .get(0)
+                        .getStartedAt()
+                        .after(result.getContent().get(1).getStartedAt()));
+        assertEquals(trip3.getId(), result.getContent().get(0).getId());
+        assertEquals(trip2.getId(), result.getContent().get(1).getId());
     }
 
     @Test
@@ -311,12 +316,12 @@ class TripRepositoryTest {
         entityManager.flush();
 
         // Act
-        List<Trip> result =
+        Page<Trip> result =
                 tripRepository.findByUserIdOrderByStartedAtDesc(
                         testUser.getId(), PageRequest.of(0, 3));
 
         // Assert
-        assertEquals(3, result.size());
+        assertEquals(3, result.getNumberOfElements());
     }
 
     @Test

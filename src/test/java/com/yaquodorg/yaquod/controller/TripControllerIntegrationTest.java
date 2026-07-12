@@ -349,11 +349,11 @@ class TripControllerIntegrationTest {
         }
 
         // Act & Assert
-        mockMvc.perform(get("/api/trips/last/2"))
+        mockMvc.perform(get("/api/trips/last").param("page", "0").param("size", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(2));
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content.length()").value(2));
     }
 
     @Test

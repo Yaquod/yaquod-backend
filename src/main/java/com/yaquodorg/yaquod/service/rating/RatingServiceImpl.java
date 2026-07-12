@@ -14,6 +14,8 @@ import com.yaquodorg.yaquod.service.user.UserService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,6 +106,13 @@ public class RatingServiceImpl implements RatingService {
         validateOwnershipOrAdmin(rating, actorUserId);
         log.info("Rating deleted for rating id: {} by user id: {}", id, actorUserId);
         ratingRepository.deleteRatingById(id);
+    }
+
+    @Override
+    public Page<RatingResponse> getMyRatingsPaginated(Pageable pageable, Long userId) {
+        return ratingRepository
+                .findByUserId(userId, pageable)
+                .map(RatingServiceImpl::toRatingResponse);
     }
 
     @Override
