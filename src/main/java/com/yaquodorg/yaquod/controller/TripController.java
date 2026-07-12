@@ -2,6 +2,7 @@ package com.yaquodorg.yaquod.controller;
 
 import static com.yaquodorg.yaquod.response.ApiResponse.createSuccessResponse;
 
+import com.yaquodorg.yaquod.dtos.admin.RequestDto;
 import com.yaquodorg.yaquod.dtos.trip.TripDto;
 import com.yaquodorg.yaquod.dtos.trip.TripRequestDto;
 import com.yaquodorg.yaquod.entity.Request;
@@ -246,6 +247,34 @@ public class TripController {
                         PageRequest.of(page, size, Sort.by("startedAt").descending()),
                         user.getId());
         return ResponseEntity.ok(createSuccessResponse(trips));
+    }
+
+    @Operation(
+            summary = "Get paginated requests for current user",
+            description =
+                    "Retrieves paginated trip requests for the currently authenticated user,"
+                            + " sorted by creation date descending")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "User requests retrieved successfully")
+            })
+    @PreAuthorize("hasAnyRole('CLIENT', 'ADMIN')")
+    @GetMapping("/requests")
+    public ResponseEntity<ApiResponse<Page<RequestDto>>> getUserRequests(
+            @Parameter(description = "Page number (zero-based)", example = "0")
+                    @RequestParam(defaultValue = "0")
+                    int page,
+            @Parameter(description = "Page size", example = "10")
+                    @RequestParam(defaultValue = "10")
+                    int size,
+            @AuthenticationPrincipal User user) {
+        Page<RequestDto> requests =
+                requestService.getUserRequestsPaginated(
+                        PageRequest.of(page, size, Sort.by("createdAt").descending()),
+                        user.getId());
+        return ResponseEntity.ok(createSuccessResponse(requests));
     }
 
     @Operation(
