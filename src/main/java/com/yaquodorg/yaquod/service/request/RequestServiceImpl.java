@@ -1,5 +1,6 @@
 package com.yaquodorg.yaquod.service.request;
 
+import com.yaquodorg.yaquod.dtos.request.RequestDto;
 import com.yaquodorg.yaquod.dtos.trip.TripCancelDto;
 import com.yaquodorg.yaquod.dtos.vehicle.MoveVehicleDto;
 import com.yaquodorg.yaquod.entity.*;
@@ -20,6 +21,8 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,6 +96,12 @@ public class RequestServiceImpl implements RequestService {
         List<Request> requests = requestRepository.findAllWithTripAndVehicle();
         log.debug("Found {} requests", requests.size());
         return requests;
+    }
+
+    @Override
+    public Page<RequestDto> getUserRequestsPaginated(Pageable pageable, Long userId) {
+        log.debug("Fetching paginated requests for user id: {}", userId);
+        return requestRepository.findByUserId(userId, pageable).map(RequestDto::fromEntity);
     }
 
     @Override

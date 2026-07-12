@@ -5,12 +5,14 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.yaquodorg.yaquod.dtos.trip.InitTripDto;
+import com.yaquodorg.yaquod.dtos.trip.TripDto;
 import com.yaquodorg.yaquod.entity.*;
 import com.yaquodorg.yaquod.exception.ResourceNotFoundException;
 import com.yaquodorg.yaquod.repository.TripRepository;
 import com.yaquodorg.yaquod.service.trip.TripServiceImpl;
 import com.yaquodorg.yaquod.service.user.UserService;
 import com.yaquodorg.yaquod.service.vehicle.VehicleService;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,11 +22,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -307,21 +314,78 @@ class TripServiceImplTest {
     }
 
     @Test
-    @DisplayName("shouldGetUserLastNTrips")
-    void shouldGetUserLastNTrips() {
+    @DisplayName("shouldGetUserTripsPaginated")
+    void shouldGetUserTripsPaginated() {
         // Arrange
-        int n = 5;
-        List<Trip> lastTrips = Collections.singletonList(testTrip);
+        int page = 0, size = 5;
+        Pageable pageable = PageRequest.of(page, size);
+
+        GeometryFactory gf = new GeometryFactory();
+        Point startPoint = gf.createPoint(new Coordinate(31.0, 30.0));
+        Point destPoint = gf.createPoint(new Coordinate(31.5, 30.5));
+
+        Request request =
+                Request.builder()
+                        .id(1L)
+                        .user(testUser)
+                        .startLocation(startPoint)
+                        .destinationLocation(destPoint)
+                        .build();
+
+        Payment payment =
+                Payment.builder().id(1L).amount(BigDecimal.valueOf(150.00)).currency("EGP").build();
+
+        Rating rating = Rating.builder().id(1L).ratingValue(5).build();
+
+        Vehicle vehicle =
+                Vehicle.builder()
+                        .id(1L)
+                        .vinNumber("VIN123456")
+                        .carCompany("Toyota")
+                        .model("Corolla")
+                        .color("White")
+                        .status(VehicleStatus.IDLE)
+                        .build();
+
+        Trip trip =
+                Trip.builder()
+                        .id(1L)
+                        .request(request)
+                        .vehicle(vehicle)
+                        .user(testUser)
+                        .payment(payment)
+                        .rating(rating)
+                        .status(TripStatus.COMPLETED)
+                        .startedAt(new Timestamp(System.currentTimeMillis()))
+                        .endedAt(new Timestamp(System.currentTimeMillis() + 3600000))
+                        .build();
+
+        Page<Trip> tripPage = new PageImpl<>(Collections.singletonList(trip), pageable, 1);
         when(tripRepository.findByUserIdOrderByStartedAtDesc(eq(1L), any(Pageable.class)))
-                .thenReturn(lastTrips);
+                .thenReturn(tripPage);
 
         // Act
-        List<Trip> result = tripService.getUserLastNTrips(n, 1L);
+        Page<TripDto> result = tripService.getUserTripsPaginated(pageable, 1L);
 
         // Assert
-        assertEquals(1, result.size());
-        assertEquals(lastTrips, result);
-        verify(tripRepository).findByUserIdOrderByStartedAtDesc(eq(1L), eq(PageRequest.of(0, n)));
+        assertEquals(1, result.getNumberOfElements());
+        TripDto dto = result.getContent().get(0);
+        assertEquals(trip.getId(), dto.getId());
+        assertEquals(TripStatus.COMPLETED, dto.getStatus());
+        assertNotNull(dto.getStartedAt());
+        assertNotNull(dto.getEndedAt());
+        assertEquals(31.0, dto.getStartLong());
+        assertEquals(30.0, dto.getStartLat());
+        assertEquals(31.5, dto.getEndLong());
+        assertEquals(30.5, dto.getEndLat());
+        assertEquals(BigDecimal.valueOf(150.00), dto.getAmount());
+        assertEquals("EGP", dto.getCurrency());
+        assertEquals(Integer.valueOf(5), dto.getRatingValue());
+        assertEquals("Toyota", dto.getCarCompany());
+        assertEquals("Corolla", dto.getModel());
+        assertEquals("White", dto.getColor());
+
+        verify(tripRepository).findByUserIdOrderByStartedAtDesc(eq(1L), eq(pageable));
     }
 
     @Test

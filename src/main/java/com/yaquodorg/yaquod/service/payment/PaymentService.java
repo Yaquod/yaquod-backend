@@ -3,12 +3,15 @@ package com.yaquodorg.yaquod.service.payment;
 import com.yaquodorg.yaquod.dtos.payment.ChargeSavedCardDirectResponse;
 import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
+import com.yaquodorg.yaquod.dtos.payment.PaymentDto;
 import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.PaymentStatus;
 import com.yaquodorg.yaquod.entity.User;
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface PaymentService {
     CreateCheckoutResponse createCardTokenizationCheckout(User user);
@@ -25,6 +28,8 @@ public interface PaymentService {
     List<SavedCardDto> getUserSavedCards(Long userId);
 
     void deleteSavedCard(Long cardId, Long userId);
+
+    Page<PaymentDto> getUserPaymentsPaginated(Pageable pageable, Long userId);
 
     List<Payment> getAllPayments();
 

@@ -1,4 +1,4 @@
-package com.yaquodorg.yaquod.dtos.admin;
+package com.yaquodorg.yaquod.dtos.request;
 
 import com.yaquodorg.yaquod.entity.Request;
 import com.yaquodorg.yaquod.entity.RequestStatus;

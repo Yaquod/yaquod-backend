@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yaquodorg.yaquod.dtos.payment.ChargeSavedCardDirectResponse;
 import com.yaquodorg.yaquod.dtos.payment.CreateCheckoutResponse;
 import com.yaquodorg.yaquod.dtos.payment.PayWithSavedCardResponse;
+import com.yaquodorg.yaquod.dtos.payment.PaymentDto;
 import com.yaquodorg.yaquod.dtos.payment.SavedCardDto;
 import com.yaquodorg.yaquod.entity.Payment;
 import com.yaquodorg.yaquod.entity.PaymentStatus;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -619,6 +622,27 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public long countPaymentsByStatus(PaymentStatus status) {
         return paymentRepository.countByStatus(status);
+    }
+
+    @Override
+    public Page<PaymentDto> getUserPaymentsPaginated(Pageable pageable, Long userId) {
+        return paymentRepository
+                .findByUserId(userId, pageable)
+                .map(
+                        payment ->
+                                PaymentDto.builder()
+                                        .id(payment.getId())
+                                        .amount(payment.getAmount())
+                                        .currency(payment.getCurrency())
+                                        .status(payment.getStatus())
+                                        .paymobTransactionId(payment.getPaymobTransactionId())
+                                        .createdAt(payment.getCreatedAt())
+                                        .paidAt(payment.getPaidAt())
+                                        .tripId(
+                                                payment.getTrip() != null
+                                                        ? payment.getTrip().getId()
+                                                        : null)
+                                        .build());
     }
 
     @Override
