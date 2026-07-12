@@ -266,8 +266,7 @@ public class TripController {
             @Parameter(description = "Page number (zero-based)", example = "0")
                     @RequestParam(defaultValue = "0")
                     int page,
-            @Parameter(description = "Page size", example = "10")
-                    @RequestParam(defaultValue = "10")
+            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10")
                     int size,
             @AuthenticationPrincipal User user) {
         Page<RequestDto> requests =

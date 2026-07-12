@@ -101,9 +101,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public Page<RequestDto> getUserRequestsPaginated(Pageable pageable, Long userId) {
         log.debug("Fetching paginated requests for user id: {}", userId);
-        return requestRepository
-                .findByUserId(userId, pageable)
-                .map(RequestDto::fromEntity);
+        return requestRepository.findByUserId(userId, pageable).map(RequestDto::fromEntity);
     }
 
     @Override
