@@ -203,6 +203,7 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
+    @Transactional
     public List<Vehicle> findKNearestVehicles(double longitude, double latitude, int k) {
         log.info("Finding {} nearest vehicles to location: ({}, {})", k, longitude, latitude);
         Point point = createPoint(longitude, latitude);
@@ -212,6 +213,7 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
+    @Transactional
     public List<Vehicle> findKNearestVehiclesWithinDistance(
             double longitude, double latitude, double maxDistanceMeters, int k) {
         log.info(
