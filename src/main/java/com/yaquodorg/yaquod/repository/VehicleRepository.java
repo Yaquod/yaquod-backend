@@ -23,6 +23,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
             AND v.status = 'IDLE'
             ORDER BY ST_Distance(v.last_updated_location, :point)
             LIMIT :limit
+            FOR UPDATE SKIP LOCKED
             """,
             nativeQuery = true)
     List<Vehicle> findKNearestVehicles(@Param("point") Point point, @Param("limit") int limit);
@@ -38,6 +39,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
             AND ST_DWithin(v.last_updated_location::geography, :point::geography, :maxDistance)
             ORDER BY ST_Distance(v.last_updated_location, :point)
             LIMIT :limit
+            FOR UPDATE SKIP LOCKED
             """,
             nativeQuery = true)
     List<Vehicle> findKNearestVehiclesWithinDistance(
